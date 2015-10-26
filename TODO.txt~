@@ -1,0 +1,3 @@
+Make a program that fakes talking to arduinos
+Make sure it compiles (catkin_make in this case)
+make a roslaunch for it

@@ -1,0 +1,4 @@
+Make a program that fakes talking to arduinos
+Fix dependencies in CMakeLists.txt
+Make sure it compiles (catkin_make in this case)
+make a roslaunch for it
