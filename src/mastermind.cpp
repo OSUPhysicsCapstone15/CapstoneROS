@@ -1,6 +1,7 @@
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 #include "robot/EncoderRequest.h"
+#include "robot/Motors.h"
 #include <cstdlib> 
 #include <sstream>
 
@@ -45,7 +46,7 @@ int main(int argc, char **argv)
    * than we can send them, the number here specifies how many messages to
    * buffer up before throwing some away.
    */
-  ros::Publisher motor_pub = n.advertise<std_msgs::String>("Motors", 1000);
+  ros::Publisher motor_pub = n.advertise<robot::Motors>("Motors", 1000);
   ros::ServiceClient client = n.serviceClient<robot::EncoderRequest>("encoder_request");
   ros::Rate loop_rate(10); // This should be fast enough for us, since at 2 m/s this would be .2 meters an update at worst.
 
@@ -59,13 +60,11 @@ int main(int argc, char **argv)
       /**
        * This is a message object. You stuff it with data, and then publish it.
        */
-      std_msgs::String msg;
+      robot::Motors msg;
+      msg.leftMotor = -1.0;
+      msg.rightMotor = 1.4;
 
-      std::stringstream ss;
-      ss << "There will be some motor setting here: " << count;
-      msg.data = ss.str();
-
-      ROS_INFO("%s", msg.data.c_str());
+      ROS_INFO("Publishing motor vals: %f,%f", (float)msg.leftMotor, (float)msg.rightMotor);
 
       /**
        * The publish() function is how you send messages. The parameter

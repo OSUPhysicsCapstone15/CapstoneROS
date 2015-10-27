@@ -54,5 +54,8 @@ include_directories(
 
 add_executable(mastermind src/mastermind.cpp)
 target_link_libraries(mastermind ${catkin_LIBRARIES})
-add_dependencies(mastermind beginner_tutorials_generate_messages_cpp)
+#add_dependencies(mastermind beginner_tutorials_generate_messages_cpp)
+add_executable(fake_arduino src/fake_arduino.cpp)
+target_link_libraries(fake_arduino ${catkin_LIBRARIES})
+#add_dependencies(mastermind beginner_tutorials_generate_messages_cpp)
 # This last add dependancies is worrysome, due to litterally being tutorial dependant
