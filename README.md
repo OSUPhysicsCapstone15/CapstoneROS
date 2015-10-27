@@ -1,2 +1,2 @@
 # CapstoneROS
-# To be put in catkin_ws/src/CapstoneROS/
+# To be put in catkin_ws/src/robot/
