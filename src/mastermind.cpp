@@ -1,7 +1,6 @@
 #include "ros/ros.h"
 #include "std_msgs/String.h"
-#include "ros/ros.h"
-
+#include "robot/EncoderRequest.h"
 #include <cstdlib> 
 #include <sstream>
 
@@ -74,7 +73,7 @@ int main(int argc, char **argv)
        * given as a template parameter to the advertise<>() call, as was done
        * in the constructor above.
        */
-      chatter_pub.publish(msg); // Send the new speeds for the arduino to pick up.
+      motor_pub.publish(msg); // Send the new speeds for the arduino to pick up.
       robot::EncoderRequest srv;
       //srv.request.left = 677; // This is what a request arugment WOULD look like, but there are none
       if (client.call(srv))
