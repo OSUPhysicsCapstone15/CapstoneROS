@@ -4,92 +4,89 @@
 #include "robot/Motors.h"
 #include <cstdlib> 
 #include <sstream>
+#include <ctime>
+
+// Some constants
+static const double MOTOR_MAX = 350;
 
 /**
  * Early prototype of the robot main control, adapted from ROS tutorials
  */
-int main(int argc, char **argv)
-{
-  /**
-   * The ros::init() function needs to see argc and argv so that it can perform
-   * any ROS arguments and name remapping that were provided at the command line.
-   * For programmatic remappings you can use a different version of init() which takes
-   * remappings directly, but for most command-line programs, passing argc and argv is
-   * the easiest way to do it.  The third argument to init() is the name of the node.
-   *
-   * You must call one of the versions of ros::init() before using any other
-   * part of the ROS system.
-   */
+int main(int argc, char **argv) {
+
+  std::time_t start_time = std::time(NULL); // Keeps track of time, clock_t is alias of some arithmetic type
+  double total_time; // The current time in seconds since the start of the clock
+  double last_update = 0; // Keep track of the last time since we made a command change
+  
+  // Initialize ROS, this must be done before using other ROS components
   ros::init(argc, argv, "robot");
 
-  /**
-   * NodeHandle is the main access point to communications with the ROS system.
-   * The first NodeHandle constructed will fully initialize this node, and the last
-   * NodeHandle destructed will close down the node.
-   */
+  // Main access point to ROS. Makes a ROS node, which will shut down when this is destructed
   ros::NodeHandle n;
 
-  /**
-   * The advertise() function is how you tell ROS that you want to
-   * publish on a given topic name. This invokes a call to the ROS
-   * master node, which keeps a registry of who is publishing and who
-   * is subscribing. After this advertise() call is made, the master
-   * node will notify anyone who is trying to subscribe to this topic name,
-   * and they will in turn negotiate a peer-to-peer connection with this
-   * node.  advertise() returns a Publisher object which allows you to
-   * publish messages on that topic through a call to publish().  Once
-   * all copies of the returned Publisher object are destroyed, the topic
-   * will be automatically unadvertised.
-   *
-   * The second parameter to advertise() is the size of the message queue
-   * used for publishing messages.  If messages are published more quickly
-   * than we can send them, the number here specifies how many messages to
-   * buffer up before throwing some away.
-   */
+  // Publish a topic "Motors" of the "Motors" msg variety, with a message queue of 1000
   ros::Publisher motor_pub = n.advertise<robot::Motors>("Motors", 1000);
-  ros::ServiceClient client = n.serviceClient<robot::EncoderRequest>("encoder_request");
+  
+  // Start a service client that will call the service "encoder_request"
+  ros::ServiceClient encoderClient = n.serviceClient<robot::EncoderRequest>("encoder_request");
+  
+  // Defines a maximum loop rate (10 Hz)
   ros::Rate loop_rate(10); // This should be fast enough for us, since at 2 m/s this would be .2 meters an update at worst.
 
-  /**
-   * A count of how many messages we have sent. This is used to create
-   * a unique string for each message.
-   */
-  int count = 0;
-  while (ros::ok())
-    {
-      /**
-       * This is a message object. You stuff it with data, and then publish it.
-       */
-      robot::Motors msg;
-      msg.leftMotor = -1.0;
-      msg.rightMotor = 1.4;
+  
+  int count = 0;// Count the iterations, because why not
+  double leftWheelSpeed = 0; // Keep track of the wheel speeds
+  double rightWheelSpeed = 0;
+  int leftEncoderCount = 0;
+  int rightEncoderCount = 0;
+  while (ros::ok()) {
 
-      ROS_INFO("Publishing motor vals: %f,%f", (float)msg.leftMotor, (float)msg.rightMotor);
+    // First we update the total time
+    total_time = (std::time(NULL) - start_time); // Get the time since start in seconds
 
-      /**
-       * The publish() function is how you send messages. The parameter
-       * is the message object. The type of this object must agree with the type
-       * given as a template parameter to the advertise<>() call, as was done
-       * in the constructor above.
-       */
-      motor_pub.publish(msg); // Send the new speeds for the arduino to pick up.
-      robot::EncoderRequest srv;
-      //srv.request.left = 677; // This is what a request arugment WOULD look like, but there are none
-      if (client.call(srv))
-	{
-	  ROS_INFO("Encodes read: (%f,%f)", (float)srv.response.leftCount, (float)srv.response.rightCount);
-	}
-      else
-	{
-	  ROS_ERROR("Failed to call service encoder_request");
-	  return 1;
-	}
-
-      ros::spinOnce();
-      loop_rate.sleep();
-      ++count;
+    // Update the motor set speeds
+    if(total_time - last_update > 5.0) { // Switch every 5 seconds
+      if(leftWheelSpeed == 0) { // These don't really have to be separate, but it makes it clear
+	leftWheelSpeed = 0.9;
+      } else {
+	leftWheelSpeed = 0;
+      }
+      if(rightWheelSpeed == 0) {
+	rightWheelSpeed = 0.9;
+      } else {
+	rightWheelSpeed = 0;
+      }
+      last_update = total_time;
     }
+    ROS_INFO("Total time since first update: %f", (float)(total_time));
+    ROS_INFO("Time since last update: %f", (float)last_update);
+    // Pack the motor values into a message object
+    robot::Motors msg; // Defined in msg directory
+    msg.leftMotor = leftWheelSpeed * MOTOR_MAX;
+    msg.rightMotor = rightWheelSpeed * MOTOR_MAX;
+    
+    // Publish the motor speed message. Notice that the msg type matches the advertise template <>
+    motor_pub.publish(msg); // Send the new speeds for the arduino to pick up.
+    ROS_INFO("Published motor vals: %f,%f", (float)msg.leftMotor, (float)msg.rightMotor);
+    
+    // Make a service request. Defined in srv directory
+    robot::EncoderRequest srv;
 
+    //srv.request.left = 677; /* This is what a request arugment WOULD look like, but there are none */
+
+    // Make a call to a service. It returns true if it succeeds, and updates src with the right values
+    if (encoderClient.call(srv)) {
+      leftEncoderCount = (long)srv.response.leftCount;
+      rightEncoderCount = (int)srv.response.rightCount;
+      ROS_INFO("Encoders read: (%d,%d)", leftEncoderCount, rightEncoderCount);
+    } else { // If it returned false, something went wrong
+      ROS_ERROR("Failed to call service encoder_request");
+    }
+    
+    ros::spinOnce(); // Checks for ros update
+    loop_rate.sleep(); // Sleep for the period corresponding to the given frequency
+    count++; // Increment count
+  }
 
   return 0;
 }
