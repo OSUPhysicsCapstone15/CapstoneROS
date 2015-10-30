@@ -16,6 +16,8 @@ find_package(catkin REQUIRED COMPONENTS
  add_message_files(
    FILES
    Motors.msg
+   LeftMotor.msg
+   RightMotor.msg
  )
 
 # Generate services in the 'srv' folder
@@ -59,3 +61,5 @@ add_executable(fake_arduino src/fake_arduino.cpp)
 target_link_libraries(fake_arduino ${catkin_LIBRARIES})
 #add_dependencies(mastermind beginner_tutorials_generate_messages_cpp)
 # This last add dependancies is worrysome, due to litterally being tutorial dependant
+add_executable(basic_motor_control src/basic_motor_control.cpp)
+target_link_libraries(basic_motor_control ${catkin_LIBRARIES})
