@@ -1,5 +1,6 @@
 #include "ros/ros.h"
 #include "std_msgs/String.h"
+#include "std_msgs/Float32.h"
 #include "robot/EncoderRequest.h"
 #include "robot/LeftMotor.h"
 #include "robot/RightMotor.h"
@@ -11,14 +12,14 @@
 static const double MOTOR_MAX = 350;
 
 
-void leftMotorCallback(const robot::LeftMotor::ConstPtr& msg)
+void leftMotorCallback(const std_msgs::Float32::ConstPtr& msg)
 {
-  ROS_INFO("LeftMotorSet: [%f]", msg->leftMotor);
+  ROS_INFO("LeftMotorSet: [%f]", msg->data);
 }
 
-void rightMotorCallback(const robot::RightMotor::ConstPtr& msg)
+void rightMotorCallback(const std_msgs::Float32::ConstPtr& msg)
 {
-  ROS_INFO("RightMotorSet: [%f]", msg->rightMotor);
+  ROS_INFO("RightMotorSet: [%f]", msg->data);
 }
 
 
@@ -38,8 +39,8 @@ int main(int argc, char **argv) {
   ros::NodeHandle n;
 
   // Publish topics "RightMotors" and "LeftMotors" of the msg variety of the same (singular) name, with a message queue of 1000
-  ros::Publisher left_motor_pub = n.advertise<robot::LeftMotor>("LeftMotors", 1000);
-  ros::Publisher right_motor_pub = n.advertise<robot::RightMotor>("RightMotors", 1000);
+  ros::Publisher left_motor_pub = n.advertise<std_msgs::Float32>("LeftMotors", 1000);
+  ros::Publisher right_motor_pub = n.advertise<std_msgs::Float32>("RightMotors", 1000);
 
   // Subscriber to motor return
   ros::Subscriber subL = n.subscribe("LeftReturn", 1000, leftMotorCallback);
@@ -74,15 +75,15 @@ int main(int argc, char **argv) {
     ROS_INFO("Total time since first update: %f", (float)(total_time));
     ROS_INFO("Time since last update: %f", (float)last_update);
     // Pack the motor values into a message object
-    robot::RightMotor right_msg; // Defined in msg directory
-    robot::LeftMotor left_msg;
-    left_msg.leftMotor = leftWheelSpeed * MOTOR_MAX;
-    right_msg.rightMotor = rightWheelSpeed * MOTOR_MAX;
+    std_msgs::Float32 right_msg; // Defined in msg directory
+    std_msgs::Float32 left_msg;
+    left_msg.data = leftWheelSpeed * MOTOR_MAX;
+    right_msg.data = rightWheelSpeed * MOTOR_MAX;
     
     // Publish the motor speed message. Notice that the msg type matches the advertise template <>
     left_motor_pub.publish(left_msg); // Send the new speeds for the arduino to pick up.
     right_motor_pub.publish(right_msg); // Send the new speeds for the arduino to pick up.
-    ROS_INFO("Published motor vals: %f,%f", (float)left_msg.leftMotor, (float)right_msg.rightMotor);
+    ROS_INFO("Published motor vals: %f,%f", (float)left_msg.data, (float)right_msg.data);
     
     ros::spinOnce(); // Checks for ros update
     loop_rate.sleep(); // Sleep for the period corresponding to the given frequency
