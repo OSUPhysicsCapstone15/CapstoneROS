@@ -2,6 +2,7 @@
 #include "std_msgs/String.h"
 #include "std_msgs/Float32.h"
 #include "std_msgs/Int32.h"
+#include "std_msgs/Int8.h"
 #include "std_msgs/Bool.h"
 #include "robot/EncoderRequest.h"
 #include "robot/LeftMotor.h"
