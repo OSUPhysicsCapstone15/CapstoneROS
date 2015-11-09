@@ -15,7 +15,7 @@
 static const double MOTOR_MAX = 350;
 
 // Global variables
-bool paused = true;
+bool paused = false;
 int rightEncoder = 0;
 int leftEncoder = 0;
 
@@ -51,6 +51,7 @@ void rightEncoderCallback(const std_msgs::Int32::ConstPtr& msg)
  * Early prototype of the robot main control, adapted from ROS tutorials
  */
 int main(int argc, char **argv) {
+  ROS_INFO("PROGRAM STARTED");
 
   std::time_t start_time = std::time(NULL); // Keeps track of time, clock_t is alias of some arithmetic type
   double total_time; // The current time in seconds since the start of the clock
@@ -86,14 +87,14 @@ int main(int argc, char **argv) {
 
     if (!paused) {
       // Update the motor set speeds
-      if(total_time - last_update > 5.0) { // Switch every 5 seconds
+      if(total_time - last_update > 3.0) { // Switch every 5 seconds
 	if(leftWheelSpeed == 0) { // These don't really have to be separate, but it makes it clear
-	  leftWheelSpeed = 0.9;
+	  leftWheelSpeed = 0.5;
 	} else {
 	  leftWheelSpeed = 0;
 	}
 	if(rightWheelSpeed == 0) {
-	  rightWheelSpeed = 0.9;
+	  rightWheelSpeed = 0.5;
 	} else {
 	  rightWheelSpeed = 0;
 	}
