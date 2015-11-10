@@ -25,6 +25,8 @@ static const double WHEEL_BASE = 42; // Inches
 bool paused = false;
 int rightEncoder = 0;
 int leftEncoder = 0;
+int heartbeat = 1;
+int heartbeatconfirm = 1;
 double leftWheelSpeed = 0; // Keep track of the wheel speeds
 double rightWheelSpeed = 0;
 double current_angle = 0; // The current angle of the robot (relative)
@@ -60,6 +62,12 @@ void rightEncoderCallback(const std_msgs::Int32::ConstPtr& msg)
 {
   //ROS_INFO("RightEncoderReading: [%d]", msg->data);
   rightEncoder = msg->data;
+}
+
+void heartbeatCallback(const std_msgs::Int32::ConstPtr& msg)
+{
+  ROS_INFO("Received heartbeat number: [%i]", msg->data);
+  heartbeatconfirm = msg->data;
 }
 
 // Distance is in inches
@@ -98,6 +106,7 @@ void zero_system() {
   target_angle = 0;
 }
 
+  
 /**
  * Early prototype of the robot main control, adapted from ROS tutorials
  */
@@ -118,6 +127,7 @@ int main(int argc, char **argv) {
   ros::Publisher left_motor_pub = n.advertise<std_msgs::Float32>("LeftMotors", 1000);
   ros::Publisher right_motor_pub = n.advertise<std_msgs::Float32>("RightMotors", 1000);
   ros::Publisher freq_div_pub = n.advertise<std_msgs::Int32>("FreqDiv", 1000);
+  ros::Publisher heartbeatcheck_pub = n.advertise<std_msgs::Int32>("Heartbeat",1000);
 
   // Subscriber to motor return
   ros::Subscriber subLMotor = n.subscribe("LeftReturn", 1000, leftMotorCallback);
@@ -125,6 +135,7 @@ int main(int argc, char **argv) {
   ros::Subscriber subPaused = n.subscribe("Paused", 1000, pausedCallback);
   ros::Subscriber subLEncoder = n.subscribe("LeftEncoder", 1000, leftEncoderCallback);
   ros::Subscriber subREncoder = n.subscribe("RightEncoder", 1000, rightEncoderCallback);
+  ros::Subscriber subHeartbeatConfirm = n.subscribe("Heartbeat", 1000, heartbeatCallback);
 
   // Defines a maximum loop rate (10 Hz)
   ros::Rate loop_rate(10); // This should be fast enough for us, since at 2 m/s this would be .2 meters an update at worst.
@@ -138,6 +149,9 @@ int main(int argc, char **argv) {
   std_msgs::Int32 freq_div_msg;
   freq_div_msg.data = 0;
   freq_div_pub.publish(freq_div_msg);
+
+  std_msgs::Int32 heartbeat_check_msg;
+  heartbeat_check_msg.data = heartbeat;
 
   ros::spinOnce();
   loop_rate.sleep();
@@ -155,6 +169,17 @@ int main(int argc, char **argv) {
     // First we update the total time
     total_time = (std::time(NULL) - start_time); // Get the time since start in seconds
     
+    heartbeat_check_msg.data = heartbeat;
+    heartbeatcheck_pub.publish(heartbeat_check_msg);
+    heartbeat++;
+    ros::spinOnce();
+    if (heartbeatconfirm != heartbeat-1) {
+      paused = true;
+      rightWheelSpeed = 0;
+      leftWheelSpeed = 0;
+    }
+    else {paused = false;}
+
     if (!paused) {
       
       // Turn 45 degrees every 10 seconds
