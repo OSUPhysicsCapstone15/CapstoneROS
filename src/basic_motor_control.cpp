@@ -117,6 +117,7 @@ int main(int argc, char **argv) {
   // Publish topics "RightMotors" and "LeftMotors" of the msg variety of the same (singular) name, with a message queue of 1000
   ros::Publisher left_motor_pub = n.advertise<std_msgs::Float32>("LeftMotors", 1000);
   ros::Publisher right_motor_pub = n.advertise<std_msgs::Float32>("RightMotors", 1000);
+  ros::Publisher freq_div_pub = n.advertise<std_msgs::Int32>("FreqDiv", 1000);
 
   // Subscriber to motor return
   ros::Subscriber subLMotor = n.subscribe("LeftReturn", 1000, leftMotorCallback);
@@ -134,47 +135,57 @@ int main(int argc, char **argv) {
   rightWheelSpeed = 0;
   leftWheelSpeed = 0;
 
-  zero_system();
+  std_msgs::Int32 freq_div_msg;
+  freq_div_msg.data = 0;
+  freq_div_pub.publish(freq_div_msg);
+
+  ros::spinOnce();
+  loop_rate.sleep();
+  ros::spinOnce();
+
+  zero_system(); // This should get the correct encoder values now
+  freq_div_msg.data = 1;
+  freq_div_pub.publish(freq_div_msg);
+
   while (ros::ok()) {
-      ROS_INFO("Current angle: %f", current_angle);
-      ROS_INFO("Target angle: %f", target_angle);
-
-      // First we update the total time
-      total_time = (std::time(NULL) - start_time); // Get the time since start in seconds
-
-      if (!paused) {
-	
-	// Turn 45 degrees every 10 seconds
-	if(total_time - last_update > 10.0) { // Switch every 5 seconds
-	  zero_system();
-	  target_angle = 45;
-	  last_update = total_time;
-	  turning = true;
-	}
-	ROS_INFO("Total time since first update: %f", (float)(total_time));
-	ROS_INFO("Time since last update: %f", (float)last_update);
-	
-	if(turning) {
-	  turning  = !(pivotOnWheel(&leftWheelSpeed, &rightWheelSpeed, target_angle, current_angle));
-	  ROS_INFO("Trying to turn: %f %f", leftWheelSpeed, rightWheelSpeed);
-	}
-	
-	current_angle = enc2angle(leftEncoder-left_encoder_zeropoint, rightEncoder - right_encoder_zeropoint);
-	
-	// Values decided, pass to arduinos
-	// Pack the motor values into a message object
-	std_msgs::Float32 right_msg; // Defined in msg directory
-	std_msgs::Float32 left_msg;
-	left_msg.data = leftWheelSpeed * MOTOR_MAX;
-	right_msg.data = rightWheelSpeed * MOTOR_MAX;
-	
-	// Publish the motor speed message. Notice that the msg type matches the advertise template <>
-	left_motor_pub.publish(left_msg); // Send the new speeds for the arduino to pick up.
+    current_angle = enc2angle(leftEncoder-left_encoder_zeropoint, rightEncoder - right_encoder_zeropoint);	
+    ROS_INFO("Current angle: %f", current_angle);
+    ROS_INFO("Target angle: %f", target_angle);
+    ROS_INFO("Encoder [left, right]: [%f, %f]", leftEncoder - left_encoder_zeropoint, rightEncoder - right_encoder_zeropoint);
+    // First we update the total time
+    total_time = (std::time(NULL) - start_time); // Get the time since start in seconds
+    
+    if (!paused) {
+      
+      // Turn 45 degrees every 10 seconds
+      if(total_time - last_update > 10.0) { // Switch every 5 seconds
+	zero_system();
+	target_angle = 45;
+	last_update = total_time;
+	turning = true;
+      }
+      ROS_INFO("Total time since first update: %f", (float)(total_time));
+      ROS_INFO("Time since last update: %f", (float)last_update);
+      
+      if(turning) {
+	turning  = !(pivotOnWheel(&leftWheelSpeed, &rightWheelSpeed, target_angle, current_angle));
+	ROS_INFO("Trying to turn: %f %f", leftWheelSpeed, rightWheelSpeed);
+      }
+      
+      // Values decided, pass to arduinos
+      // Pack the motor values into a message object
+      std_msgs::Float32 right_msg; // Defined in msg directory
+      std_msgs::Float32 left_msg;
+      left_msg.data = leftWheelSpeed * MOTOR_MAX;
+      right_msg.data = rightWheelSpeed * MOTOR_MAX;
+      
+      // Publish the motor speed message. Notice that the msg type matches the advertise template <>
+      left_motor_pub.publish(left_msg); // Send the new speeds for the arduino to pick up.
 	right_motor_pub.publish(right_msg); // Send the new speeds for the arduino to pick up.
 	ROS_INFO("Published motor vals: %f,%f", (float)left_msg.data, (float)right_msg.data);
 	ROS_INFO("---------------------------------------------------------------------");
-      }
-      ros::spinOnce(); // Checks for ros update
+    }
+    ros::spinOnce(); // Checks for ros update
     loop_rate.sleep(); // Sleep for the period corresponding to the given frequency
   }
   
