@@ -18,6 +18,7 @@ using namespace std;
 static const double MOTOR_MAX = 350;
 static const double PIVOT_SPEED = 0.5;
 static const double ANGLE_PRECISION = 5; // Units of degrees
+static const double FORWARD_PRECISION = 12; // Units of inches
 static const int PULSE_RATIO = 600;
 static const double WHEEL_DIAMETER = 12; // Inches
 static const double WHEEL_BASE = 42; // Inches
@@ -31,10 +32,13 @@ double leftWheelSpeed = 0; // Keep track of the wheel speeds
 double rightWheelSpeed = 0;
 double current_angle = 0; // The current angle of the robot (relative)
 double target_angle = 0; // The current target angle
+double current_distance = 0;
+double target_distance = 0;
 double left_encoder_zeropoint = 0; // Zeropoints for the encoders
 double right_encoder_zeropoint = 0;
 // Flags
 bool turning = false; // Whether or not we should be executing a turn
+bool driving = false; // Whether or not we are driving forward
 
 void leftMotorCallback(const std_msgs::Float32::ConstPtr& msg)
 {
@@ -82,6 +86,19 @@ double enc2angle(double encL, double encR) {
 }
 
 // Sets motor values, returns true if at destination
+bool goXInches(double *leftWheelSpeed, double *rightWheelSpeed, double target, double current, double speed) {
+  double diff = target - current;
+  if(diff < FORWARD_PRECISION) {
+    *rightWheelSpeed = 0;
+    *leftWheelSpeed = 0;
+    return 1;
+  } 
+  *rightWheelSpeed = speed;
+  *leftWheelSpeed = speed;
+  return 0;
+}
+
+// Sets motor values, returns true if at destination
 bool pivotOnWheel(double *leftWheelSpeed, double *rightWheelSpeed, double target, double current) {
   double diff = target - current;
   if(abs(diff) < ANGLE_PRECISION) {
@@ -96,7 +113,9 @@ bool pivotOnWheel(double *leftWheelSpeed, double *rightWheelSpeed, double target
     *leftWheelSpeed = PIVOT_SPEED;
     *rightWheelSpeed = 0;
   }
+  return 0;
 }
+
 
 // Reset local states
 void zero_system() {
@@ -104,6 +123,10 @@ void zero_system() {
   right_encoder_zeropoint = rightEncoder;
   current_angle = 0;
   target_angle = 0;
+  current_distance = 0;
+  target_distance = 0;
+  turning = false;
+  driving = false;
 }
 
   
@@ -169,7 +192,8 @@ int main(int argc, char **argv) {
   freq_div_pub.publish(freq_div_msg);
 
   while (ros::ok()) {
-    current_angle = enc2angle(leftEncoder-left_encoder_zeropoint, rightEncoder - right_encoder_zeropoint);	
+    current_angle = enc2angle(leftEncoder-left_encoder_zeropoint, rightEncoder - right_encoder_zeropoint);
+    current_distance = enc2distance(leftEncoder - left_encoder_zeropoint)/2 + enc2distance(rightEncoder - right_encoder_zeropoint)/2;
     ROS_INFO("Current angle: %f", current_angle);
     ROS_INFO("Target angle: %f", target_angle);
     ROS_INFO("Encoder [left, right]: [%f, %f]", leftEncoder - left_encoder_zeropoint, rightEncoder - right_encoder_zeropoint);
@@ -191,7 +215,7 @@ int main(int argc, char **argv) {
     }
 
     if (!paused) {
-      
+      /*
       // Turn 45 degrees every 10 seconds
       
       if(total_time - last_update > 10.0) { // Switch every 5 seconds
@@ -200,12 +224,22 @@ int main(int argc, char **argv) {
 	last_update = total_time;
 	turning = true;
       }
+      */
+      if(total_time - last_update > 20.0) { // Switch every 20 seconds
+	zero_system();
+	target_distance = 36;
+	last_update = total_time;
+	driving = true;
+      }
       
       ROS_INFO("Total time since first update: %f", (float)(total_time));
       ROS_INFO("Time since last update: %f", (float)last_update);
       if(turning) {
 	turning  = !(pivotOnWheel(&leftWheelSpeed, &rightWheelSpeed, target_angle, current_angle));
 	ROS_INFO("Trying to turn: %f %f", leftWheelSpeed, rightWheelSpeed);
+      } else if(driving) {
+	driving = !(goXInches(&leftWheelSpeed, &rightWheelSpeed, target_distance, current_distance, 0.6));
+	ROS_INFO("Trying to drive: %f %f", leftWheelSpeed, rightWheelSpeed);
       }
 
       // Values decided, pass to arduinos
