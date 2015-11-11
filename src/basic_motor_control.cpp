@@ -16,7 +16,7 @@ using namespace std;
 
 // Some static constants
 static const double MOTOR_MAX = 350;
-static const double PIVOT_SPEED = 0.6;
+static const double PIVOT_SPEED = 0.5;
 static const double ANGLE_PRECISION = 5; // Units of degrees
 static const int PULSE_RATIO = 600;
 static const double WHEEL_DIAMETER = 12; // Inches
@@ -127,7 +127,8 @@ int main(int argc, char **argv) {
   ros::Publisher left_motor_pub = n.advertise<std_msgs::Float32>("LeftMotors", 1000);
   ros::Publisher right_motor_pub = n.advertise<std_msgs::Float32>("RightMotors", 1000);
   ros::Publisher freq_div_pub = n.advertise<std_msgs::Int32>("FreqDiv", 1000);
-  ros::Publisher heartbeatcheck_pub = n.advertise<std_msgs::Int32>("Heartbeat",1000);
+  ros::Publisher heartbeatcheck_pub = n.advertise<std_msgs::Int32>("Heartbeat",1000);  
+  ros::Publisher enc_reset_pub = n.advertise<std_msgs::Bool>("EncReset",1000);
 
   // Subscriber to motor return
   ros::Subscriber subLMotor = n.subscribe("LeftReturn", 1000, leftMotorCallback);
@@ -135,7 +136,7 @@ int main(int argc, char **argv) {
   ros::Subscriber subPaused = n.subscribe("Paused", 1000, pausedCallback);
   ros::Subscriber subLEncoder = n.subscribe("LeftEncoder", 1000, leftEncoderCallback);
   ros::Subscriber subREncoder = n.subscribe("RightEncoder", 1000, rightEncoderCallback);
-  ros::Subscriber subHeartbeatConfirm = n.subscribe("Heartbeat", 1000, heartbeatCallback);
+  ros::Subscriber subHeartbeatConfirm = n.subscribe("ConfHeartbeat", 1000, heartbeatCallback);
 
   // Defines a maximum loop rate (10 Hz)
   ros::Rate loop_rate(10); // This should be fast enough for us, since at 2 m/s this would be .2 meters an update at worst.
@@ -153,8 +154,14 @@ int main(int argc, char **argv) {
   std_msgs::Int32 heartbeat_check_msg;
   heartbeat_check_msg.data = heartbeat;
 
+  std_msgs::Bool enc_reset_msg;
+  enc_reset_msg.data = true;
+  enc_reset_pub.publish(enc_reset_msg);
+
   ros::spinOnce();
   loop_rate.sleep();
+  enc_reset_msg.data = false;
+  enc_reset_pub.publish(enc_reset_msg);
   ros::spinOnce();
 
   zero_system(); // This should get the correct encoder values now
@@ -168,35 +175,39 @@ int main(int argc, char **argv) {
     ROS_INFO("Encoder [left, right]: [%f, %f]", leftEncoder - left_encoder_zeropoint, rightEncoder - right_encoder_zeropoint);
     // First we update the total time
     total_time = (std::time(NULL) - start_time); // Get the time since start in seconds
-    
-    heartbeat_check_msg.data = heartbeat;
-    heartbeatcheck_pub.publish(heartbeat_check_msg);
-    heartbeat++;
+
+    // Not robust to slow signals
     ros::spinOnce();
-    if (heartbeatconfirm != heartbeat-1) {
+    if (heartbeatconfirm < heartbeat-15) {
       paused = true;
       rightWheelSpeed = 0;
       leftWheelSpeed = 0;
     }
-    else {paused = false;}
+    else {
+      paused = false;    
+      heartbeat_check_msg.data = heartbeat;
+      heartbeatcheck_pub.publish(heartbeat_check_msg);
+      heartbeat++;
+    }
 
     if (!paused) {
       
       // Turn 45 degrees every 10 seconds
+      
       if(total_time - last_update > 10.0) { // Switch every 5 seconds
 	zero_system();
 	target_angle = 45;
 	last_update = total_time;
 	turning = true;
       }
+      
       ROS_INFO("Total time since first update: %f", (float)(total_time));
       ROS_INFO("Time since last update: %f", (float)last_update);
-      
       if(turning) {
 	turning  = !(pivotOnWheel(&leftWheelSpeed, &rightWheelSpeed, target_angle, current_angle));
 	ROS_INFO("Trying to turn: %f %f", leftWheelSpeed, rightWheelSpeed);
       }
-      
+
       // Values decided, pass to arduinos
       // Pack the motor values into a message object
       std_msgs::Float32 right_msg; // Defined in msg directory
@@ -209,6 +220,8 @@ int main(int argc, char **argv) {
 	right_motor_pub.publish(right_msg); // Send the new speeds for the arduino to pick up.
 	ROS_INFO("Published motor vals: %f,%f", (float)left_msg.data, (float)right_msg.data);
 	ROS_INFO("---------------------------------------------------------------------");
+    } else {
+      ROS_INFO("I AM PAUSED");
     }
     ros::spinOnce(); // Checks for ros update
     loop_rate.sleep(); // Sleep for the period corresponding to the given frequency
