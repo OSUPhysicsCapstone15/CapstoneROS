@@ -17,6 +17,7 @@ using namespace std;
 // Some static constants
 static const double MOTOR_MAX = 350;
 static const double PIVOT_SPEED = 0.5;
+static const double BREAK_SPEED = -0.25; // Reverse with enough power to stop wheel motion
 static const double ANGLE_PRECISION = 5; // Units of degrees
 static const double FORWARD_PRECISION = 12; // Units of inches
 static const int PULSE_RATIO = 600;
@@ -93,7 +94,7 @@ bool goXInches(double *leftWheelSpeed, double *rightWheelSpeed, double target, d
     *leftWheelSpeed = 0;
     return 1;
   } 
-  *rightWheelSpeed = speed;
+  *rightWheelSpeed = 0.7*speed;
   *leftWheelSpeed = speed;
   return 0;
 }
@@ -103,8 +104,12 @@ bool pivotOnWheel(double *leftWheelSpeed, double *rightWheelSpeed, double target
   double diff = target - current;
   if(abs(diff) < ANGLE_PRECISION) {
     *rightWheelSpeed = 0;
-    *leftWheelSpeed = 0;
+    *leftWheelSpeed = 0.5*BREAK_SPEED;
     return 1;
+  }
+  else if(abs(diff) < 10) {
+    *leftWheelSpeed = BREAK_SPEED;
+    *rightWheelSpeed = 0;
   }
   if(diff < 0) {
     *rightWheelSpeed = PIVOT_SPEED;
@@ -194,8 +199,7 @@ int main(int argc, char **argv) {
   while (ros::ok()) {
     current_angle = enc2angle(leftEncoder-left_encoder_zeropoint, rightEncoder - right_encoder_zeropoint);
     current_distance = enc2distance(leftEncoder - left_encoder_zeropoint)/2 + enc2distance(rightEncoder - right_encoder_zeropoint)/2;
-    ROS_INFO("Current angle: %f", current_angle);
-    ROS_INFO("Target angle: %f", target_angle);
+
     ROS_INFO("Encoder [left, right]: [%f, %f]", leftEncoder - left_encoder_zeropoint, rightEncoder - right_encoder_zeropoint);
     // First we update the total time
     total_time = (std::time(NULL) - start_time); // Get the time since start in seconds
@@ -215,31 +219,45 @@ int main(int argc, char **argv) {
     }
 
     if (!paused) {
-      /*
+      
       // Turn 45 degrees every 10 seconds
       
-      if(total_time - last_update > 10.0) { // Switch every 5 seconds
+      /*if(total_time - last_update > 10.0) { // Switch every 5 seconds
 	zero_system();
 	target_angle = 45;
 	last_update = total_time;
 	turning = true;
-      }
-      */
-      if(total_time - last_update > 20.0) { // Switch every 20 seconds
+	}*/
+      
+       if(total_time - last_update > 15.0) { // Switch every 20 seconds
 	zero_system();
-	target_distance = 36;
+	target_distance = 90;
 	last_update = total_time;
 	driving = true;
-      }
+	}
       
+       
+	 ROS_INFO("Current angle: %f", current_angle);
+	 ROS_INFO("Target angle: %f", target_angle);
+       
+       if(driving) {
+	 ROS_INFO("Current distance: %f", current_distance);
+	 ROS_INFO("Target distance: %f", target_distance);
+       }
+	 
       ROS_INFO("Total time since first update: %f", (float)(total_time));
       ROS_INFO("Time since last update: %f", (float)last_update);
       if(turning) {
 	turning  = !(pivotOnWheel(&leftWheelSpeed, &rightWheelSpeed, target_angle, current_angle));
 	ROS_INFO("Trying to turn: %f %f", leftWheelSpeed, rightWheelSpeed);
       } else if(driving) {
-	driving = !(goXInches(&leftWheelSpeed, &rightWheelSpeed, target_distance, current_distance, 0.6));
+	driving = !(goXInches(&leftWheelSpeed, &rightWheelSpeed, target_distance, current_distance, 0.5));
 	ROS_INFO("Trying to drive: %f %f", leftWheelSpeed, rightWheelSpeed);
+	if (current_angle > 5) {
+	  leftWheelSpeed = leftWheelSpeed*0.5;
+	} else if (current_angle < -5) {
+	  rightWheelSpeed = rightWheelSpeed*0.5;
+	}
       }
 
       // Values decided, pass to arduinos
