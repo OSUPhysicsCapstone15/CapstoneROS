@@ -23,6 +23,9 @@ static const double FORWARD_PRECISION = 12; // Units of inches
 static const int PULSE_RATIO = 600;
 static const double WHEEL_DIAMETER = 12; // Inches
 static const double WHEEL_BASE = 42; // Inches
+static const double K_p = 1; // PID proportional constant
+static const double K_d = 1; // PID derivative constant
+static const double K_i = 1; // PID integral constant
 // Global variables
 bool paused = false;
 int rightEncoder = 0;
@@ -37,6 +40,7 @@ double current_distance = 0;
 double target_distance = 0;
 double left_encoder_zeropoint = 0; // Zeropoints for the encoders
 double right_encoder_zeropoint = 0;
+double left_fudge_factor = 0.9;
 // Flags
 bool turning = false; // Whether or not we should be executing a turn
 bool driving = false; // Whether or not we are driving forward
@@ -89,13 +93,14 @@ double enc2angle(double encL, double encR) {
 // Sets motor values, returns true if at destination
 bool goXInches(double *leftWheelSpeed, double *rightWheelSpeed, double target, double current, double speed) {
   double diff = target - current;
+
   if(diff < FORWARD_PRECISION) {
     *rightWheelSpeed = 0;
     *leftWheelSpeed = 0;
     return 1;
   } 
-  *rightWheelSpeed = 0.7*speed;
-  *leftWheelSpeed = speed;
+  *rightWheelSpeed = speed;
+  *leftWheelSpeed = speed*left_fudge_factor;
   return 0;
 }
 
@@ -143,7 +148,7 @@ int main(int argc, char **argv) {
 
   std::time_t start_time = std::time(NULL); // Keeps track of time, clock_t is alias of some arithmetic type
   double total_time; // The current time in seconds since the start of the clock
-  double last_update = 0; // Keep track of the last time since we made a command change
+  double last_update = -30; // Keep track of the last time since we made a command change
   
   // Initialize ROS, this must be done before using other ROS components
   ros::init(argc, argv, "robot");
@@ -229,9 +234,9 @@ int main(int argc, char **argv) {
 	turning = true;
 	}*/
       
-       if(total_time - last_update > 15.0) { // Switch every 20 seconds
+       if(total_time - last_update > 30.0) { // Switch every 20 seconds
 	zero_system();
-	target_distance = 90;
+	target_distance = 180; // Go 20 tiles
 	last_update = total_time;
 	driving = true;
 	}
@@ -251,14 +256,18 @@ int main(int argc, char **argv) {
 	turning  = !(pivotOnWheel(&leftWheelSpeed, &rightWheelSpeed, target_angle, current_angle));
 	ROS_INFO("Trying to turn: %f %f", leftWheelSpeed, rightWheelSpeed);
       } else if(driving) {
-	driving = !(goXInches(&leftWheelSpeed, &rightWheelSpeed, target_distance, current_distance, 0.5));
+	driving = !(goXInches(&leftWheelSpeed, &rightWheelSpeed, target_distance, current_distance, 0.55));
 	ROS_INFO("Trying to drive: %f %f", leftWheelSpeed, rightWheelSpeed);
-	if (current_angle > 5) {
+	
+	/*
+	// Angle correction
+	
+	if (current_angle > 4) {
 	  leftWheelSpeed = leftWheelSpeed*0.5;
-	} else if (current_angle < -5) {
+	} else if (current_angle < -4) {
 	  rightWheelSpeed = rightWheelSpeed*0.5;
-	}
-      }
+	  }
+	  }*/
 
       // Values decided, pass to arduinos
       // Pack the motor values into a message object
