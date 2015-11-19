@@ -24,7 +24,6 @@ static const int PULSE_RATIO = 600;
 static const double WHEEL_DIAMETER = 12; // Inches
 static const double WHEEL_BASE = 42; // Inches
 static const double K_p = 1; // PID proportional constant
-static const double K_d = 1; // PID derivative constant
 static const double K_i = 1; // PID integral constant
 // Global variables
 bool paused = false;
@@ -44,6 +43,7 @@ double left_fudge_factor = 0.9;
 // Flags
 bool turning = false; // Whether or not we should be executing a turn
 bool driving = false; // Whether or not we are driving forward
+bool firstPIDspin = true; // Something to initialize the clock
 
 void leftMotorCallback(const std_msgs::Float32::ConstPtr& msg)
 {
@@ -90,7 +90,51 @@ double enc2angle(double encL, double encR) {
   return 360.0 * enc2distance(diff)/((2*3.14159)*WHEEL_BASE);
 }
 
-// Sets motor values, returns true if at destination
+void forwardPID(double *leftWheelSpeed, double *rightWheelSpeed, int leftEnc, int rightEnc, bool *firstRun, double Kp, double Ki) {
+  if((bool)firstRun == true){
+    double newtime = millis();
+    int newRightEnc = rightEnc;
+    int newLeftEnc = leftEnc;
+    double leftErrorSum = 0;
+    double rightErrorSum = 0;
+    firstRun = false;
+    }
+
+   else {
+  // Time
+  double oldtime = newtime;
+  newtime = millis();
+  double timediff = newtime - oldtime;
+  
+  // Right Encoders
+  int oldRightEnc = newRightEnc;
+  newRightEnc = rightEnc;
+  int rightEncDiff = newRightEnc - oldRightEnc;
+
+  // Left Encoders
+  int oldLeftEnc = newLeftEnc;
+  newLeftEnc = leftEnc;
+  int leftEncDiff = newLeftEnc - oldLeftEnc;
+
+  // The speeds will need a conversion to the normalized motor speeds that the arduino takes
+  double leftEncSpeed = leftEncDiff*1.0/(timediff);
+  double rightEncSpeed = rightEncDiff*1.0/(timediff);
+
+  // The actual PID
+  double leftError = *leftWheelSpeed - leftEncSpeed;  // Proportional term
+  double rightError = *rightWheelSpeed - rightEncSpeed;
+  
+  leftErrorSum += leftError;  // Integral term
+  rightErrorSum += rightError;
+
+  *leftWheelSpeed = Kp*leftError + Ki*leftErrorSum;
+  *rightWheelSpeed = Kp*rightError + Ki*rightErrorSum;
+  
+  // Evidently many systems don't use D terms in real applications, so we'll wait
+  }
+}
+
+// Sets motor values, returns true if at destination 
 bool goXInches(double *leftWheelSpeed, double *rightWheelSpeed, double target, double current, double speed) {
   double diff = target - current;
 
@@ -257,6 +301,7 @@ int main(int argc, char **argv) {
 	ROS_INFO("Trying to turn: %f %f", leftWheelSpeed, rightWheelSpeed);
       } else if(driving) {
 	driving = !(goXInches(&leftWheelSpeed, &rightWheelSpeed, target_distance, current_distance, 0.55));
+	forwardPID(&leftWheelSpeed, &rightWheelSpeed, leftEncoder, rightEncoder, &firstPIDspin, K_p, K_i);
 	ROS_INFO("Trying to drive: %f %f", leftWheelSpeed, rightWheelSpeed);
 	
 	/*
