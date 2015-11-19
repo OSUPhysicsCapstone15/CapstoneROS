@@ -206,6 +206,7 @@ int main(int argc, char **argv) {
   ros::Publisher freq_div_pub = n.advertise<std_msgs::Int32>("FreqDiv", 1000);
   ros::Publisher heartbeatcheck_pub = n.advertise<std_msgs::Int32>("Heartbeat",1000);  
   ros::Publisher enc_reset_pub = n.advertise<std_msgs::Bool>("EncReset",1000);
+  ros::Publisher retrieval_arm_pub = n.advertise<std_msgs::Bool>("GrabObject",1000);
 
   // Subscriber to motor return
   ros::Subscriber subLMotor = n.subscribe("LeftReturn", 1000, leftMotorCallback);
