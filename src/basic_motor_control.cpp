@@ -4,6 +4,7 @@
 #include "std_msgs/Int32.h"
 #include "std_msgs/Int8.h"
 #include "std_msgs/Bool.h"
+#include "robot/Commands.h"
 #include "robot/EncoderRequest.h"
 #include "robot/LeftMotor.h"
 #include "robot/RightMotor.h"
@@ -48,6 +49,9 @@ bool turning = false; // Whether or not we should be executing a turn
 bool driving = false; // Whether or not we are driving forward
 bool firstPIDspin = true; // Something to initialize the clock
 
+// Prototypes
+void zero_system();
+
 void leftMotorCallback(const std_msgs::Float32::ConstPtr& msg)
 {
   ROS_INFO("LeftMotorSet: [%f]", msg->data);
@@ -74,6 +78,24 @@ void rightEncoderCallback(const std_msgs::Int32::ConstPtr& msg)
 {
   //ROS_INFO("RightEncoderReading: [%d]", msg->data);
   rightEncoder = msg->data;
+}
+
+void commandsCallback(const robot::Commands::ConstPtr& msg)
+{
+  ROS_INFO("COMMAND RECEIVED: %i, %f", msg->commandOrder, msg->value);
+  zero_system(); // Stop everything, we have a new command
+  switch(msg->commandOrder) {
+  case 1:
+    driving = true;
+    target_distance = msg->value;
+    break;
+  case 2:
+    turning = true;
+    target_angle = msg->value;
+    break;
+  default:
+    break;
+  }
 }
 
 void heartbeatCallback(const std_msgs::Int32::ConstPtr& msg)
@@ -227,6 +249,7 @@ int main(int argc, char **argv) {
   ros::Subscriber subLEncoder = n.subscribe("LeftEncoder", 1000, leftEncoderCallback);
   ros::Subscriber subREncoder = n.subscribe("RightEncoder", 1000, rightEncoderCallback);
   ros::Subscriber subHeartbeatConfirm = n.subscribe("ConfHeartbeat", 1000, heartbeatCallback);
+  ros::Subscriber subControl = n.subscribe("Commands", 1000, commandsCallback);
 
   // Defines a maximum loop rate (10 Hz)
   ros::Rate loop_rate(10); // This should be fast enough for us, since at 2 m/s this would be .2 meters an update at worst.
@@ -291,63 +314,74 @@ int main(int argc, char **argv) {
 	turning = true;
 	}*/
       
-       if(total_time - last_update > 30.0) { // Switch every 20 seconds
+      /*if(total_time - last_update > 30.0) { // Switch every 20 seconds
 	zero_system();
 	target_distance = 180; // Go 20 tiles
 	last_update = total_time;
 	driving = true;
-	}
+	}*/
       
        
-	 ROS_INFO("Current angle: %f", current_angle);
-	 ROS_INFO("Target angle: %f", target_angle);
+       ROS_INFO("Current angle: %f", current_angle);
+       ROS_INFO("Target angle: %f", target_angle);
        
        if(driving) {
 	 ROS_INFO("Current distance: %f", current_distance);
 	 ROS_INFO("Target distance: %f", target_distance);
        }
 	 
-      ROS_INFO("Total time since first update: %f", (float)(total_time));
-      ROS_INFO("Time since last update: %f", (float)last_update);
-      if(turning) {
-	turning  = !(pivotOnWheel(&leftWheelSpeed, &rightWheelSpeed, target_angle, current_angle));
-	ROS_INFO("Trying to turn: %f %f", leftWheelSpeed, rightWheelSpeed);
-      } else if(driving) {
-	driving = !(goXInches(&leftWheelSpeed, &rightWheelSpeed, target_distance, current_distance, 0.55));
-	forwardPID(&leftWheelSpeed, &rightWheelSpeed, leftEncoder, rightEncoder, &firstPIDspin, K_p, K_i);
-	ROS_INFO("Trying to drive: %f %f", leftWheelSpeed, rightWheelSpeed);
+       ROS_INFO("Total time since first update: %f", (float)(total_time));
+       ROS_INFO("Time since last update: %f", (float)last_update);
+       
+       if(turning) {
+	 turning  = !(pivotOnWheel(&leftWheelSpeed, &rightWheelSpeed, target_angle, current_angle));
+	 ROS_INFO("Trying to turn: %f %f", leftWheelSpeed, rightWheelSpeed);
+       } else if(driving) {
+	 driving = !(goXInches(&leftWheelSpeed, &rightWheelSpeed, target_distance, current_distance, 0.55));
 	
-	/*
-	// Angle correction
 	
-	if (current_angle > 4) {
-	  leftWheelSpeed = leftWheelSpeed*0.5;
-	} else if (current_angle < -4) {
-	  rightWheelSpeed = rightWheelSpeed*0.5;
-	  }
-	  }*/
+	 // Angle correction
+	
+	 if (current_angle > 3) {
+	   leftWheelSpeed = leftWheelSpeed*0.5;
+	 } else if (current_angle < -3) {
+	   rightWheelSpeed = rightWheelSpeed*0.5;
+	 }
 
-      // Values decided, pass to arduinos
-      // Pack the motor values into a message object
-      std_msgs::Float32 right_msg; // Defined in msg directory
-      std_msgs::Float32 left_msg;
-      left_msg.data = leftWheelSpeed * MOTOR_MAX;
-      right_msg.data = rightWheelSpeed * MOTOR_MAX;
-      
-      // Publish the motor speed message. Notice that the msg type matches the advertise template <>
-      left_motor_pub.publish(left_msg); // Send the new speeds for the arduino to pick up.
-	right_motor_pub.publish(right_msg); // Send the new speeds for the arduino to pick up.
-	ROS_INFO("Published motor vals: %f,%f", (float)left_msg.data, (float)right_msg.data);
-	ROS_INFO("---------------------------------------------------------------------");
+	 if (current_angle > 8) {
+	   leftWheelSpeed = leftWheelSpeed*0.4;
+	   rightWheelSpeed = rightWheelSpeed*0.85;
+	 } else if (current_angle < -8) {
+	   rightWheelSpeed = rightWheelSpeed*0.4;
+	   leftWheelSpeed = leftWheelSpeed*0.85;
+	 }
+	 //forwardPID(&leftWheelSpeed, &rightWheelSpeed, leftEncoder, rightEncoder, &firstPIDspin, K_p, K_i);
+	 ROS_INFO("Trying to drive: %f %f", leftWheelSpeed, rightWheelSpeed);
+       }
     } else {
       ROS_INFO("I AM PAUSED");
     }
+
+
+    // Values decided, pass to arduinos
+    // Pack the motor values into a message object
+    std_msgs::Float32 right_msg; // Defined in msg directory
+    std_msgs::Float32 left_msg;
+    left_msg.data = leftWheelSpeed * MOTOR_MAX;
+    right_msg.data = rightWheelSpeed * MOTOR_MAX;
+	 
+    // Publish the motor speed message. Notice that the msg type matches the advertise template <>
+    left_motor_pub.publish(left_msg); // Send the new speeds for the arduino to pick up.
+    right_motor_pub.publish(right_msg); // Send the new speeds for the arduino to pick up.
+    ROS_INFO("Published motor vals: %f,%f", (float)left_msg.data, (float)right_msg.data);
+    ROS_INFO("---------------------------------------------------------------------");
     ros::spinOnce(); // Checks for ros update
     loop_rate.sleep(); // Sleep for the period corresponding to the given frequency
+    
+  }
 
   return 0;
 }
-
 // OLD CONTROL SCHEMES
       /*
       // Update the motor set speeds
