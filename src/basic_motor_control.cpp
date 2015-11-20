@@ -49,6 +49,7 @@ auto startTime = std::chrono::system_clock::now();
 // Flags
 bool turning = false; // Whether or not we should be executing a turn
 bool driving = false; // Whether or not we are driving forward
+bool grabbing = false; // Whether or not we are grabbing an object
 bool firstPIDspin = true; // Something to initialize the clock
 
 // Prototypes
@@ -94,6 +95,9 @@ void commandsCallback(const robot::Commands::ConstPtr& msg)
   case 2:
     turning = true;
     target_angle = msg->value;
+    break;
+  case 3:
+    //Whatever
     break;
   default:
     break;
@@ -371,6 +375,17 @@ int main(int argc, char **argv) {
 	 //forwardPID(&leftWheelSpeed, &rightWheelSpeed, leftEncoder, rightEncoder, &firstPIDspin, K_p, K_i);
 	 ROS_INFO("Trying to drive: %f %f", leftWheelSpeed, rightWheelSpeed);
        }
+    } else if (grabbing) {
+      ROS_INFO("Grabbing the object.");
+      retrieval_go_msg.data = true;
+      retrieval_arm_pub.publish(retrieval_go_msg); // Tell the arm arduino to start grabbing
+      retrievalconfirm = false;
+      while(!retrievalconfirm){ // Stop everything til the grabbing is finished
+	ROS_INFO("Waiting for grabbing to finish.");
+	ros::spinOnce();
+      }
+      retrieval_go_msg.data = false;
+      retrieval_arm_pub.publish(retrieval_go_msg); // Tell the arm arduino not to grab anymore
     } else {
       ROS_INFO("I AM PAUSED");
     }
