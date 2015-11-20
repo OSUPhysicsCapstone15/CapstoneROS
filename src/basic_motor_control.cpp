@@ -34,6 +34,8 @@ int rightEncoder = 0;
 int leftEncoder = 0;
 int heartbeat = 1;
 int heartbeatconfirm = 1;
+bool retrievalgo = false;
+bool retrievalconfirm = false;
 double leftWheelSpeed = 0; // Keep track of the wheel speeds
 double rightWheelSpeed = 0;
 double current_angle = 0; // The current angle of the robot (relative)
@@ -102,6 +104,12 @@ void heartbeatCallback(const std_msgs::Int32::ConstPtr& msg)
 {
   ROS_INFO("Received heartbeat number: [%i]", msg->data);
   heartbeatconfirm = msg->data;
+}
+
+void retrievalCallback(const std_msgs::Bool::ConstPtr& msg)
+{
+  ROS_INFO("Retrieval finished.");
+  retrievalconfirm = msg->data;
 }
 
 // Distance is in inches
@@ -250,6 +258,7 @@ int main(int argc, char **argv) {
   ros::Subscriber subREncoder = n.subscribe("RightEncoder", 1000, rightEncoderCallback);
   ros::Subscriber subHeartbeatConfirm = n.subscribe("ConfHeartbeat", 1000, heartbeatCallback);
   ros::Subscriber subControl = n.subscribe("Commands", 1000, commandsCallback);
+  ros::Subscriber subRetrieval = n.subscribe("GrabFinished", 1000, retrievalCallback);
 
   // Defines a maximum loop rate (10 Hz)
   ros::Rate loop_rate(10); // This should be fast enough for us, since at 2 m/s this would be .2 meters an update at worst.
@@ -266,6 +275,10 @@ int main(int argc, char **argv) {
 
   std_msgs::Int32 heartbeat_check_msg;
   heartbeat_check_msg.data = heartbeat;
+
+  std_msgs::Bool retrieval_go_msg;
+  retrieval_go_msg.data = retrievalgo;
+  retrieval_arm_pub.publish(retrieval_go_msg);
 
   std_msgs::Bool enc_reset_msg;
   enc_reset_msg.data = true;
