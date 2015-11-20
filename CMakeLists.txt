@@ -63,3 +63,4 @@ target_link_libraries(fake_arduino ${catkin_LIBRARIES})
 # This last add dependancies is worrysome, due to litterally being tutorial dependant
 add_executable(basic_motor_control src/basic_motor_control.cpp)
 target_link_libraries(basic_motor_control ${catkin_LIBRARIES})
+set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")

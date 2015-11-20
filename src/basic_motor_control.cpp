@@ -11,8 +11,10 @@
 #include <sstream>
 #include <ctime>
 #include <cmath>
+#include <chrono>
 
 using namespace std;
+// using namespace std::chrono;
 
 // Some static constants
 static const double MOTOR_MAX = 350;
@@ -40,6 +42,7 @@ double target_distance = 0;
 double left_encoder_zeropoint = 0; // Zeropoints for the encoders
 double right_encoder_zeropoint = 0;
 double left_fudge_factor = 0.9;
+auto startTime = std::chrono::system_clock::now();
 // Flags
 bool turning = false; // Whether or not we should be executing a turn
 bool driving = false; // Whether or not we are driving forward
@@ -90,20 +93,30 @@ double enc2angle(double encL, double encR) {
   return 360.0 * enc2distance(diff)/((2*3.14159)*WHEEL_BASE);
 }
 
-void forwardPID(double *leftWheelSpeed, double *rightWheelSpeed, int leftEnc, int rightEnc, bool *firstRun, double Kp, double Ki) {
-  if((bool)firstRun == true){
-    double newtime = millis();
-    int newRightEnc = rightEnc;
-    int newLeftEnc = leftEnc;
-    double leftErrorSum = 0;
-    double rightErrorSum = 0;
-    firstRun = false;
-    }
+double millis() {
+  auto endTime = std::chrono::system_clock::now();
+  std::chrono::duration<double> diff = endTime - startTime;
+  return diff.count();
+}
 
-   else {
+
+double newtime = millis();
+int newRightEnc, newLeftEnc;
+double leftErrorSum = 0;
+double rightErrorSum = 0;
+bool first_done = false;
+void forwardPID(double *leftWheelSpeed, double *rightWheelSpeed, int leftEnc, int rightEnc, bool *firstRun, double Kp, double Ki) {
+
+  if(!first_done) {
+    newRightEnc = rightEnc;
+    newLeftEnc = leftEnc;
+    first_done = true;
+    return;
+  }
+
   // Time
   double oldtime = newtime;
-  newtime = millis();
+  newtime = millis(); // TODO: Replace
   double timediff = newtime - oldtime;
   
   // Right Encoders
@@ -131,7 +144,6 @@ void forwardPID(double *leftWheelSpeed, double *rightWheelSpeed, int leftEnc, in
   *rightWheelSpeed = Kp*rightError + Ki*rightErrorSum;
   
   // Evidently many systems don't use D terms in real applications, so we'll wait
-  }
 }
 
 // Sets motor values, returns true if at destination 
@@ -332,8 +344,7 @@ int main(int argc, char **argv) {
     }
     ros::spinOnce(); // Checks for ros update
     loop_rate.sleep(); // Sleep for the period corresponding to the given frequency
-  }
-  
+
   return 0;
 }
 
