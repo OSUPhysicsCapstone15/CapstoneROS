@@ -35,15 +35,20 @@ int main(int argc, char **argv) {
       if( command == "drive") {
 	std::cout << "Enter number of inches:\n";
 	commandOrder = 1;
+	std::cin >> val;
       } else if( command == "turn"){
 	std::cout << "Enter number of degrees:\n";
-	commandOrder = 2; 
+	commandOrder = 2;
+	std::cin >> val;
+      } else if ( command == "grab" ) {
+	std::cout << "Executing grab\n";
+	commandOrder = 3;
+      } else if (command == "exit") {
+	return 0;
       } else {
 	std::cout << "Really? Why. That's not even a command.\n";
 	continue;
       }
-
-      std::cin >> val;
 
       // Pack the command values into a message object
       robot::Commands msg; // Defined in msg directory

@@ -97,7 +97,7 @@ void commandsCallback(const robot::Commands::ConstPtr& msg)
     target_angle = msg->value;
     break;
   case 3:
-    //Whatever
+    grabbing = true;
     break;
   default:
     break;
@@ -106,7 +106,7 @@ void commandsCallback(const robot::Commands::ConstPtr& msg)
 
 void heartbeatCallback(const std_msgs::Int32::ConstPtr& msg)
 {
-  ROS_INFO("Received heartbeat number: [%i]", msg->data);
+  //ROS_INFO("Received heartbeat number: [%i]", msg->data);
   heartbeatconfirm = msg->data;
 }
 
@@ -184,13 +184,17 @@ void forwardPID(double *leftWheelSpeed, double *rightWheelSpeed, int leftEnc, in
 bool goXInches(double *leftWheelSpeed, double *rightWheelSpeed, double target, double current, double speed) {
   double diff = target - current;
 
-  if(diff < FORWARD_PRECISION) {
+  if(std::abs(diff) < FORWARD_PRECISION) {
     *rightWheelSpeed = 0;
     *leftWheelSpeed = 0;
     return 1;
-  } 
+  }
   *rightWheelSpeed = speed;
   *leftWheelSpeed = speed*left_fudge_factor;
+  if (diff < 0) {
+    *rightWheelSpeed *= -1;
+    *leftWheelSpeed *= -1;
+  }
   return 0;
 }
 
@@ -339,24 +343,24 @@ int main(int argc, char **argv) {
 	}*/
       
        
-       ROS_INFO("Current angle: %f", current_angle);
-       ROS_INFO("Target angle: %f", target_angle);
+      //ROS_INFO("Current angle: %f", current_angle);
+      //ROS_INFO("Target angle: %f", target_angle);
        
        if(driving) {
 	 ROS_INFO("Current distance: %f", current_distance);
 	 ROS_INFO("Target distance: %f", target_distance);
        }
 	 
-       ROS_INFO("Total time since first update: %f", (float)(total_time));
-       ROS_INFO("Time since last update: %f", (float)last_update);
+       //ROS_INFO("Total time since first update: %f", (float)(total_time));
+       //ROS_INFO("Time since last update: %f", (float)last_update);
        
+       // THIS SHOULD BE A CASE STRUCTURE
        if(turning) {
 	 turning  = !(pivotOnWheel(&leftWheelSpeed, &rightWheelSpeed, target_angle, current_angle));
 	 ROS_INFO("Trying to turn: %f %f", leftWheelSpeed, rightWheelSpeed);
        } else if(driving) {
 	 driving = !(goXInches(&leftWheelSpeed, &rightWheelSpeed, target_distance, current_distance, 0.55));
-	
-	
+
 	 // Angle correction
 	
 	 if (current_angle > 3) {
@@ -374,8 +378,7 @@ int main(int argc, char **argv) {
 	 }
 	 //forwardPID(&leftWheelSpeed, &rightWheelSpeed, leftEncoder, rightEncoder, &firstPIDspin, K_p, K_i);
 	 ROS_INFO("Trying to drive: %f %f", leftWheelSpeed, rightWheelSpeed);
-       }
-    } else if (grabbing) {
+       } else if (grabbing) {
       ROS_INFO("Grabbing the object.");
       retrieval_go_msg.data = true;
       retrieval_arm_pub.publish(retrieval_go_msg); // Tell the arm arduino to start grabbing
@@ -386,6 +389,7 @@ int main(int argc, char **argv) {
       }
       retrieval_go_msg.data = false;
       retrieval_arm_pub.publish(retrieval_go_msg); // Tell the arm arduino not to grab anymore
+       }
     } else {
       ROS_INFO("I AM PAUSED");
     }
@@ -405,9 +409,7 @@ int main(int argc, char **argv) {
     ROS_INFO("---------------------------------------------------------------------");
     ros::spinOnce(); // Checks for ros update
     loop_rate.sleep(); // Sleep for the period corresponding to the given frequency
-    
   }
-
   return 0;
 }
 // OLD CONTROL SCHEMES
