@@ -19,7 +19,7 @@ using namespace std;
 
 // Some static constants
 static const double MOTOR_MAX = 350;
-static const double PIVOT_SPEED = 0.5;
+static const double PIVOT_SPEED = 0.9;
 static const double BREAK_SPEED = -0.25; // Reverse with enough power to stop wheel motion
 static const double ANGLE_PRECISION = 5; // Units of degrees
 static const double FORWARD_PRECISION = 12; // Units of inches
@@ -343,8 +343,8 @@ int main(int argc, char **argv) {
 	}*/
       
        
-      //ROS_INFO("Current angle: %f", current_angle);
-      //ROS_INFO("Target angle: %f", target_angle);
+      ROS_INFO("Current angle: %f", current_angle);
+      ROS_INFO("Target angle: %f", target_angle);
        
        if(driving) {
 	 ROS_INFO("Current distance: %f", current_distance);
@@ -359,7 +359,7 @@ int main(int argc, char **argv) {
 	 turning  = !(pivotOnWheel(&leftWheelSpeed, &rightWheelSpeed, target_angle, current_angle));
 	 ROS_INFO("Trying to turn: %f %f", leftWheelSpeed, rightWheelSpeed);
        } else if(driving) {
-	 driving = !(goXInches(&leftWheelSpeed, &rightWheelSpeed, target_distance, current_distance, 0.55));
+	 driving = !(goXInches(&leftWheelSpeed, &rightWheelSpeed, target_distance, current_distance, 0.9));
 
 	 // Angle correction
 	
