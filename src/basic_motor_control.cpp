@@ -18,7 +18,7 @@ using namespace std;
 // using namespace std::chrono;
 
 // Some static constants
-static const double MOTOR_MAX = 350;
+static const double MOTOR_MAX = 400;
 static const double PIVOT_SPEED = 0.9;
 static const double BREAK_SPEED = -0.25; // Reverse with enough power to stop wheel motion
 static const double ANGLE_PRECISION = 5; // Units of degrees
@@ -325,23 +325,6 @@ int main(int argc, char **argv) {
     }
 
     if (!paused) {
-      
-      // Turn 45 degrees every 10 seconds
-      
-      /*if(total_time - last_update > 10.0) { // Switch every 5 seconds
-	zero_system();
-	target_angle = 45;
-	last_update = total_time;
-	turning = true;
-	}*/
-      
-      /*if(total_time - last_update > 30.0) { // Switch every 20 seconds
-	zero_system();
-	target_distance = 180; // Go 20 tiles
-	last_update = total_time;
-	driving = true;
-	}*/
-      
        
       ROS_INFO("Current angle: %f", current_angle);
       ROS_INFO("Target angle: %f", target_angle);
@@ -412,20 +395,3 @@ int main(int argc, char **argv) {
   }
   return 0;
 }
-// OLD CONTROL SCHEMES
-      /*
-      // Update the motor set speeds
-      if(total_time - last_update > 3.0) { // Switch every 5 seconds
-	if(leftWheelSpeed == 0) { // These don't really have to be separate, but it makes it clear
-	  leftWheelSpeed = 0.5;
-	} else {
-	  leftWheelSpeed = 0;
-	}
-	if(rightWheelSpeed == 0) {
-	  rightWheelSpeed = 0.5;
-	} else {
-	  rightWheelSpeed = 0;
-	}
-	last_update = total_time;
-      }
-      */
