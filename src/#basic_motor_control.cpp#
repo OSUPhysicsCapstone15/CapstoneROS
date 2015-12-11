@@ -135,7 +135,7 @@ void heartbeatCallback(const std_msgs::Int32::ConstPtr& msg)
 // Signal the retrieval has succeeded 
 void retrievalCallback(const std_msgs::Bool::ConstPtr& msg)
 {
-  //ROS_INFO("Retrieval finished.");
+  ROS_INFO("Retrieval finished.");
   retrievalconfirm = msg->data;
 }
 
