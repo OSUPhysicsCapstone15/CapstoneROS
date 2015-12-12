@@ -1,6 +1,7 @@
 // Uncomment below for debug messages
 //#define DEBUG
-
+#define DEBUG_LITE
+#define ANGLE_CORRECTION
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 #include "std_msgs/Float32.h"
@@ -21,8 +22,8 @@
 using namespace std;
 
 // Some static constants
-static const double MOTOR_MAX = 400; // Max motor value
-static const double PIVOT_SPEED = 0.9; // The speed to run the motors at in a pivot
+static const double MOTOR_MAX = 325;//400; // Max motor value
+static const double PIVOT_SPEED = 0.85; // The speed to run the motors at in a pivot
 static const double BREAK_SPEED = -0.25; // Reverse with enough power to stop wheel motion
 static const double ANGLE_PRECISION = 5; // Units of degrees
 static const double FORWARD_PRECISION = 12; // Units of inches
@@ -67,13 +68,17 @@ void zero_system();
 // Confirmation of motor value set
 void leftMotorCallback(const std_msgs::Float32::ConstPtr& msg)
 {
+#ifdef DEBUG_LITE
   ROS_INFO("LeftMotorSet: [%f]", msg->data);
+#endif
 }
 
 // Confirmation of motor value set
 void rightMotorCallback(const std_msgs::Float32::ConstPtr& msg)
 {
+#ifdef DEBUG_LITE
   ROS_INFO("RightMotorSet: [%f]", msg->data);
+#endif
 }
 
 // The aruduino has received a remote pause
@@ -135,7 +140,7 @@ void heartbeatCallback(const std_msgs::Int32::ConstPtr& msg)
 // Signal the retrieval has succeeded 
 void retrievalCallback(const std_msgs::Bool::ConstPtr& msg)
 {
-  //ROS_INFO("Retrieval finished.");
+  ROS_INFO("Retrieval finished.");
   retrievalconfirm = msg->data;
 }
 
@@ -336,9 +341,9 @@ int main(int argc, char **argv) {
   while (ros::ok()) { // Stay in this loop for the length of the program
     current_angle = enc2angle(leftEncoder-left_encoder_zeropoint, rightEncoder - right_encoder_zeropoint);
     current_distance = enc2distance(leftEncoder - left_encoder_zeropoint)/2 + enc2distance(rightEncoder - right_encoder_zeropoint)/2;
-
+#ifdef DEBUG_LITE
     ROS_INFO("Encoder [left, right]: [%lld, %lld]", leftEncoder - left_encoder_zeropoint, rightEncoder - right_encoder_zeropoint);
-
+#endif
     ros::spinOnce();
 
     // Make sure that the encoders are responding
@@ -356,7 +361,7 @@ int main(int argc, char **argv) {
 
     // While running
     if (!paused) {
-       
+#ifdef DEBUG_LITE 
       //Turning messages
       ROS_INFO("Current angle: %f", current_angle);
       ROS_INFO("Target angle: %f", target_angle);
@@ -367,6 +372,7 @@ int main(int argc, char **argv) {
 	ROS_INFO("Current distance: %f", current_distance);
 	ROS_INFO("Target distance: %f", target_distance);
       }
+#endif
 	 
        if(turning) {
 	 turning  = !(pivotOnWheel(&leftWheelSpeed, &rightWheelSpeed, target_angle, current_angle)); // Keep moving until we arrive
@@ -375,7 +381,7 @@ int main(int argc, char **argv) {
 	 driving = !(goXInches(&leftWheelSpeed, &rightWheelSpeed, target_distance, current_distance, 0.9));
 
 	 // Angle correction, replacement for PID
-	
+#ifdef ANGLE_CORRECTION	
 	 if (current_angle > 3) {
 	   leftWheelSpeed = leftWheelSpeed*0.5;
 	 } else if (current_angle < -3) {
@@ -389,6 +395,7 @@ int main(int argc, char **argv) {
 	   rightWheelSpeed = rightWheelSpeed*0.4;
 	   leftWheelSpeed = leftWheelSpeed*0.85;
 	 }
+#endif
 	 //forwardPID(&leftWheelSpeed, &rightWheelSpeed, leftEncoder, rightEncoder, &firstPIDspin, K_p, K_i);
 	 ROS_INFO("Trying to drive: %f %f", leftWheelSpeed, rightWheelSpeed);
        } else if (grabbing) {
@@ -397,9 +404,10 @@ int main(int argc, char **argv) {
 	 retrieval_arm_pub.publish(retrieval_go_msg); // Tell the arm arduino to start grabbing
 	 retrievalconfirm = false;
 	 while(!retrievalconfirm){ // Stop everything until the grabbing is finished (this blocks for now)
-	   ROS_INFO("Waiting for grabbing to finish.");
+	   //ROS_INFO("Waiting for grabbing to finish.");
 	   ros::spinOnce();
 	 }
+	 grabbing = false;
 	 retrieval_go_msg.data = false;
 	 retrieval_arm_pub.publish(retrieval_go_msg); // Tell the arm arduino not to grab anymore
        }
@@ -418,8 +426,10 @@ int main(int argc, char **argv) {
     // Publish the motor speed message. Notice that the msg type matches the advertise template <>
     left_motor_pub.publish(left_msg); // Send the new speeds for the arduino to pick up.
     right_motor_pub.publish(right_msg); // Send the new speeds for the arduino to pick up.
+#ifdef DEBUG_LITE
     ROS_INFO("Published motor vals: %f,%f", (float)left_msg.data, (float)right_msg.data);
     ROS_INFO("---------------------------------------------------------------------");
+#endif
     ros::spinOnce(); // Checks for ros update
     loop_rate.sleep(); // Sleep for the period corresponding to the given frequency
   }
