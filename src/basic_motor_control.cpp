@@ -22,9 +22,10 @@
 using namespace std;
 
 // Some static constants
-static const double MOTOR_MAX = 325;//400; // Max motor value
-static const double PIVOT_SPEED = 0.85; // The speed to run the motors at in a pivot
-static const double BREAK_SPEED = -0.25; // Reverse with enough power to stop wheel motion
+static const double MOTOR_MAX = 310; // Max motor value (400 max)
+static const double PIVOT_SPEED = 0.70; // The speed to run the motors at in a pivot
+static const double ENC_FUDGE = 1.1;//1.26
+static const double BREAK_SPEED = -0.33; // Reverse with enough power to stop wheel motion
 static const double ANGLE_PRECISION = 5; // Units of degrees
 static const double FORWARD_PRECISION = 12; // Units of inches
 static const int PULSE_RATIO = 600; // The number of pulses per full rotation in an encoder 
@@ -46,7 +47,7 @@ double current_distance = 0; // The distance traveled since last zero (average o
 double target_distance = 0; // The target distance to travel to if driving
 long long left_encoder_zeropoint = 0; // Zeropoints for the encoders
 long long right_encoder_zeropoint = 0; // These are subtracted from final values.
-double left_fudge_factor = 1.0; // Used to correct for drift. 1.0
+double left_fudge_factor = .96; // Used to correct for drift. 1.0
 auto startTime = std::chrono::system_clock::now();
 
 // Flags
@@ -150,7 +151,7 @@ void retrievalCallback(const std_msgs::Bool::ConstPtr& msg)
 
 // Converts units of encoder counts to inches
 double enc2distance(long long enc) {
-  return ((double)enc/PULSE_RATIO)*3.14159*WHEEL_DIAMETER;
+  return ((double)enc/PULSE_RATIO)*3.14159*WHEEL_DIAMETER*ENC_FUDGE;
 }
 
 // Converts units of two encoders to degrees turned
@@ -222,10 +223,14 @@ void forwardPID(double *leftWheelSpeed, double *rightWheelSpeed, int leftEnc, in
 // Sets motor values, returns true if at destination 
 bool goXInches(double *leftWheelSpeed, double *rightWheelSpeed, double target, double current, double speed) {
   double diff = target - current; // The difference between where we are at and where we want to be
-
-  if(std::abs(diff) < FORWARD_PRECISION) { // If we are closer than our chosen precision, stop
+  if(diff == 0){
     *rightWheelSpeed = 0;
     *leftWheelSpeed = 0;
+    return 1;
+  }
+  if(std::abs(diff) < FORWARD_PRECISION) { // If we are closer than our chosen precision, stop
+    *rightWheelSpeed = 0.55*BREAK_SPEED;
+    *leftWheelSpeed = 0.82*BREAK_SPEED;
     return 1;
   }
   *rightWheelSpeed = speed; // Other wise move ahead
@@ -240,15 +245,17 @@ bool goXInches(double *leftWheelSpeed, double *rightWheelSpeed, double target, d
 // Sets motor values, returns true if at destination
 bool pivotOnWheel(double *leftWheelSpeed, double *rightWheelSpeed, double target, double current) {
   double diff = target - current; // How much we need to turn
+  if(diff>0){
+    diff *= .9;
+  }
   if(abs(diff) < ANGLE_PRECISION) { // If we are closer than out precision, brake
-    *rightWheelSpeed = 0;
-    *leftWheelSpeed = 0.5*BREAK_SPEED;
+    *rightWheelSpeed = 0.5*BREAK_SPEED;
+    *leftWheelSpeed = 0.82*BREAK_SPEED;
     return 1;
-  }
-  else if(abs(diff) < 10) { // If we are within 10 degrees, start braking
-    *leftWheelSpeed = BREAK_SPEED;
-    *rightWheelSpeed = 0;
-  }
+  } else if(abs(diff) < target/12.0) { // If we are within 30 degrees, start braking
+    *leftWheelSpeed = 0.5*BREAK_SPEED;
+    *rightWheelSpeed = 0.5*BREAK_SPEED;
+    }
   if(diff < 0) { // If we need to turn left
     *rightWheelSpeed = PIVOT_SPEED;
     *leftWheelSpeed = 0;
@@ -361,20 +368,10 @@ int main(int argc, char **argv) {
 
     // While running
     if (!paused) {
-#ifdef DEBUG_LITE 
-      //Turning messages
-      ROS_INFO("Current angle: %f", current_angle);
-      ROS_INFO("Target angle: %f", target_angle);
-       
-
-      // Driving messages
-      if(driving) {
-	ROS_INFO("Current distance: %f", current_distance);
-	ROS_INFO("Target distance: %f", target_distance);
-      }
-#endif
 	 
        if(turning) {
+	 current_angle = enc2angle(leftEncoder-left_encoder_zeropoint, rightEncoder - right_encoder_zeropoint);
+
 	 turning  = !(pivotOnWheel(&leftWheelSpeed, &rightWheelSpeed, target_angle, current_angle)); // Keep moving until we arrive
 	 ROS_INFO("Trying to turn: %f %f", leftWheelSpeed, rightWheelSpeed);
        } else if(driving) { // If we are driving forward right now
@@ -383,17 +380,19 @@ int main(int argc, char **argv) {
 	 // Angle correction, replacement for PID
 #ifdef ANGLE_CORRECTION	
 	 if (current_angle > 3) {
-	   leftWheelSpeed = leftWheelSpeed*0.5;
+	   leftWheelSpeed = leftWheelSpeed*0.75;
 	 } else if (current_angle < -3) {
-	   rightWheelSpeed = rightWheelSpeed*0.5;
+	   rightWheelSpeed = rightWheelSpeed*0.75;
 	 }
 
 	 if (current_angle > 8) {
-	   leftWheelSpeed = leftWheelSpeed*0.4;
-	   rightWheelSpeed = rightWheelSpeed*0.85;
+	   leftWheelSpeed = leftWheelSpeed*0.55;
+	   rightWheelSpeed = rightWheelSpeed*0.75;
+	   ROS_INFO("!!!!!!!!!!!!!!!!!!!!!BIG CORRECTION TO THE LEFT");
 	 } else if (current_angle < -8) {
-	   rightWheelSpeed = rightWheelSpeed*0.4;
-	   leftWheelSpeed = leftWheelSpeed*0.85;
+	   rightWheelSpeed = rightWheelSpeed*0.55;
+	   leftWheelSpeed = leftWheelSpeed*0.75;
+	   ROS_INFO("!!!!!!!!!!!!!!!1BIG CORRECTION TO THE RIGHT************");
 	 }
 #endif
 	 //forwardPID(&leftWheelSpeed, &rightWheelSpeed, leftEncoder, rightEncoder, &firstPIDspin, K_p, K_i);
@@ -410,7 +409,21 @@ int main(int argc, char **argv) {
 	 grabbing = false;
 	 retrieval_go_msg.data = false;
 	 retrieval_arm_pub.publish(retrieval_go_msg); // Tell the arm arduino not to grab anymore
+
        }
+#ifdef DEBUG_LITE 
+      //Turning messages
+      ROS_INFO("Current angle: %f", current_angle);
+      ROS_INFO("Target angle: %f", target_angle);
+       
+
+      ROS_INFO("Current distance: %f", current_distance);
+      // Driving messages
+      if(driving) {
+	ROS_INFO("Target distance: %f", target_distance);
+      }
+#endif
+
     } else {
       ROS_INFO("I AM PAUSED");
     }
