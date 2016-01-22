@@ -299,6 +299,7 @@ int main(int argc, char **argv) {
   ros::Publisher heartbeatcheck_pub = n.advertise<std_msgs::Int32>("Heartbeat",1000);  
   ros::Publisher enc_reset_pub = n.advertise<std_msgs::Bool>("EncReset",1000);
   ros::Publisher retrieval_arm_pub = n.advertise<std_msgs::Bool>("GrabObject",1000);
+  ros::Publisher command_done_pub = n.advertise<std_msgs::Int32>("CommandDone",1000);
 
   // Subscriber to motor return
   ros::Subscriber subLMotor = n.subscribe("LeftReturn", 1000, leftMotorCallback);
@@ -371,12 +372,20 @@ int main(int argc, char **argv) {
 	 
        if(turning) {
 	 current_angle = enc2angle(leftEncoder-left_encoder_zeropoint, rightEncoder - right_encoder_zeropoint);
-
-	 turning  = !(pivotOnWheel(&leftWheelSpeed, &rightWheelSpeed, target_angle, current_angle)); // Keep moving until we arrive
+	 turning = !(pivotOnWheel(&leftWheelSpeed, &rightWheelSpeed, target_angle, current_angle)); // Keep moving until we arrive
+	 if(!turning) { // Must have just finished the turn
+	   std_msgs::int32 msg; // Defined in msg directory 
+	   msg.data = 0;
+	   command_done_pub.publish(msg);
+	 }
 	 ROS_INFO("Trying to turn: %f %f", leftWheelSpeed, rightWheelSpeed);
        } else if(driving) { // If we are driving forward right now
 	 driving = !(goXInches(&leftWheelSpeed, &rightWheelSpeed, target_distance, current_distance, 0.9));
-
+	 if(!driving) {
+	   std_msgs::int32 msg; // Defined in msg directory 
+	   msg.data = 0;
+	   command_done_pub.publish(msg);
+	 }
 	 // Angle correction, replacement for PID
 #ifdef ANGLE_CORRECTION	
 	 if (current_angle > 3) {

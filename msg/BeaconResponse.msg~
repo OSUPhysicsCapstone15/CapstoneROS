@@ -1,0 +1,6 @@
+float32 angle_from_robot
+float32 distance
+float32 angle_from_beacon
+boolean only_bottom
+boolean beacon_not_found
+boolean beacon_angle_conf
