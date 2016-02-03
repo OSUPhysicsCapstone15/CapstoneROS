@@ -374,7 +374,7 @@ int main(int argc, char **argv) {
 	 current_angle = enc2angle(leftEncoder-left_encoder_zeropoint, rightEncoder - right_encoder_zeropoint);
 	 turning = !(pivotOnWheel(&leftWheelSpeed, &rightWheelSpeed, target_angle, current_angle)); // Keep moving until we arrive
 	 if(!turning) { // Must have just finished the turn
-	   std_msgs::int32 msg; // Defined in msg directory 
+	   std_msgs::Int32 msg; // Defined in msg directory 
 	   msg.data = 0;
 	   command_done_pub.publish(msg);
 	 }
@@ -382,7 +382,7 @@ int main(int argc, char **argv) {
        } else if(driving) { // If we are driving forward right now
 	 driving = !(goXInches(&leftWheelSpeed, &rightWheelSpeed, target_distance, current_distance, 0.9));
 	 if(!driving) {
-	   std_msgs::int32 msg; // Defined in msg directory 
+	   std_msgs::Int32 msg; // Defined in msg directory 
 	   msg.data = 0;
 	   command_done_pub.publish(msg);
 	 }
