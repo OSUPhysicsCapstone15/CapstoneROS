@@ -8,9 +8,40 @@
 // view a copy of this license, visit http://creativecommons.org/licenses/by/2.5/ca/
 
 #include "ros/ros.h"
+#include "std_msgs/Int32.h"
+#include "std_msgs/Int64.h"
+#include "std_msgs/Bool.h"
 #include <stdio.h>
 #include <phidget21.h>
 
+// Set up ROS publishing
+std_msgs::Int64 leftencoder_msg;
+std_msgs::Int64 rightencoder_msg;
+std_msgs::Int32 confirmheartbeat_msg;
+ros::Publisher pub_LeftEncoder;
+ros::Publisher pub_RightEncoder;
+ros::Publisher pub_confirmHeartbeat;
+
+// Static constants
+static int freqDiv = 10;
+static int heartbeat = 0;
+
+// Gobals
+long long countR, countL;
+
+void FreqDivCallback(const std_msgs::Int32& msg) {
+  freqDiv = msg.data;
+}
+
+void HeartbeatCheckCallback(const std_msgs::Int32& msg) {
+  heartbeat = msg.data;
+}
+
+void RunResetCallback(const std_msgs::Bool& msg) {
+  if (msg.data) {
+    return;
+  }
+}
 
 int CCONV AttachHandler(CPhidgetHandle ENC, void *userptr)
 {
@@ -63,6 +94,19 @@ int CCONV PositionChangeHandler(CPhidgetEncoderHandle ENC, void *usrptr, int Ind
 {
 	int Position;
 	CPhidgetEncoder_getPosition(ENC, Index, &Position);
+	if(Index == 0) { // Left
+	  leftencoder_msg.data = Position;
+	  if(Position % freqDiv == 0){
+	    pub_LeftEncoder.publish(leftencoder_msg);
+	  }
+	  ros::spinOnce();
+	} else if(Index == 1) { // Right
+	  rightencoder_msg.data = Position;
+	  if(Position % freqDiv == 0){
+	    pub_RightEncoder.publish(rightencoder_msg);
+	  } 
+	  ros::spinOnce();
+	  }
 	printf("Encoder #%i - Position: %5d -- Relative Change %2d -- Elapsed Time: %5d \n", Index, Position, RelativePosition, Time);
 	
 	return 0;
@@ -133,7 +177,12 @@ int encoder_simple()
 	//keep displaying encoder data until user input is read
 	printf("Press any key to end\n");
 	char endChar = 'z';
-	while(1) {
+	while(ros::ok()) {
+	  if(heartbeat != 0) {
+	    confirmheartbeat_msg.data = heartbeat;
+	    pub_confirmHeartbeat.publish(confirmheartbeat_msg);
+	    heartbeat = 0;
+	  }
 	  ros::spinOnce();
 	}
 
@@ -150,8 +199,17 @@ int main(int argc, char* argv[])
 {
   ros::init(argc, argv, "phidgetEncoder");
 
-  ros::NodeHandle n;
+  ros::NodeHandle  n;  
 
+  ros::Subscriber fd = n.subscribe("FreqDiv", 1000, FreqDivCallback);
+  ros::Subscriber checkHeartbeat = n.subscribe("Heartbeat", 1000, HeartbeatCheckCallback);
+  ros::Subscriber encReset = n.subscribe("EncReset", 1000, RunResetCallback);
+
+
+  pub_LeftEncoder = n.advertise<std_msgs::Int64>("LeftEncoder", 1000);
+  pub_RightEncoder = n.advertise<std_msgs::Int64>("RightEncoder", 1000);
+  pub_confirmHeartbeat = n.advertise<std_msgs::Int32>("ConfHeartbeat", 1000);
+  
   ros::spinOnce();
   
   encoder_simple();
