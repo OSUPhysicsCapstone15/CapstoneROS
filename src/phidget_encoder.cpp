@@ -185,8 +185,8 @@ int encoder_simple()
       heartbeat = 0;
     }
     if(resetFlag) {
-      encoder.setEncoderPosition(0,0);
-      encoder.setEncoderPosition(0,0);
+      encoder->setEncoderPosition(0,0);
+      encoder->setEncoderPosition(0,0);
       resetFlag = false;
     }
     ros::spinOnce();
