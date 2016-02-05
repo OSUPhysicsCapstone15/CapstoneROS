@@ -19,6 +19,8 @@ find_package(catkin REQUIRED COMPONENTS
    LeftMotor.msg
    RightMotor.msg
    Commands.msg
+   BeaconRequest.msg
+   BeaconResponse.msg
  )
 
 # Generate services in the 'srv' folder
@@ -67,6 +69,10 @@ target_link_libraries(phidget_encoder phidget21)
 # This last add dependancies is worrysome, due to litterally being tutorial dependant
 add_executable(basic_motor_control src/basic_motor_control.cpp)
 target_link_libraries(basic_motor_control ${catkin_LIBRARIES})
+add_executable(nav src/nav.cpp)
+target_link_libraries(nav ${catkin_LIBRARIES})
+add_executable(vision_sim src/vision_sim.cpp)
+target_link_libraries(vision_sim ${catkin_LIBRARIES})
 #set(CMAKE_CXX_FLAGS "-std=c++0x -lphidget21 ${CMAKE_CXX_FLAGS}")
 set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
 #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lphidget21")

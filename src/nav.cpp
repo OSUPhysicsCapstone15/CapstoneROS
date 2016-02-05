@@ -1,14 +1,17 @@
 #include "ros/ros.h"
+#include "std_msgs/Int32.h"
 #include "robot/Commands.h"
+#include "robot/BeaconResponse.h"
+#include "robot/BeaconRequest.h"
 #include <cstdlib> 
 #include <iostream>
 #include <string>
 #include <cmath>
 
 // Flags
-int state = 0; // 0: Startup, 1: Target seeking, 2: Returning, 3: BeaconApproach, 4: Paused 
-double last_angle_to_beacon = 180;
-double last_angle_to_robot = 0;
+int state = 2; // 0: Startup, 1: Target seeking, 2: Returning, 3: BeaconApproach, 4: Paused 
+double last_angle_from_beacon = 0;
+double last_angle_from_robot = 180;
 double last_distance_to_beacon = 12;
 bool only_bottom_light = true;
 bool beacon_found = true;
@@ -26,25 +29,25 @@ void beaconCallback(const robot::BeaconResponse::ConstPtr& msg) {
     beacon_found = false;
     beacon_angle_conf = false;
   } else {
-    last_angle_to_beacon = msg->angle_from_beacon;
-    last_angle_to_robot = msg->angle_to_robot;
+    last_angle_from_beacon = msg->angle_from_beacon;
+    last_angle_from_robot = msg->angle_from_robot;
     last_distance_to_beacon = msg->distance;
     only_bottom_light = msg->only_bottom;
     beacon_found = true;
     beacon_angle_conf = msg->beacon_angle_conf; 
     if(beacon_angle_conf) {
-      y_pos = last_distance_to_beacon * cos(last_angle_to_beacon * PI/180); //Vision sends deg
-      x_pos = last_distance_to_beacon * sin(last_angle_to_beacon * PI/180);
+      y_pos = last_distance_to_beacon * cos(last_angle_from_beacon * M_PI/180); //Vision sends deg
+      x_pos = last_distance_to_beacon * sin(last_angle_from_beacon * M_PI/180);
     }
   }
   waiting_on_vision = false;
 }
 
-void setState(const std_msgs::int32::ConstPtr& msg) {
+void setState(const std_msgs::Int32::ConstPtr& msg) {
   state = msg->data;
 }
 
-void comandDone(const std_msgs::int32::ConstPtr& msg) {
+void commandDone(const std_msgs::Int32::ConstPtr& msg) {
   waiting_on_command = false;
 }
   
@@ -52,7 +55,7 @@ void comandDone(const std_msgs::int32::ConstPtr& msg) {
  * Early prototype of the robot navigation
  */
 int main(int argc, char **argv) {
-  
+	ROS_INFO("Initializing...");
   // Initialize ROS, this must be done before using other ROS components
   ros::init(argc, argv, "navigation");
 
@@ -78,6 +81,7 @@ int main(int argc, char **argv) {
   // Make a beacon request
   robot::BeaconRequest b_msg; // Defined in msg directory
   robot::Commands c_msg;
+	ROS_INFO("Initializing Complete");
   
   while (ros::ok()) {
     
@@ -91,12 +95,14 @@ int main(int argc, char **argv) {
       b_msg.angle_min = -150;
       b_msg.angle_max = 150;
       beacon_request_pub.publish(b_msg); // Look for the beacon
+	ROS_INFO("Request Published");
       waiting_on_vision = true;
+	ros::spinOnce();
       while(waiting_on_vision) {
 	loop_rate.sleep(); // TODO: Add a timeout here
       }
       if(beacon_found) {
-	double angle = last_angle_to_beacon + (90 - last_angle_to_robot - (180/PI)*atan((y_pos - 5)/x_pos));
+	double angle = last_angle_from_robot+ (90 - last_angle_from_beacon - (180/M_PI)*atan((y_pos - 5)/x_pos));
 	double dist = sqrt(x_pos*x_pos + (y_pos-5)*(y_pos-5));
 	if(dist < 30) {
 	  state = 3;
@@ -139,7 +145,7 @@ int main(int argc, char **argv) {
 	loop_rate.sleep(); // TODO: Add a timeout here
       }
       if(beacon_found) {
-	double angle = last_angle_to_beacon;
+	double angle = last_angle_from_robot;
 	if(abs(angle) > 10) {
 	  c_msg.commandOrder = 2; // Turning
 	  c_msg.value = angle;
