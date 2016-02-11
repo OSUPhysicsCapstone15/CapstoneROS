@@ -76,3 +76,10 @@ target_link_libraries(vision_sim ${catkin_LIBRARIES})
 #set(CMAKE_CXX_FLAGS "-std=c++0x -lphidget21 ${CMAKE_CXX_FLAGS}")
 set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
 #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lphidget21")
+
+#vision
+add_executable(vision src/vision/ros_vision.cpp src/vision/beacon.cpp)
+target_link_libraries(ros_vision ${catkin_LIBRARIES})
+target_link_libraries(ros_vision ${pkg-config --libs opencv})
+#
+
