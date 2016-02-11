@@ -79,7 +79,7 @@ set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
 
 #vision
 add_executable(vision src/vision/ros_vision.cpp src/vision/beacon.cpp)
-target_link_libraries(ros_vision ${catkin_LIBRARIES})
-target_link_libraries(ros_vision ${pkg-config --libs opencv})
+target_link_libraries(vision ${catkin_LIBRARIES})
+target_link_libraries(vision ${OpenCV_LIBS})
 #
 

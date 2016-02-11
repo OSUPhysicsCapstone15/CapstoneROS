@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(beginner_tutorials)
+project(robot)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -15,13 +15,18 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate messages in the 'msg' folder
  add_message_files(
    FILES
-   Num.msg
+   Motors.msg
+   LeftMotor.msg
+   RightMotor.msg
+   Commands.msg
+   BeaconRequest.msg
+   BeaconResponse.msg
  )
 
 # Generate services in the 'srv' folder
  add_service_files(
    FILES
-   AddTwoInts.srv
+   EncoderRequest.srv
  )
 
 ## Generate actions in the 'action' folder
@@ -52,18 +57,29 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_executable(talker src/talker.cpp)
-target_link_libraries(talker ${catkin_LIBRARIES})
-add_dependencies(talker beginner_tutorials_generate_messages_cpp)
+add_executable(mastermind src/mastermind.cpp)
+target_link_libraries(mastermind ${catkin_LIBRARIES})
+#add_dependencies(mastermind beginner_tutorials_generate_messages_cpp)
+add_executable(fake_arduino src/fake_arduino.cpp)
+target_link_libraries(fake_arduino ${catkin_LIBRARIES})
+add_executable(phidget_encoder src/phidget_encoder.cpp)
+target_link_libraries(phidget_encoder ${catkin_LIBRARIES})
+target_link_libraries(phidget_encoder phidget21)
+#add_dependencies(mastermind beginner_tutorials_generate_messages_cpp)
+# This last add dependancies is worrysome, due to litterally being tutorial dependant
+add_executable(basic_motor_control src/basic_motor_control.cpp)
+target_link_libraries(basic_motor_control ${catkin_LIBRARIES})
+add_executable(nav src/nav.cpp)
+target_link_libraries(nav ${catkin_LIBRARIES})
+add_executable(vision_sim src/vision_sim.cpp)
+target_link_libraries(vision_sim ${catkin_LIBRARIES})
+#set(CMAKE_CXX_FLAGS "-std=c++0x -lphidget21 ${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
+#set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lphidget21")
 
-add_executable(listener src/listener.cpp)
-target_link_libraries(listener ${catkin_LIBRARIES})
-add_dependencies(listener beginner_tutorials_generate_messages_cpp)
+#vision
+add_executable(vision src/vision/ros_vision.cpp src/vision/beacon.cpp)
+target_link_libraries(vision ${catkin_LIBRARIES})
+target_link_libraries(vision ${pkg-config --libs opencv})
+#
 
-add_executable(add_two_ints_server src/add_two_ints_server.cpp)
-target_link_libraries(add_two_ints_server ${catkin_LIBRARIES})
-add_dependencies(add_two_ints_server beginner_tutorials_gencpp)
-
-add_executable(add_two_ints_client src/add_two_ints_client.cpp)
-target_link_libraries(add_two_ints_client ${catkin_LIBRARIES})
-add_dependencies(add_two_ints_client beginner_tutorials_gencpp)

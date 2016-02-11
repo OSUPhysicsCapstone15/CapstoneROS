@@ -1,5 +1,6 @@
 // Uncomment below for debug messages
 //#define DEBUG
+//#define HEARTBEAT_MONITOR
 #define DEBUG_LITE
 #define ANGLE_CORRECTION
 #include "ros/ros.h"
@@ -354,6 +355,7 @@ int main(int argc, char **argv) {
 #endif
     ros::spinOnce();
 
+#ifdef HEARBEAT_MONITOR
     // Make sure that the encoders are responding
     if (heartbeatconfirm < heartbeat-15) {
       paused = true;
@@ -366,7 +368,7 @@ int main(int argc, char **argv) {
       heartbeatcheck_pub.publish(heartbeat_check_msg);
       heartbeat++;
     }
-
+#endif
     // While running
     if (!paused) {
 	 

@@ -25,6 +25,7 @@ int x_pos = 0;
 int y_pos = 1;
 
 void beaconCallback(const robot::BeaconResponse::ConstPtr& msg) {
+	ROS_INFO("Response Recieved");
   if(msg->beacon_not_found) {
     beacon_found = false;
     beacon_angle_conf = false;
@@ -50,6 +51,8 @@ void setState(const std_msgs::Int32::ConstPtr& msg) {
 void commandDone(const std_msgs::Int32::ConstPtr& msg) {
   waiting_on_command = false;
 }
+
+
   
 /**
  * Early prototype of the robot navigation
@@ -94,26 +97,37 @@ int main(int argc, char **argv) {
     case 2: // Returning
       b_msg.angle_min = -150;
       b_msg.angle_max = 150;
+	while(beacon_request_pub.getNumSubscribers()<1)
+{}
       beacon_request_pub.publish(b_msg); // Look for the beacon
-	ROS_INFO("Request Published");
-      waiting_on_vision = true;
 	ros::spinOnce();
+      waiting_on_vision = true;
+      ROS_INFO("Request Published");
       while(waiting_on_vision) {
 	loop_rate.sleep(); // TODO: Add a timeout here
+	ros::spinOnce();
       }
       if(beacon_found) {
-	double angle = last_angle_from_robot+ (90 - last_angle_from_beacon - (180/M_PI)*atan((y_pos - 5)/x_pos));
-	double dist = sqrt(x_pos*x_pos + (y_pos-5)*(y_pos-5));
-	if(dist < 30) {
+	double angle;
+	if(x_pos == 0) {
+	  angle = last_angle_from_robot; // In line with front of beacon. Avoid 1/0 error.
+	} else {
+	  angle = last_angle_from_robot + (90 - last_angle_from_beacon - (180/M_PI)*atan((y_pos - 5)/x_pos));
+	}
+	double dist = sqrt(x_pos*x_pos + (y_pos-5)*(y_pos-5)); // Distance to staging area
+	ROS_INFO("Beacon Found, staging at Angle: %f, Distance: %f", angle, dist);
+	if(dist < 0.5) {
 	  state = 3;
 	  break;
 	}
 	if(abs(angle)<10) {
 	  c_msg.commandOrder = 1; // Driving
 	  c_msg.value = dist;
-	  command_pub.publish(c_msg);
+	  //command_pub.publish(c_msg);
 	  waiting_on_command = true;
+	  ROS_INFO("Requesting Drive of %f meters", dist);
 	  while(waiting_on_command){
+	    ros::spinOnce();
 	    loop_rate.sleep(); // TODO: Add a timeout here
 	  }
 	} else {
@@ -121,7 +135,9 @@ int main(int argc, char **argv) {
 	  c_msg.value = angle;
 	  command_pub.publish(c_msg);
 	  waiting_on_command = true;
+	  ROS_INFO("Requesting Turn of %f degrees", angle);	  
 	  while(waiting_on_command){
+	    ros::spinOnce();
 	    loop_rate.sleep(); // TODO: Add a timeout here
 	  }
 	}
@@ -130,7 +146,9 @@ int main(int argc, char **argv) {
 	c_msg.value = 180;
 	command_pub.publish(c_msg);
 	waiting_on_command = true;
+	ROS_INFO("Beacon lost, turning 180");
 	while(waiting_on_command){
+	  ros::spinOnce();
 	  loop_rate.sleep(); // TODO: Add a timeout here
 	}
 	
@@ -142,6 +160,7 @@ int main(int argc, char **argv) {
       beacon_request_pub.publish(b_msg); // Look for the beacon
       waiting_on_vision = true;
       while(waiting_on_vision) {
+	ros::spinOnce();
 	loop_rate.sleep(); // TODO: Add a timeout here
       }
       if(beacon_found) {
@@ -152,6 +171,7 @@ int main(int argc, char **argv) {
 	  command_pub.publish(c_msg);
 	  waiting_on_command = true;
 	  while(waiting_on_command){
+	    ros::spinOnce();
 	    loop_rate.sleep(); // TODO: Add a timeout here
 	  }	  
 	} else {
@@ -160,6 +180,7 @@ int main(int argc, char **argv) {
 	  command_pub.publish(c_msg);
 	  waiting_on_command = true;
 	  while(waiting_on_command){
+	    ros::spinOnce();
 	    loop_rate.sleep(); // TODO: Add a timeout here
 	  }
 	}
@@ -169,6 +190,7 @@ int main(int argc, char **argv) {
 	command_pub.publish(c_msg);
 	waiting_on_command = true;
 	while(waiting_on_command){
+	  ros::spinOnce();
 	  loop_rate.sleep(); // TODO: Add a timeout here
 	}	
       }

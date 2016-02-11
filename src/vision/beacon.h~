@@ -1,7 +1,7 @@
 #ifndef beacon_H_INCLUDED
 #define beacon_H_INCLUDED
 
-struct beacon_loc beacon_main(float min, float max);
+beacon_loc beacon_main(float min, float max);
 
 struct beacon_loc {
 	float angle_from_robot;

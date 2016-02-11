@@ -26,7 +26,7 @@ void BeaconRequest_hand(const robot::BeaconRequest::ConstPtr& msg) {
 	rsp.beacon_not_found = loc.beacon_not_found;
 	rsp.beacon_angle_conf = loc.beacon_angle_conf;
 
-	becn_rsp.publish(rsp);
+	becn_rsp.pubilsh(rsp);
 
 }
  
