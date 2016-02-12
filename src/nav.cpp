@@ -21,8 +21,8 @@ bool waiting_on_vision = false;
 int command_timeout = 100; //TODO: Add command timeout
 
 // Coordinates
-int x_pos = 0;
-int y_pos = 1;
+double x_pos = 0;
+double y_pos = 1;
 
 void beaconCallback(const robot::BeaconResponse::ConstPtr& msg) {
 	ROS_INFO("Response Recieved");
@@ -37,7 +37,7 @@ void beaconCallback(const robot::BeaconResponse::ConstPtr& msg) {
     beacon_found = true;
     beacon_angle_conf = msg->beacon_angle_conf; 
     if(beacon_angle_conf) {
-      y_pos = last_distance_to_beacon * cos(last_angle_from_beacon * M_PI/180); //Vision sends deg
+      y_pos = last_distance_to_beacon * cos(last_angle_from_beacon * M_PI/180);  //Vision sends deg
       x_pos = last_distance_to_beacon * sin(last_angle_from_beacon * M_PI/180);
     }
   }
@@ -97,10 +97,10 @@ int main(int argc, char **argv) {
     case 2: // Returning
       b_msg.angle_min = -150;
       b_msg.angle_max = 150;
-	while(beacon_request_pub.getNumSubscribers()<1)
-{}
+      while(beacon_request_pub.getNumSubscribers()<1)
+	{loop_rate.sleep();}
       beacon_request_pub.publish(b_msg); // Look for the beacon
-	ros::spinOnce();
+      ros::spinOnce();
       waiting_on_vision = true;
       ROS_INFO("Request Published");
       while(waiting_on_vision) {
@@ -110,11 +110,27 @@ int main(int argc, char **argv) {
       if(beacon_found) {
 	double angle;
 	if(x_pos == 0) {
-	  angle = last_angle_from_robot; // In line with front of beacon. Avoid 1/0 error.
+	  if(y_pos < 5) {
+	    angle = last_angle_from_robot + 180;
+	  } else {
+	    angle = last_angle_from_robot; // In line with front of beacon. Avoid 1/0 error.
+	  }	
 	} else {
-	  angle = last_angle_from_robot + (90 - last_angle_from_beacon - (180/M_PI)*atan((y_pos - 5)/x_pos));
+	  if(last_angle_from_beacon > 0){
+	    angle = last_angle_from_robot + (90 - last_angle_from_beacon - (180/M_PI)*atan((double)(y_pos - 5)/x_pos));
+	  } else {
+	    angle = last_angle_from_robot - (90 + last_angle_from_beacon + (180/M_PI)*atan((double)(y_pos - 5)/x_pos));
+	  }
 	}
 	double dist = sqrt(x_pos*x_pos + (y_pos-5)*(y_pos-5)); // Distance to staging area
+	if(angle > 180) {
+	  angle = 360 - angle;
+	}
+
+	ROS_INFO("INFO: (x,y) is (%f, %f)", x_pos, y_pos);
+	ROS_INFO("Alpha is: (180/M_PI)*atan(%f)",(double)(y_pos - 5)/x_pos);
+	ROS_INFO("Alpha is: %f",(180/M_PI)*atan((double)(y_pos - 5)/x_pos));
+	ROS_INFO("Angle from robot is: %f", last_angle_from_robot);
 	ROS_INFO("Beacon Found, staging at Angle: %f, Distance: %f", angle, dist);
 	if(dist < 0.5) {
 	  state = 3;
