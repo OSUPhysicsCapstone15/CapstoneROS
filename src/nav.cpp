@@ -136,7 +136,7 @@ int main(int argc, char **argv) {
 	  state = 3;
 	  break;
 	}
-	if(abs(angle)<10) {
+	if(abs(angle)<5) {
 	  c_msg.commandOrder = 1; // Driving
 	  c_msg.value = dist;
 	  //command_pub.publish(c_msg);
@@ -182,6 +182,7 @@ int main(int argc, char **argv) {
       if(beacon_found) {
 	double angle = last_angle_from_robot;
 	if(abs(angle) > 10) {
+	  ROS_INFO("Turning to approach");
 	  c_msg.commandOrder = 2; // Turning
 	  c_msg.value = angle;
 	  command_pub.publish(c_msg);
@@ -191,6 +192,7 @@ int main(int argc, char **argv) {
 	    loop_rate.sleep(); // TODO: Add a timeout here
 	  }	  
 	} else {
+	  ROS_INFO("Approaching");
 	  c_msg.commandOrder = 1; // Drive up the ramp
 	  c_msg.value = 5.2;
 	  command_pub.publish(c_msg);
