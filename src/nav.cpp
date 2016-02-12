@@ -192,13 +192,14 @@ int main(int argc, char **argv) {
 	  }	  
 	} else {
 	  c_msg.commandOrder = 1; // Drive up the ramp
-	  c_msg.value = 200;
+	  c_msg.value = 5.2;
 	  command_pub.publish(c_msg);
 	  waiting_on_command = true;
 	  while(waiting_on_command){
 	    ros::spinOnce();
 	    loop_rate.sleep(); // TODO: Add a timeout here
 	  }
+	  state = 4;
 	}
       } else {
 	c_msg.commandOrder = 2; // Turning
