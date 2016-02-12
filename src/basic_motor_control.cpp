@@ -2,7 +2,7 @@
 //#define DEBUG
 //#define HEARTBEAT_MONITOR
 #define DEBUG_LITE
-#define ANGLE_CORRECTION
+//#define ANGLE_CORRECTION
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 #include "std_msgs/Float32.h"
@@ -25,11 +25,11 @@ using namespace std;
 // Some static constants
 static const double MOTOR_MAX = 310; // Max motor value (400 max)
 static const double PIVOT_SPEED = 0.70; // The speed to run the motors at in a pivot
-static const double ENC_FUDGE = 1.1;//1.26
-static const double BREAK_SPEED = -0.33; // Reverse with enough power to stop wheel motion
+static const double ENC_FUDGE = 1.0;//1.26
+static const double BREAK_SPEED = 0;//-0.33; // Reverse with enough power to stop wheel motion
 static const double ANGLE_PRECISION = 5; // Units of degrees
 static const double FORWARD_PRECISION = 12; // Units of inches
-static const int PULSE_RATIO = 600; // The number of pulses per full rotation in an encoder 
+static const int PULSE_RATIO = 2400; // The number of pulses per full rotation in an encoder 
 static const double WHEEL_DIAMETER = 12; // Inches
 static const double WHEEL_BASE = 42; // Inches
 static const double K_p = 1; // PID proportional constant
@@ -116,7 +116,7 @@ void commandsCallback(const robot::Commands::ConstPtr& msg)
   switch(msg->commandOrder) {
   case 1: // Drive forward a certain distance
     driving = true;
-    target_distance = msg->value; // The value is the distance (inches)
+    target_distance = msg->value * 39.37; // The value is the distance (m -> in)
     break;
   case 2: // Turn to an angle
     turning = true;
