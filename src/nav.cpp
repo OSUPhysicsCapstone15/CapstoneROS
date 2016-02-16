@@ -134,12 +134,13 @@ int main(int argc, char **argv) {
 	ROS_INFO("Beacon Found, staging at Angle: %f, Distance: %f", angle, dist);
 	if(dist < 0.5) {
 	  state = 3;
+	ROS_INFO("Changed to appraoch state");
 	  break;
 	}
 	if(abs(angle)<5) {
 	  c_msg.commandOrder = 1; // Driving
 	  c_msg.value = dist;
-	  //command_pub.publish(c_msg);
+	  command_pub.publish(c_msg);
 	  waiting_on_command = true;
 	  ROS_INFO("Requesting Drive of %f meters", dist);
 	  while(waiting_on_command){
