@@ -10,6 +10,8 @@
 #include <string>
 #include <ctime>
 #include "sys/time.h"
+#include "functions.h"
+
 using namespace std;
 using namespace cv;
 

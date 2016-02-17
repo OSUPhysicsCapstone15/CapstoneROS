@@ -2,7 +2,6 @@
 #include "robot/BeaconRequest.h"
 #include "robot/BeaconResponse.h"
 #include "beacon.h"
-#include "opencv2/opencv.hpp"
 
 //create handle for node
 ros::NodeHandle n;

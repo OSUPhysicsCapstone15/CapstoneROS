@@ -11,11 +11,6 @@ struct beacon_loc {
 	bool beacon_angle_conf;
 };
 
-struct hsvParams{
-  int hL, sL, vL, hH, sH, vH;
-};
-
-Mat getPic(VideoCapture cap);
 
 beacon_loc beacon_main(float min, float max);
 
