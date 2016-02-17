@@ -2,7 +2,7 @@
 //#define DEBUG
 //#define HEARTBEAT_MONITOR
 #define DEBUG_LITE
-//#define ANGLE_CORRECTION
+#define ANGLE_CORRECTION
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 #include "std_msgs/Float32.h"
@@ -27,6 +27,7 @@ static const double MOTOR_MAX = 310; // Max motor value (400 max)
 static const double PIVOT_SPEED = 0.50; // The speed to run the motors at in a pivot
 static const double ENC_FUDGE = 1.0;//1.26
 static const double BREAK_SPEED = -0.10; // Reverse with enough power to stop wheel motion
+static const double DRIVE_SPEED = 0.75;
 static const double ANGLE_PRECISION = 5; // Units of degrees
 static const double FORWARD_PRECISION = 12; // Units of inches
 static const int PULSE_RATIO = 2400; // The number of pulses per full rotation in an encoder 
@@ -48,7 +49,7 @@ double current_distance = 0; // The distance traveled since last zero (average o
 double target_distance = 0; // The target distance to travel to if driving
 long long left_encoder_zeropoint = 0; // Zeropoints for the encoders
 long long right_encoder_zeropoint = 0; // These are subtracted from final values.
-double left_fudge_factor = .96; // Used to correct for drift. 1.0
+double left_fudge_factor = 1.0; // Used to correct for drift. 1.0
 auto startTime = std::chrono::system_clock::now();
 
 // Flags
@@ -382,7 +383,7 @@ int main(int argc, char **argv) {
 	 }
 	 ROS_INFO("Trying to turn: %f %f", leftWheelSpeed, rightWheelSpeed);
        } else if(driving) { // If we are driving forward right now
-	 driving = !(goXInches(&leftWheelSpeed, &rightWheelSpeed, target_distance, current_distance, 0.9));
+	 driving = !(goXInches(&leftWheelSpeed, &rightWheelSpeed, target_distance, current_distance, DRIVE_SPEED));
 	 if(!driving) {
 	   std_msgs::Int32 msg; // Defined in msg directory 
 	   msg.data = 0;
@@ -391,18 +392,18 @@ int main(int argc, char **argv) {
 	 // Angle correction, replacement for PID
 #ifdef ANGLE_CORRECTION	
 	 if (current_angle > 3) {
-	   leftWheelSpeed = leftWheelSpeed*0.75;
+	   leftWheelSpeed = leftWheelSpeed*0.85;
 	 } else if (current_angle < -3) {
-	   rightWheelSpeed = rightWheelSpeed*0.75;
+	   rightWheelSpeed = rightWheelSpeed*0.85;
 	 }
 
 	 if (current_angle > 8) {
-	   leftWheelSpeed = leftWheelSpeed*0.55;
-	   rightWheelSpeed = rightWheelSpeed*0.75;
+	   leftWheelSpeed = leftWheelSpeed*0.65;
+	   rightWheelSpeed = rightWheelSpeed*0.85;
 	   ROS_INFO("!!!!!!!!!!!!!!!!!!!!!BIG CORRECTION TO THE LEFT");
 	 } else if (current_angle < -8) {
-	   rightWheelSpeed = rightWheelSpeed*0.55;
-	   leftWheelSpeed = leftWheelSpeed*0.75;
+	   rightWheelSpeed = rightWheelSpeed*0.65;
+	   leftWheelSpeed = leftWheelSpeed*0.85;
 	   ROS_INFO("!!!!!!!!!!!!!!!1BIG CORRECTION TO THE RIGHT************");
 	 }
 #endif
