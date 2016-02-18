@@ -132,7 +132,7 @@ void robot_angle(Mat img, int object_rows, int object_cols, bool targetIsBeacon)
 
 //    cout << "Turn robot " << turn_robot_x_degrees << " degrees." << endl;
     cout << "Turn robot " << turn_robot_x_degrees_other << " degrees." << endl;
-    orientation.angle_from_robot=turn_robot_x_degrees_other;
+    //orientation.angle_from_robot=turn_robot_x_degrees_other;
 //    cout << "Tilt camera " << tilt_camera_x_degrees << " degrees." << endl;
 //    cout << "Tilt radians " << tilted_radians << endl;
 //    cout << "tan(tilted_radians) = " << tan(tilted_radians) << endl;
@@ -194,8 +194,8 @@ void printDistanceFromLights(vector<KeyPoint> keypoints){
 	double beacon=-.0118*percentage*percentage + 1.5054*percentage + 20.374;
 //	cout << "distance between center point and beacon center in pixels: " << ((left+right)/2)-320 << endl; //use for robot angle
         int dist=40051*pow(height,-.997);
-	orientation.angle_from_beacon=beacon;
-	orientation.distance=dist;
+	//orientation.angle_from_beacon=beacon;
+	//orientation.distance=dist;
 }
 
 Mat getPic(VideoCapture cap)
