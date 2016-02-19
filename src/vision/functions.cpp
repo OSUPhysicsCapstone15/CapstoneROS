@@ -131,7 +131,7 @@ void robot_angle(Mat img, int object_rows, int object_cols, bool targetIsBeacon,
 //    double distance = height_diff / tan(tilted_radians); 			// triangle formula for finding distance
 
 //    cout << "Turn robot " << turn_robot_x_degrees << " degrees." << endl;
-    //cout << "Turn robot " << turn_robot_x_degrees_other << " degrees." << endl;
+    cout << "Turn robot " << turn_robot_x_degrees_other << " degrees." << endl;
     orientation->angle_from_robot=turn_robot_x_degrees_other;
 //    cout << "Tilt camera " << tilt_camera_x_degrees << " degrees." << endl;
 //    cout << "Tilt radians " << tilted_radians << endl;
@@ -184,16 +184,18 @@ void printDistanceFromLights(vector<KeyPoint> keypoints, beacon_loc* orientation
         double height=top-bot;
 	double width = right-left;
 
-//       cout<<"distance between left and right lights in pixels: "<<width<<endl;
+       cout<<"distance between left and right lights in pixels: "<<width<<endl;
 //       cout<<"distance between top and bottom lights in pixels: "<<height<<endl; //use for distance formula
 
 //	cout << "height in pixels: " << height << endl;
-//	cout << "width in pixels: " << width << endl;
+	cout << "width in pixels: " << width << endl;
 	double percentage=100 * (height - width) / height;
 	cout << "width is  " << percentage << " percent of height" << endl; //use for beacon orientation
 	double beacon=-.0118*percentage*percentage + 1.5054*percentage + 20.374;
 //	cout << "distance between center point and beacon center in pixels: " << ((left+right)/2)-320 << endl; //use for robot angle
         int dist=40051*pow(height,-.997);
+	cout << "beacon orientation is " << beacon << endl;
+	cout << "Distance is " << dist << endl;
 	orientation->angle_from_beacon=beacon;
 	orientation->distance=dist * 0.0254;
 }

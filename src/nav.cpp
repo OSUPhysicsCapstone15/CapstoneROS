@@ -19,6 +19,7 @@ bool beacon_angle_conf = true;
 bool waiting_on_command = false;
 bool waiting_on_vision = false;
 int command_timeout = 100; //TODO: Add command timeout
+bool move_to_stage = false;
 
 // Coordinates
 double x_pos = 0;
@@ -109,43 +110,90 @@ int main(int argc, char **argv) {
 	ros::spinOnce();
       }
       if(beacon_found) {
-	double angle;
-	if(x_pos == 0) {
-	  if(y_pos < 5) {
-	    angle = last_angle_from_robot + 180;
-	  } else {
-	    angle = last_angle_from_robot; // In line with front of beacon. Avoid 1/0 error.
-	  }	
-	} else {
-	  if(last_angle_from_beacon > 0){
-	    angle = last_angle_from_robot + (90 - last_angle_from_beacon - (180/M_PI)*atan((double)(y_pos - 5)/x_pos));
-	  } else {
-	    angle = last_angle_from_robot - (90 + last_angle_from_beacon + (180/M_PI)*atan((double)(y_pos - 5)/x_pos));
-	  }
-	}
-	double dist = sqrt(x_pos*x_pos + (y_pos-5)*(y_pos-5)); // Distance to staging area
-	if(angle > 180) {
-	  angle = 360 - angle;
-	}
-
-	ROS_INFO("INFO: (x,y) is (%f, %f)", x_pos, y_pos);
-	ROS_INFO("Alpha is: (180/M_PI)*atan(%f)",(double)(y_pos - 5)/x_pos);
-	ROS_INFO("Alpha is: %f",(180/M_PI)*atan((double)(y_pos - 5)/x_pos));
-	ROS_INFO("Angle from robot is: %f", last_angle_from_robot);
-	ROS_INFO("Beacon Found, staging at Angle: %f, Distance: %f", angle, dist);
 	double driveDist = 0;
-	if(dist < 0.5) {
-	  state = 3;
-	ROS_INFO("Changed to appraoch state");
-	  break;
-	}
-	if(abs(angle)<5) {
-	  c_msg.commandOrder = 1; // Driving
-	  if(dist > 10) {
-	    driveDist = 10;
+	if(!only_bottom_light) {
+	  double angle;
+	  if(x_pos == 0) {
+	    if(y_pos < 5) {
+	      angle = last_angle_from_robot + 180;
+	    } else {
+	      angle = last_angle_from_robot; // In line with front of beacon. Avoid 1/0 error.
+	    }	
 	  } else {
-	    driveDist = dist;
+	    if(last_angle_from_beacon > 0){
+	      angle = last_angle_from_robot + (90 - last_angle_from_beacon - (180/M_PI)*atan((double)(y_pos - 5)/x_pos));
+	    } else {
+	      angle = last_angle_from_robot - (90 + last_angle_from_beacon + (180/M_PI)*atan((double)(y_pos - 5)/x_pos));
+	    }
 	  }
+	  double dist = sqrt(x_pos*x_pos + (y_pos-5)*(y_pos-5)); // Distance to staging area
+	  if(angle > 180) {
+	    angle = angle-360;
+	  }
+	  
+	  ROS_INFO("INFO: (x,y) is (%f, %f)", x_pos, y_pos);
+	  ROS_INFO("Alpha is: (180/M_PI)*atan(%f)",(double)(y_pos - 5)/x_pos);
+	  ROS_INFO("Alpha is: %f",(180/M_PI)*atan((double)(y_pos - 5)/x_pos));
+	  ROS_INFO("Angle from robot is: %f", last_angle_from_robot);
+	  ROS_INFO("Beacon Found, staging at Angle: %f, Distance: %f", angle, dist);
+	  if(dist < 0.5) {
+	    state = 3;
+	    ROS_INFO("Changed to appraoch state");
+	    break;
+	  }
+	  if(abs(angle)<5) {
+	    c_msg.commandOrder = 1; // Driving
+	    if(dist > 10) {
+	      driveDist = 10;
+	    } else {
+	      driveDist = dist;
+	    }
+	    c_msg.value = driveDist;
+	    command_pub.publish(c_msg);
+	    waiting_on_command = true;
+	    ROS_INFO("Requesting Drive of %f meters", driveDist);
+	    while(waiting_on_command){
+	      ros::spinOnce();
+	      loop_rate.sleep(); // TODO: Add a timeout here
+	    }
+	  } else {
+	    c_msg.commandOrder = 2; // Turning, then driving
+	    c_msg.value = angle;
+	    command_pub.publish(c_msg);
+	    waiting_on_command = true;
+	    ROS_INFO("Requesting Turn of %f degrees", angle);	  
+	    while(waiting_on_command){
+	      ros::spinOnce();
+	      loop_rate.sleep(); // TODO: Add a timeout here
+	    }
+	    c_msg.commandOrder = 1; // Driving
+	    if(dist > 10) {
+	      driveDist = 10;
+	    } else {
+	      driveDist = dist;
+	    }
+	    c_msg.value = driveDist;
+	    command_pub.publish(c_msg);
+	    waiting_on_command = true;
+	    ROS_INFO("Requesting Drive of %f meters", driveDist);
+	    while(waiting_on_command){
+	      ros::spinOnce();
+	      loop_rate.sleep(); // TODO: Add a timeout here
+	    }
+	    
+	  }
+	} else { // We see the beacon, but only the bottom
+	  c_msg.commandOrder = 2; // Turning, then driving
+	  c_msg.value = 180-last_angle_from_robot;
+	  command_pub.publish(c_msg);
+	  waiting_on_command = true;
+	  ROS_INFO("Requesting Turn of %f degrees", 180-last_angle_from_robot); // Back Up	  
+	  while(waiting_on_command){
+	    ros::spinOnce();
+	    loop_rate.sleep(); // TODO: Add a timeout here
+	  }
+	  c_msg.commandOrder = 1; // Driving
+	  driveDist = 5;
 	  c_msg.value = driveDist;
 	  command_pub.publish(c_msg);
 	  waiting_on_command = true;
@@ -153,17 +201,17 @@ int main(int argc, char **argv) {
 	  while(waiting_on_command){
 	    ros::spinOnce();
 	    loop_rate.sleep(); // TODO: Add a timeout here
-	  }
-	} else {
-	  c_msg.commandOrder = 2; // Turning
-	  c_msg.value = angle;
+	  } 
+	  c_msg.commandOrder = 2; // Turning, then driving
+	  c_msg.value = 180;
 	  command_pub.publish(c_msg);
 	  waiting_on_command = true;
-	  ROS_INFO("Requesting Turn of %f degrees", angle);	  
+	  ROS_INFO("Requesting Turn of %f degrees", 180.0); // Back Up	  
 	  while(waiting_on_command){
 	    ros::spinOnce();
 	    loop_rate.sleep(); // TODO: Add a timeout here
 	  }
+
 	}
       } else { // Lost the beacon, start spinning and searching
 	c_msg.commandOrder = 2; // Turning
