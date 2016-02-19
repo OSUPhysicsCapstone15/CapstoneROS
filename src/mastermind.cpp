@@ -33,8 +33,12 @@ int main(int argc, char **argv) {
       std::cin >> command;
       //std::getline(std::cin, command);
       if( command == "drive") {
-	std::cout << "Enter number of inches:\n";
+	std::cout << "Enter number of meters:\n";
 	commandOrder = 1;
+	std::cin >> val;
+      } else if( command == "drivefast") {
+	std::cout << "Enter number of meters:\n";
+	commandOrder = 4;
 	std::cin >> val;
       } else if( command == "turn"){
 	std::cout << "Enter number of degrees:\n";

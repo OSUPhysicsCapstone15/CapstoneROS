@@ -28,6 +28,7 @@ static const double PIVOT_SPEED = 0.50; // The speed to run the motors at in a p
 static const double ENC_FUDGE = 1.0;//1.26
 static const double BREAK_SPEED = -0.10; // Reverse with enough power to stop wheel motion
 static const double DRIVE_SPEED = 0.75;
+static const double DRIVE_SPEED_FAST = 0.9;
 static const double ANGLE_PRECISION = 5; // Units of degrees
 static const double FORWARD_PRECISION = 12; // Units of inches
 static const int PULSE_RATIO = 2400; // The number of pulses per full rotation in an encoder 
@@ -56,6 +57,7 @@ auto startTime = std::chrono::system_clock::now();
 bool paused = false; // Whether or not the robot is paused
 bool turning = false; // Whether or not we should be executing a turn
 bool driving = false; // Whether or not we are driving forward
+bool drivingFast = false; // Make it go faster
 bool grabbing = false; // Whether or not we are grabbing an object
 bool retrievalgo = false;
 bool retrievalconfirm = false;
@@ -117,6 +119,7 @@ void commandsCallback(const robot::Commands::ConstPtr& msg)
   switch(msg->commandOrder) {
   case 1: // Drive forward a certain distance
     driving = true;
+    drivingFast = false;
     target_distance = msg->value * 39.37; // The value is the distance (m -> in)
     break;
   case 2: // Turn to an angle
@@ -125,6 +128,11 @@ void commandsCallback(const robot::Commands::ConstPtr& msg)
     break;
   case 3: // Grab the target
     grabbing = true;
+    break;
+  case 4: // Drive forward a certain distance, fast
+    driving = true;
+    drivingFast = true;
+    target_distance = msg->value * 39.37; // The value is the distance (m -> in)
     break;
   default: // Default is to do nothing
     break;
@@ -383,7 +391,11 @@ int main(int argc, char **argv) {
 	 }
 	 ROS_INFO("Trying to turn: %f %f", leftWheelSpeed, rightWheelSpeed);
        } else if(driving) { // If we are driving forward right now
-	 driving = !(goXInches(&leftWheelSpeed, &rightWheelSpeed, target_distance, current_distance, DRIVE_SPEED));
+	 if(!drivingFast){
+	   driving = !(goXInches(&leftWheelSpeed, &rightWheelSpeed, target_distance, current_distance, DRIVE_SPEED)); 
+	 } else {
+	   driving = !(goXInches(&leftWheelSpeed, &rightWheelSpeed, target_distance, current_distance, DRIVE_SPEED_FAST)); 
+	 }
 	 if(!driving) {
 	   std_msgs::Int32 msg; // Defined in msg directory 
 	   msg.data = 0;

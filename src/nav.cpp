@@ -201,7 +201,7 @@ int main(int argc, char **argv) {
 	  }	  
 	} else {
 	  ROS_INFO("Approaching");
-	  c_msg.commandOrder = 1; // Drive up the ramp
+	  c_msg.commandOrder = 4; // Drive up the ramp (high speed)
 	  c_msg.value = 5.2;
 	  command_pub.publish(c_msg);
 	  waiting_on_command = true;
