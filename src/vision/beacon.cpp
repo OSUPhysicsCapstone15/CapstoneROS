@@ -62,7 +62,7 @@ int thresh=140;
        return b_loc;
   }
 
-  while(true){
+ 
 
     Mat imgOriginal1 = getPic(cap);
     Mat imgOriginal2 = getPic(cap);
@@ -133,17 +133,25 @@ int thresh=140;
     if(keypoints.size() == 4)
     {
       text = "Object Found";
-      cout<<endl<<endl<<"Object Found"<<endl;
+      //cout<<endl<<endl<<"Object Found"<<endl;
+	b_loc.beacon_not_found = 0;
+	b_loc.only_bottom = 0;
       Point cent;
       cent=findkeyPoint(keypoints);
- //     cout<<"dist: "<<printDistanceFromLights(keypoints)<<endl; 
+ //     cout<<"dist: "<<printDistanceFromLights(keypoints)<<endl;
+	 printDistanceFromLights(keypoints, &b_loc);
       circle(out, cent, 5, CV_RGB(0,100,0), -1, 8);
-      robot_angle(diff, cent.y, cent.x, 1);
-    }
+      robot_angle(diff, cent.y, cent.x, 1, &b_loc);
+    }else if(keypoints.size() == 1){
+		b_loc.beacon_not_found = 0;
+		b_loc.only_bottom = 1;
+		robot_angle(diff, keypoints.front().pt.y, keypoints.front().pt.x, 1, &b_loc);
+	}
     else
     {
       text = "Error";
-      cout<<endl<<endl<<"No Object Found"<<endl;
+      //cout<<endl<<endl<<"No Object Found"<<endl;
+	b_loc.beacon_not_found = 1;
   //	while(keypoints.size() > 2)
   //	   thresh+=5;
     }
@@ -151,7 +159,7 @@ int thresh=140;
     imshow("Original 2", imgOriginal2); //show the original image
     imshow("Original 3", imgOriginal3); //show the original image
     imshow("Diff", out);
-    waitKey(-1);
-  }
+    waitKey(20);
+  
 return b_loc;
 }

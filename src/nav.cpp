@@ -36,7 +36,8 @@ void beaconCallback(const robot::BeaconResponse::ConstPtr& msg) {
     only_bottom_light = msg->only_bottom;
     beacon_found = true;
     beacon_angle_conf = msg->beacon_angle_conf; 
-    if(beacon_angle_conf) {
+    ROS_INFO("From beacon: %f, From robot: %f, Distance: %f", last_angle_from_beacon, last_angle_from_robot, last_distance_to_beacon);
+    if(true){//beacon_angle_conf) {
       y_pos = last_distance_to_beacon * cos(last_angle_from_beacon * M_PI/180);  //Vision sends deg
       x_pos = last_distance_to_beacon * sin(last_angle_from_beacon * M_PI/180);
     }
@@ -132,6 +133,7 @@ int main(int argc, char **argv) {
 	ROS_INFO("Alpha is: %f",(180/M_PI)*atan((double)(y_pos - 5)/x_pos));
 	ROS_INFO("Angle from robot is: %f", last_angle_from_robot);
 	ROS_INFO("Beacon Found, staging at Angle: %f, Distance: %f", angle, dist);
+	double driveDist = 0;
 	if(dist < 0.5) {
 	  state = 3;
 	ROS_INFO("Changed to appraoch state");
@@ -139,10 +141,15 @@ int main(int argc, char **argv) {
 	}
 	if(abs(angle)<5) {
 	  c_msg.commandOrder = 1; // Driving
-	  c_msg.value = dist;
+	  if(dist > 10) {
+	    driveDist = 10;
+	  } else {
+	    driveDist = dist;
+	  }
+	  c_msg.value = driveDist;
 	  command_pub.publish(c_msg);
 	  waiting_on_command = true;
-	  ROS_INFO("Requesting Drive of %f meters", dist);
+	  ROS_INFO("Requesting Drive of %f meters", driveDist);
 	  while(waiting_on_command){
 	    ros::spinOnce();
 	    loop_rate.sleep(); // TODO: Add a timeout here
@@ -158,12 +165,12 @@ int main(int argc, char **argv) {
 	    loop_rate.sleep(); // TODO: Add a timeout here
 	  }
 	}
-      } else {
+      } else { // Lost the beacon, start spinning and searching
 	c_msg.commandOrder = 2; // Turning
-	c_msg.value = 180;
+	c_msg.value = 35;
 	command_pub.publish(c_msg);
 	waiting_on_command = true;
-	ROS_INFO("Beacon lost, turning 180");
+	ROS_INFO("Beacon lost, turning");
 	while(waiting_on_command){
 	  ros::spinOnce();
 	  loop_rate.sleep(); // TODO: Add a timeout here

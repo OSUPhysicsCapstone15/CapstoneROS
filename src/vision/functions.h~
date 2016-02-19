@@ -6,7 +6,6 @@
 #include "opencv2/highgui/highgui.hpp"
 #include <vector>
 #include "sys/time.h"
-#include "beacon.h"
 using namespace cv;
 using namespace std;
 
@@ -14,7 +13,14 @@ struct hsvParams{
   int hL, sL, vL, hH, sH, vH;
 };
 
-
+struct beacon_loc {
+	float angle_from_robot; //degrees for all angles
+	float distance; //meters
+	float angle_from_beacon;
+	bool only_bottom;
+	bool beacon_not_found;
+	bool beacon_angle_conf;
+};
 
 void removenoise(Mat&);
 
