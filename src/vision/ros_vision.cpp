@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
 
 	//ok() will return true as long as the node is still running and Ctrl-C hasnt been pressed
 	while (ros::ok()) { 
-	   //busy wait for a request
+	   //SpinOnce processes any subscriber handlers waiting on the queue
 	   ros::spinOnce();
 	   loop_rate.sleep();
     }
