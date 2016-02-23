@@ -1,44 +1,43 @@
 #include "beacon.h"
-#include "functions.h"
+#include "opencv2/highgui/highgui.hpp"
+
+Beacon::Beacon() {
+	namedWindow("Original 1", WINDOW_NORMAL);
+  	namedWindow("Original 2", WINDOW_NORMAL);
+  	namedWindow("Original 3", WINDOW_NORMAL);
+  	namedWindow("Diff", WINDOW_NORMAL);	
+}
+
+Beacon::~Beacon() {
+	
+}
+
+void Beacon::capture() {
+  	int thresh=50;
+  	
+
+  	hsvParams hsv = {20,0,0,97,37,255};
+
+	//Set up blob detection parame
+	SimpleBlobDetector::Params params;
+	params.filterByInertia = true;
+	params.filterByConvexity = false;
+	params.filterByColor = false;
+	params.filterByCircularity = false;
+  	params.filterByArea = true;
+	params.minThreshold = 50;
+    params.maxThreshold = 255;
+    params.thresholdStep = 1;
+    params.minArea = 0;
+    params.minConvexity = 0.3;
+    params.minInertiaRatio = 0.10;
+    params.maxArea = 2000;
+    params.maxConvexity = 10;
 
 
-beacon_loc beacon_main(float min, float max)
- {
-	beacon_loc b_loc;
-  int thresh=50;
-  namedWindow("Original 1", WINDOW_NORMAL);
-  namedWindow("Original 2", WINDOW_NORMAL);
-  namedWindow("Original 3", WINDOW_NORMAL);
-  namedWindow("Diff", WINDOW_NORMAL);
+  	vector<KeyPoint> keypoints;
 
-  //hsvParams hsv = {76,0,224,97,37,255};
-  hsvParams hsv = {20,0,0,97,37,255};
-
-  //Set up blob detection parameters
-  SimpleBlobDetector::Params params;
- // params.blobColor //can we use this???
- // params.minDistBetweenBlobs = 50.0f;
-  params.filterByInertia = true;
-  params.filterByConvexity = false;
-  params.filterByColor = false;
-  params.filterByCircularity = false;
-  params.filterByArea = true;
-
-        params.minThreshold = 50;
-        params.maxThreshold = 255;
-        params.thresholdStep = 1;
-
-        params.minArea = 0;
-        params.minConvexity = 0.3;
-        params.minInertiaRatio = 0.10;
-
-        params.maxArea = 2000;
-        params.maxConvexity = 10;
-
-
-  vector<KeyPoint> keypoints;
-
-  VideoCapture cap(0); //capture the video from web cam
+  	VideoCapture cap(0); //capture the video from web cam
 
   if ( !cap.isOpened() )  // if not success, exit program
   {
@@ -91,7 +90,7 @@ beacon_loc beacon_main(float min, float max)
 
     Mat out;
     drawKeypoints(diff, keypoints, out, CV_RGB(0,0,0), DrawMatchesFlags::DEFAULT);
-  /*//finding if things are green or red
+  /* //finding if things are green or red
   cvtColor(out, out, COLOR_BGR2HSV);
   inRange(out, Scalar(hsv.hL, hsv.sL, hsv.vL),
          Scalar(hsv.hH, hsv.sH, hsv.vH), out);
@@ -109,7 +108,7 @@ beacon_loc beacon_main(float min, float max)
          Scalar(hsv.hH, hsv.sH, hsv.vH), out);
     blobDetect.detect( out, keypoints );
     drawKeypoints(out, keypoints, out, CV_RGB(0,0,0), DrawMatchesFlags::DEFAULT);
-    */
+    *//*
 
     //keypoints=getTop4Keypoints(keypoints);
 
@@ -152,4 +151,9 @@ beacon_loc beacon_main(float min, float max)
     waitKey(20);
   
 return b_loc;
+*/
+}
+
+int main() {
+	return 0;
 }
