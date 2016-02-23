@@ -22,7 +22,7 @@ public:
 	bool isOnlyBottom() { return only_bottom; }
 	bool isNotFound() { return beacon_not_found; }
 	bool isConfident() { return beacon_angle_conf; }
-	void closeWindows() { cv::destroyAllWindows(); }
+	static void closeWindows() { cv::destroyAllWindows(); }
 };
 
 #endif
