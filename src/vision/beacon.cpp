@@ -5,7 +5,7 @@
 beacon_loc beacon_main(float min, float max)
  {
 	beacon_loc b_loc;
-  int thresh=50;
+  int thresh=200;
   namedWindow("Original 1", WINDOW_NORMAL);
   namedWindow("Original 2", WINDOW_NORMAL);
   namedWindow("Original 3", WINDOW_NORMAL);
@@ -24,7 +24,7 @@ beacon_loc beacon_main(float min, float max)
   params.filterByCircularity = false;
   params.filterByArea = true;
 
-        params.minThreshold = 50;
+        params.minThreshold = 100;
         params.maxThreshold = 255;
         params.thresholdStep = 1;
 
@@ -76,6 +76,22 @@ beacon_loc beacon_main(float min, float max)
 
 	while(keypoints.size()>4 && thresh<=255){
 		thresh+=5;
+	  	threshold(diff, grayDiff, thresh, 255, cv::THRESH_BINARY);
+	  	dilate(grayDiff, grayDiff, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
+
+		blobDetect = SimpleBlobDetector::create(params);
+	   	blobDetect->detect( grayDiff, keypoints );
+	}
+	while(keypoints.size()<4 && thresh>=0){
+		thresh-=5;
+	  	threshold(diff, grayDiff, thresh, 255, cv::THRESH_BINARY);
+	  	dilate(grayDiff, grayDiff, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
+
+		blobDetect = SimpleBlobDetector::create(params);
+	   	blobDetect->detect( grayDiff, keypoints );
+	}
+	while(keypoints.size()>4 && thresh<=255){
+		thresh+=1;
 	  	threshold(diff, grayDiff, thresh, 255, cv::THRESH_BINARY);
 	  	dilate(grayDiff, grayDiff, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
 

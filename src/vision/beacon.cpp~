@@ -5,7 +5,7 @@
 beacon_loc beacon_main(float min, float max)
  {
 	beacon_loc b_loc;
-  int thresh=50;
+  double thresh=200.0;
   namedWindow("Original 1", WINDOW_NORMAL);
   namedWindow("Original 2", WINDOW_NORMAL);
   namedWindow("Original 3", WINDOW_NORMAL);
@@ -24,7 +24,7 @@ beacon_loc beacon_main(float min, float max)
   params.filterByCircularity = false;
   params.filterByArea = true;
 
-        params.minThreshold = 50;
+        params.minThreshold = 100;
         params.maxThreshold = 255;
         params.thresholdStep = 1;
 
@@ -51,7 +51,7 @@ beacon_loc beacon_main(float min, float max)
     Mat imgOriginal1 = getPic(cap);
     Mat imgOriginal2 = getPic(cap);
     Mat imgOriginal3 = getPic(cap);
-    Mat imgOriginal4= getPic(cap);
+    Mat imgOriginal4 = getPic(cap);
     Mat imgHSV1,imgHSV2, imgHSV3;
 
     if(imgOriginal1.empty() || imgOriginal2.empty() || imgOriginal3.empty())
@@ -60,12 +60,12 @@ beacon_loc beacon_main(float min, float max)
        return b_loc;
     }
 
-    Mat andDiff,diff1,diff2,grayDiff;
+    Mat diff,diff1,diff2,grayDiff;
     absdiff(imgOriginal1,imgOriginal2,diff1);
     absdiff(imgOriginal1,imgOriginal2,diff2);
-    bitwise_and(diff1,diff2,andDiff);
+    bitwise_and(diff1,diff2,diff);
 
-    cvtColor(andDiff, grayDiff, COLOR_BGR2GRAY); //Convert the captured
+    cvtColor(diff, grayDiff, COLOR_BGR2GRAY); //Convert the captured
 
     threshold(grayDiff, grayDiff, thresh, 255, cv::THRESH_BINARY);
     dilate(grayDiff, grayDiff, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
@@ -76,7 +76,23 @@ beacon_loc beacon_main(float min, float max)
 
 	while(keypoints.size()>4 && thresh<=255){
 		thresh+=5;
-	  	threshold(andDiff, grayDiff, thresh, 255, cv::THRESH_BINARY);
+	  	threshold(diff, grayDiff, thresh, 255, cv::THRESH_BINARY);
+	  	dilate(grayDiff, grayDiff, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
+
+		blobDetect = SimpleBlobDetector::create(params);
+	   	blobDetect->detect( grayDiff, keypoints );
+	}
+	while(keypoints.size()<4 && thresh>=0){
+		thresh-=5;
+	  	threshold(diff, grayDiff, thresh, 255, cv::THRESH_BINARY);
+	  	dilate(grayDiff, grayDiff, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
+
+		blobDetect = SimpleBlobDetector::create(params);
+	   	blobDetect->detect( grayDiff, keypoints );
+	}
+	while(keypoints.size()>4 && thresh<=255){
+		thresh+=.25;
+	  	threshold(diff, grayDiff, thresh, 255, cv::THRESH_BINARY);
 	  	dilate(grayDiff, grayDiff, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
 
 		blobDetect = SimpleBlobDetector::create(params);

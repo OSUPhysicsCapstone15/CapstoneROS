@@ -2,11 +2,16 @@
 #include "robot/BeaconRequest.h"
 #include "robot/BeaconResponse.h"
 #include "beacon.h"
+#include <signal.h>
 
 //create beacon publisher
 ros::Publisher becn_rsp;
 //create beacon subscriber
 ros::Subscriber becn_req;
+
+void sigintHand(int sig) {
+	ros::shutdown();
+}
 
 //handler for beacon request
 void BeaconRequest_hand(const robot::BeaconRequest::ConstPtr& msg) {
@@ -51,6 +56,8 @@ int main(int argc, char **argv) {
 	ros::Rate loop_rate(10);
 	ROS_INFO("Started"); //logs 
 
+	//make SIGINT handler
+	signal(SIGINT, sigintHand);
 	//ok() will return true as long as the node is still running and Ctrl-C hasnt been pressed
 	while (ros::ok()) { 
 	   //SpinOnce processes any subscriber handlers waiting on the queue

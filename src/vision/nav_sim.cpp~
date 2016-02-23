@@ -20,13 +20,16 @@ int main(int argc, char **argv) {
 	ROS_INFO("Initializing...");
 	
 	//Initialize ROS
-	ros::init(argc, argv, "nav_sim");
+	ros::init(arc, argv, "nav_sim");
 	
 	// Main access point to ROS. Makes a ROS node, which will shut down when this is destructed
   	ros::NodeHandle n;
 	
   	// Publish a topic "BeaconRequest", used to ask for a scan for the Beacon
   	ros::Publisher beacon_request_pub = n.advertise<robot::BeaconRequest>("BeaconRequest", 1000);
+	
+  	// Publish a topic "BeaconRequest", used to ask for a scan for the Beacon
+  	ros::Publisher command_pub = n.advertise<robot::Commands>("Commands", 1000);
   	
   	// Subscribe to the "BeaconResponse" return from a beacon scan
   	ros::Subscriber beacon_response_msg = n.subscribe("BeaconResponse", 1000, beaconCallback);
