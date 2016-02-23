@@ -30,6 +30,7 @@ void beaconCallback(const robot::BeaconResponse::ConstPtr& msg) {
   if(msg->beacon_not_found) {
     beacon_found = false;
     beacon_angle_conf = false;
+    ROS_INFO("Beacon Lost");
   } else {
     last_angle_from_beacon = msg->angle_from_beacon;
     last_angle_from_robot = msg->angle_from_robot;

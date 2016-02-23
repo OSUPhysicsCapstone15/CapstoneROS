@@ -3,12 +3,12 @@
 
 
 struct beacon_loc {
-	float angle_from_robot; //degrees for all angles
-	float distance; //meters
-	float angle_from_beacon;
-	bool only_bottom;
-	bool beacon_not_found;
-	bool beacon_angle_conf;
+	float angle_from_robot=0; //degrees for all angles
+	float distance=0; //meters
+	float angle_from_beacon=0;
+	bool only_bottom=0;
+	bool beacon_not_found=0;
+	bool beacon_angle_conf=0;
 };
 
 

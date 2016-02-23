@@ -131,8 +131,8 @@ void robot_angle(Mat img, int object_rows, int object_cols, bool targetIsBeacon,
 //    double distance = height_diff / tan(tilted_radians); 			// triangle formula for finding distance
 
 //    cout << "Turn robot " << turn_robot_x_degrees << " degrees." << endl;
-    //cout << "Turn robot " << turn_robot_x_degrees_other << " degrees." << endl;
-    orientation->angle_from_robot=turn_robot_x_degrees_other * 3.1415/180;
+    cout << "Turn robot " << turn_robot_x_degrees_other << " degrees." << endl;
+    orientation->angle_from_robot=turn_robot_x_degrees_other;
 //    cout << "Tilt camera " << tilt_camera_x_degrees << " degrees." << endl;
 //    cout << "Tilt radians " << tilted_radians << endl;
 //    cout << "tan(tilted_radians) = " << tan(tilted_radians) << endl;
@@ -167,18 +167,23 @@ Point findkeyPoint(vector<KeyPoint> keypoints){
 
 void printDistanceFromLights(vector<KeyPoint> keypoints, beacon_loc* orientation){
         int top=keypoints[0].pt.y,bot=keypoints[0].pt.y,left=keypoints[0].pt.x,right=keypoints[0].pt.x;
-        for(int i=1;i<keypoints.size();i++){
+    	int lefty=0,righty=0;
+	for(int i=1;i<keypoints.size();i++){
                 if(keypoints[i].pt.y>top)
                         top=keypoints[i].pt.y;
 
-                if(keypoints[i].pt.x<left)
+                if(keypoints[i].pt.x<left){
 			left=keypoints[i].pt.x;
+			lefty=keypoints[i].pt.y;
+		}
 
                 if(keypoints[i].pt.y<bot)
                         bot=keypoints[i].pt.y;
 
-                if(keypoints[i].pt.x>right)
+                if(keypoints[i].pt.x>right){
                         right=keypoints[i].pt.x;
+			righty=keypoints[i].pt.y;
+		}
 
         }
         double height=top-bot;
@@ -188,14 +193,22 @@ void printDistanceFromLights(vector<KeyPoint> keypoints, beacon_loc* orientation
 //       cout<<"distance between top and bottom lights in pixels: "<<height<<endl; //use for distance formula
 
 //	cout << "height in pixels: " << height << endl;
-//	cout << "width in pixels: " << width << endl;
+	cout << "width in pixels: " << width << endl;
 	double percentage=100 * (height - width) / height;
-	cout << "width is  " << percentage << " percent of height" << endl; //use for beacon orientation
-	double beacon=-.0118*percentage*percentage + 1.5054*percentage + 20.374;
+//	cout << "width is  " << percentage << " percent of height" << endl; //use for beacon orientation
+//	double beacon=-.0118*percentage*percentage + 1.5054*percentage + 20.374;
 //	cout << "distance between center point and beacon center in pixels: " << ((left+right)/2)-320 << endl; //use for robot angle
         int dist=40051*pow(height,-.997);
-	orientation->angle_from_beacon=beacon * 3.1415/180;
+
+	double product = dist * width;
+
+	double beacon = -.00000000000194*product*product*product + .00000010489246*product*product -.00302298*product + 97.713;
+	orientation->angle_from_beacon=beacon;
 	orientation->distance=dist * 0.0254;
+	if(lefty<righty)
+		orientation->angle_from_beacon*=-1;;
+	cout << "beacon orientation is " << orientation->angle_from_beacon << endl;
+	cout << "Distance is " << dist << endl;
 }
 
 Mat getPic(VideoCapture cap)
@@ -203,7 +216,7 @@ Mat getPic(VideoCapture cap)
     Mat img;
     struct timeval tv1,tv2;
     double duration=0;
-    double timer=.50;
+    double timer=.125;
 
     cout<<"Taking pic in "<<timer<<" s"<<endl;
     //start = std::clock();
@@ -222,3 +235,37 @@ Mat getPic(VideoCapture cap)
 
     return img;
 }
+
+/*
+vector<Keypoint> getTop4Keypoints(vector<KeyPoint> keypoints){
+    int len = keypoints.size();
+    vector<KeyPoint> top4keypoints(4);
+    top4keypoints[0].Threshold = 0;
+    top4keypoints[1].Threshold = 0;
+    top4keypoints[2].Threshold = 0;
+    top4keypoints[3].Threshold = 0;
+       
+    for (int i = 0; i < len; i++) //gets 4 highest threshold keypoints ordered from smallest to largest
+    {
+        if (top4keypoints[3].Threshold < top4keypoints[i].Threshold)
+        {
+            top4keypoints[3] = keypoints[i];
+            
+            if (top4keypoints[3].Threshold > top4keypoints[2].Threshold)
+            {
+                swap(top4keypoints[3], keypoints[2]);
+                
+                if (top4keypoints[2].Threshold > top4keypoints[1].Threshold)
+                {
+                    swap(top4keypoints[2], top4keypoints[1]);
+                    
+                    if (top4keypoints[1].Threshold > top4keypoints[0].Threshold)
+                    {
+                        swap(top4keypoints[1], top4keypoints[0]);
+                    }
+                }
+            }
+        }
+    }
+    return top4keypoints;
+}*/

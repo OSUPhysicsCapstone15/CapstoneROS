@@ -1,27 +1,11 @@
 #include "beacon.h"
-#include <iostream>
-#include "opencv2/opencv.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
-#include "opencv2/highgui/highgui.hpp"
-#include <stdio.h>
-#include <stdlib.h>
-#include <vector>
-#include <unistd.h>
-#include <string>
-#include <ctime>
-#include "sys/time.h"
 #include "functions.h"
-
-using namespace std;
-using namespace cv;
-
-
 
 
 beacon_loc beacon_main(float min, float max)
  {
 	beacon_loc b_loc;
-int thresh=140;
+  int thresh=50;
   namedWindow("Original 1", WINDOW_NORMAL);
   namedWindow("Original 2", WINDOW_NORMAL);
   namedWindow("Original 3", WINDOW_NORMAL);
@@ -40,7 +24,7 @@ int thresh=140;
   params.filterByCircularity = false;
   params.filterByArea = true;
 
-        params.minThreshold = 150;
+        params.minThreshold = 50;
         params.maxThreshold = 255;
         params.thresholdStep = 1;
 
@@ -67,7 +51,7 @@ int thresh=140;
     Mat imgOriginal1 = getPic(cap);
     Mat imgOriginal2 = getPic(cap);
     Mat imgOriginal3 = getPic(cap);
-
+    Mat imgOriginal4 = getPic(cap);
     Mat imgHSV1,imgHSV2, imgHSV3;
 
     if(imgOriginal1.empty() || imgOriginal2.empty() || imgOriginal3.empty())
@@ -76,29 +60,33 @@ int thresh=140;
        return b_loc;
     }
 
-    Mat diff;
-    absdiff(imgOriginal1,imgOriginal2,diff);
-    cvtColor(diff, diff, COLOR_BGR2GRAY); //Convert the captured
+    Mat diff,diff1,diff2,grayDiff;
+    absdiff(imgOriginal1,imgOriginal2,diff1);
+    absdiff(imgOriginal1,imgOriginal2,diff2);
+    bitwise_and(diff1,diff2,diff);
 
-    threshold(diff, diff, thresh, 255, cv::THRESH_BINARY);
-    dilate(diff, diff, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
+    cvtColor(diff, grayDiff, COLOR_BGR2GRAY); //Convert the captured
 
-    //opencv 3.0 version
+    threshold(grayDiff, grayDiff, thresh, 255, cv::THRESH_BINARY);
+    dilate(grayDiff, grayDiff, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
+
     //detect beacon blobs between pictures 1&2
     Ptr<SimpleBlobDetector> blobDetect = SimpleBlobDetector::create(params);
-    blobDetect->detect( diff, keypoints );
-    cout<<keypoints.size()<<endl;
-    //detect blobs between images 2&3
-    if(keypoints.size() ==0){
-	absdiff(imgOriginal2,imgOriginal3,diff);
-   	cvtColor(diff, diff, COLOR_BGR2GRAY); //Convert the captured
+    blobDetect->detect( grayDiff, keypoints );
 
-  	threshold(diff, diff, thresh, 255, cv::THRESH_BINARY);
-  	dilate(diff, diff, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
+	while(keypoints.size()>4 && thresh<=255){
+		thresh+=5;
+	  	threshold(diff, grayDiff, thresh, 255, cv::THRESH_BINARY);
+	  	dilate(grayDiff, grayDiff, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
 
-	blobDetect = SimpleBlobDetector::create(params);
-   	blobDetect->detect( diff, keypoints );
-    }
+		blobDetect = SimpleBlobDetector::create(params);
+	   	blobDetect->detect( grayDiff, keypoints );
+	}
+	diff=grayDiff;
+
+
+
+    cout<<thresh<<endl;
     cout<<keypoints.size()<<endl;
 
     Mat out;
@@ -122,6 +110,8 @@ int thresh=140;
     blobDetect.detect( out, keypoints );
     drawKeypoints(out, keypoints, out, CV_RGB(0,0,0), DrawMatchesFlags::DEFAULT);
     */
+
+    //keypoints=getTop4Keypoints(keypoints);
 
     //Circle blobs
     for(int i = 0; i < keypoints.size(); i++)

@@ -1,12 +1,19 @@
 #ifndef functions_H_INCLUDED
 #define functions_H_INCLUDED
 
+#include "beacon.h"
+#include <iostream>
 #include "opencv2/opencv.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
+#include <stdio.h>
+#include <stdlib.h>
 #include <vector>
+#include <unistd.h>
+#include <string>
+#include <ctime>
+#include <algorithm>
 #include "sys/time.h"
-#include "beacon.h"
 using namespace cv;
 using namespace std;
 
