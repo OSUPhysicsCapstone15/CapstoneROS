@@ -5,11 +5,14 @@
 beacon_loc beacon_main(float min, float max)
  {
 	beacon_loc b_loc;
-  int thresh=200;
+  double thresh=200.;
   namedWindow("Original 1", WINDOW_NORMAL);
   namedWindow("Original 2", WINDOW_NORMAL);
   namedWindow("Original 3", WINDOW_NORMAL);
-  namedWindow("Diff", WINDOW_NORMAL);
+  namedWindow("Original 4", WINDOW_NORMAL);
+  namedWindow("Diff1", WINDOW_NORMAL);
+  namedWindow("Diff2", WINDOW_NORMAL);
+  namedWindow("bit_and", WINDOW_NORMAL);
 
   //hsvParams hsv = {76,0,224,97,37,255};
   hsvParams hsv = {20,0,0,97,37,255};
@@ -17,7 +20,7 @@ beacon_loc beacon_main(float min, float max)
   //Set up blob detection parameters
   SimpleBlobDetector::Params params;
  // params.blobColor //can we use this???
- // params.minDistBetweenBlobs = 50.0f;
+  params.minDistBetweenBlobs = 10.0f;
   params.filterByInertia = true;
   params.filterByConvexity = false;
   params.filterByColor = false;
@@ -29,8 +32,8 @@ beacon_loc beacon_main(float min, float max)
         params.thresholdStep = 1;
 
         params.minArea = 0;
-        params.minConvexity = 0.3;
-        params.minInertiaRatio = 0.10;
+        params.minConvexity = 0.50;
+        params.minInertiaRatio = 0.50;
 
         params.maxArea = 2000;
         params.maxConvexity = 10;
@@ -46,7 +49,7 @@ beacon_loc beacon_main(float min, float max)
        return b_loc;
   }
 
- 
+
 
     Mat imgOriginal1 = getPic(cap);
     Mat imgOriginal2 = getPic(cap);
@@ -54,51 +57,62 @@ beacon_loc beacon_main(float min, float max)
     Mat imgOriginal4 = getPic(cap);
     Mat imgHSV1,imgHSV2, imgHSV3;
 
-    if(imgOriginal1.empty() || imgOriginal2.empty() || imgOriginal3.empty())
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////
+    cvtColor(bgr_image, hsv_image, COLOR_BGR2HSV);
+    // Threshold the HSV image, keep only the red pixels
+    Mat lower_red_hue_range;
+    Mat upper_red_hue_range;
+    inRange(hsv_image, Scalar(0, 100, 100), Scalar(10, 255, 255), lower_red_hue_range);
+    inRange(hsv_image, Sc  namedWindow("Original 3", WINDOW_NORMAL);
+alar(160, 100, 100), Scalar(179, 255, 255), upper_red_hue_range);
+////////////////////////////////////////////////////////////////////////////////////////////////
+*/
+    if(imgOriginal1.empty() || imgOriginal2.empty() || imgOriginal3.empty() || imgOriginal4.empty())
     {
        cout << "can not open " << endl;
        return b_loc;
     }
 
-    Mat diff,diff1,diff2,grayDiff;
+    Mat diff,diff1,diff2,grayDiff,binDiff;
     absdiff(imgOriginal1,imgOriginal2,diff1);
-    absdiff(imgOriginal1,imgOriginal2,diff2);
+    absdiff(imgOriginal3,imgOriginal4,diff2);
     bitwise_and(diff1,diff2,diff);
 
     cvtColor(diff, grayDiff, COLOR_BGR2GRAY); //Convert the captured
 
-    threshold(grayDiff, grayDiff, thresh, 255, cv::THRESH_BINARY);
-    dilate(grayDiff, grayDiff, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
+    threshold(grayDiff, binDiff, thresh, 255, cv::THRESH_BINARY);
+    dilate(binDiff, binDiff, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
 
     //detect beacon blobs between pictures 1&2
     Ptr<SimpleBlobDetector> blobDetect = SimpleBlobDetector::create(params);
-    blobDetect->detect( grayDiff, keypoints );
+    blobDetect->detect( binDiff, keypoints );
 
 	while(keypoints.size()>4 && thresh<=255){
 		thresh+=5;
-	  	threshold(diff, grayDiff, thresh, 255, cv::THRESH_BINARY);
-	  	dilate(grayDiff, grayDiff, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
+	  	threshold(grayDiff, binDiff, thresh, 255, cv::THRESH_BINARY);
+	  	dilate(binDiff, binDiff, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
 
 		blobDetect = SimpleBlobDetector::create(params);
-	   	blobDetect->detect( grayDiff, keypoints );
+	   	blobDetect->detect( binDiff, keypoints );
 	}
 	while(keypoints.size()<4 && thresh>=0){
 		thresh-=5;
-	  	threshold(diff, grayDiff, thresh, 255, cv::THRESH_BINARY);
-	  	dilate(grayDiff, grayDiff, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
+	  	threshold(grayDiff, binDiff, thresh, 255, cv::THRESH_BINARY);
+	  	dilate(binDiff, binDiff, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
 
 		blobDetect = SimpleBlobDetector::create(params);
-	   	blobDetect->detect( grayDiff, keypoints );
+	   	blobDetect->detect( binDiff, keypoints );
 	}
 	while(keypoints.size()>4 && thresh<=255){
-		thresh+=1;
-	  	threshold(diff, grayDiff, thresh, 255, cv::THRESH_BINARY);
-	  	dilate(grayDiff, grayDiff, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
+		thresh+=.25;
+	  	threshold(grayDiff, binDiff, thresh, 255, cv::THRESH_BINARY);
+	  	dilate(binDiff, binDiff, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
 
 		blobDetect = SimpleBlobDetector::create(params);
-	   	blobDetect->detect( grayDiff, keypoints );
+	   	blobDetect->detect( binDiff, keypoints );
 	}
-	diff=grayDiff;
+	diff=binDiff;
 
 
 
@@ -133,12 +147,12 @@ beacon_loc beacon_main(float min, float max)
     for(int i = 0; i < keypoints.size(); i++)
     {
   	if(keypoints[i].size>0)
-      	   circle(out, keypoints[i].pt, 1.5*keypoints[i].size, CV_RGB(0,255,0), 1, 8);
+      	   circle(out, keypoints[i].pt, 1.5*keypoints[i].size, CV_RGB(0,0,255), 5, 8);
     }
     string text;
     if(keypoints.size() == 4)
     {
-      text = "Object Found";
+        text = "Object Found";
       //cout<<endl<<endl<<"Object Found"<<endl;
 	b_loc.beacon_not_found = 0;
 	b_loc.only_bottom = 0;
@@ -164,7 +178,10 @@ beacon_loc beacon_main(float min, float max)
     imshow("Original 1", imgOriginal1); //show the original image
     imshow("Original 2", imgOriginal2); //show the original image
     imshow("Original 3", imgOriginal3); //show the original image
-    imshow("Diff", out);
+    imshow("Original 4", imgOriginal4); 
+    imshow("Diff1", diff1 );
+    imshow("Diff2", diff2 );
+    imshow("bit_and", out);
     waitKey(20);
   
 return b_loc;
