@@ -236,36 +236,51 @@ Mat getPic(VideoCapture cap)
     return img;
 }
 
-/*
-vector<Keypoint> getTop4Keypoints(vector<KeyPoint> keypoints){
-    int len = keypoints.size();
-    vector<KeyPoint> top4keypoints(4);
-    top4keypoints[0].Threshold = 0;
-    top4keypoints[1].Threshold = 0;
-    top4keypoints[2].Threshold = 0;
-    top4keypoints[3].Threshold = 0;
-       
-    for (int i = 0; i < len; i++) //gets 4 highest threshold keypoints ordered from smallest to largest
-    {
-        if (top4keypoints[3].Threshold < top4keypoints[i].Threshold)
-        {
-            top4keypoints[3] = keypoints[i];
-            
-            if (top4keypoints[3].Threshold > top4keypoints[2].Threshold)
-            {
-                swap(top4keypoints[3], keypoints[2]);
-                
-                if (top4keypoints[2].Threshold > top4keypoints[1].Threshold)
-                {
-                    swap(top4keypoints[2], top4keypoints[1]);
-                    
-                    if (top4keypoints[1].Threshold > top4keypoints[0].Threshold)
-                    {
-                        swap(top4keypoints[1], top4keypoints[0]);
-                    }
-                }
-            }
-        }
-    }
-    return top4keypoints;
+void createWindows()
+{
+    namedWindow("Original 1", WINDOW_NORMAL);
+    namedWindow("Original 2", WINDOW_NORMAL);
+    namedWindow("Original 3", WINDOW_NORMAL);
+    namedWindow("Original 4", WINDOW_NORMAL);
+    namedWindow("Diff1", WINDOW_NORMAL);
+    namedWindow("Diff2", WINDOW_NORMAL);
+    namedWindow("bit_and", WINDOW_NORMAL);
+}
+
+/*void setupBlobParams(SimpleBlobDetector::Params &params)
+{
+    params.minDistBetweenBlobs = 10.0f;
+    params.filterByInertia = true;
+    params.filterByConvexity = false;
+    params.filterByColor = false;
+    params.filterByCircularity = false;
+    params.filterByArea = true;
+
+    params.minThreshold = 100;
+    params.maxThreshold = 255;
+    params.thresholdStep = 1;
+    params.minArea = 0;
+    params.minConvexity = 0.50;
+    params.minInertiaRatio = 0.50;
+    params.maxArea = 2000;
+    params.maxConvexity = 10;
 }*/
+
+/*void checkCameraOpen(VideoCapture cap)
+{
+    if ( !cap.isOpened() )  // if not success, exit program
+    {
+         cout << "Cannot open the web cam" << endl;
+         return b_loc;
+    }
+}
+
+void checkImgFull(Mat img, beacon_loc b_loc)
+{
+    if(img.empty())
+    {
+       cout << "can not open " << endl;
+       return b_loc;
+    }
+}
+*/

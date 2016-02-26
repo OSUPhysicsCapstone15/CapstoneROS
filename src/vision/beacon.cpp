@@ -3,84 +3,76 @@
 
 
 beacon_loc beacon_main(float min, float max)
- {
-	beacon_loc b_loc;
-  double thresh=200.;
-  namedWindow("Original 1", WINDOW_NORMAL);
-  namedWindow("Original 2", WINDOW_NORMAL);
-  namedWindow("Original 3", WINDOW_NORMAL);
-  namedWindow("Original 4", WINDOW_NORMAL);
-  namedWindow("Diff1", WINDOW_NORMAL);
-  namedWindow("Diff2", WINDOW_NORMAL);
-  namedWindow("bit_and", WINDOW_NORMAL);
+{
+    beacon_loc b_loc;
+    createWindows();
 
-  //hsvParams hsv = {76,0,224,97,37,255};
-  hsvParams hsv = {20,0,0,97,37,255};
+    //Set up blob detection parameters
+    SimpleBlobDetector::Params params;
+//    setupBlobParameters(params);
+  
+    params.minDistBetweenBlobs = 10.0f;
+    params.filterByInertia = true;
+    params.filterByConvexity = false;
+    params.filterByColor = false;
+    params.filterByCircularity = false;
+    params.filterByArea = true;
 
-  //Set up blob detection parameters
-  SimpleBlobDetector::Params params;
- // params.blobColor //can we use this???
-  params.minDistBetweenBlobs = 10.0f;
-  params.filterByInertia = true;
-  params.filterByConvexity = false;
-  params.filterByColor = false;
-  params.filterByCircularity = false;
-  params.filterByArea = true;
+    params.minThreshold = 100;
+    params.maxThreshold = 255;
+    params.thresholdStep = 1;
+    params.minArea = 0;
+    params.minConvexity = 0.50;
+    params.minInertiaRatio = 0.50;
+    params.maxArea = 2000;
+    params.maxConvexity = 10;
 
-        params.minThreshold = 100;
-        params.maxThreshold = 255;
-        params.thresholdStep = 1;
+    vector<KeyPoint> keypoints;
 
-        params.minArea = 0;
-        params.minConvexity = 0.50;
-        params.minInertiaRatio = 0.50;
+    VideoCapture cap(0); //capture the video from web cam
 
-        params.maxArea = 2000;
-        params.maxConvexity = 10;
+    if ( !cap.isOpened() )  // if not success, exit program
+    {
+         cout << "Cannot open the web cam" << endl;
+         return b_loc;
+    }
 
-
-  vector<KeyPoint> keypoints;
-
-  VideoCapture cap(0); //capture the video from web cam
-
-  if ( !cap.isOpened() )  // if not success, exit program
-  {
-       cout << "Cannot open the web cam" << endl;
-       return b_loc;
-  }
-
-
+//    checkCameraOpen(cap);
 
     Mat imgOriginal1 = getPic(cap);
     Mat imgOriginal2 = getPic(cap);
     Mat imgOriginal3 = getPic(cap);
     Mat imgOriginal4 = getPic(cap);
-    Mat imgHSV1,imgHSV2, imgHSV3;
 
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////
-    cvtColor(bgr_image, hsv_image, COLOR_BGR2HSV);
-    // Threshold the HSV image, keep only the red pixels
-    Mat lower_red_hue_range;
-    Mat upper_red_hue_range;
-    inRange(hsv_image, Scalar(0, 100, 100), Scalar(10, 255, 255), lower_red_hue_range);
-    inRange(hsv_image, Sc  namedWindow("Original 3", WINDOW_NORMAL);
-alar(160, 100, 100), Scalar(179, 255, 255), upper_red_hue_range);
-////////////////////////////////////////////////////////////////////////////////////////////////
-*/
-    if(imgOriginal1.empty() || imgOriginal2.empty() || imgOriginal3.empty() || imgOriginal4.empty())
+    if(imgOriginal1.empty() || imgOriginal2.empty() ||imgOriginal3.empty() ||imgOriginal4.empty())
     {
        cout << "can not open " << endl;
        return b_loc;
     }
 
+
+//    checkImgFull(imgOriginal1);
+//    checkImgFull(imgOriginal2);
+//    checkImgFull(imgOriginal3);
+//    checkImgFull(imgOriginal4);
+
+    //initialize mats
     Mat diff,diff1,diff2,grayDiff,binDiff;
+
+    //diff1 = difference between img1 and img2
     absdiff(imgOriginal1,imgOriginal2,diff1);
+
+    //diff2 = difference between img1 and img2
     absdiff(imgOriginal3,imgOriginal4,diff2);
+
+    //logical AND diff1 and diff2 to eliminate people behind beacon
     bitwise_and(diff1,diff2,diff);
 
+    //convert to grayscale
     cvtColor(diff, grayDiff, COLOR_BGR2GRAY); //Convert the captured
 
+    //threshold and dilate
+    double thresh = 200.0;
     threshold(grayDiff, binDiff, thresh, 255, cv::THRESH_BINARY);
     dilate(binDiff, binDiff, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
 
@@ -96,7 +88,7 @@ alar(160, 100, 100), Scalar(179, 255, 255), upper_red_hue_range);
 		blobDetect = SimpleBlobDetector::create(params);
 	   	blobDetect->detect( binDiff, keypoints );
 	}
-	while(keypoints.size()<4 && thresh>=0){
+	while(keypoints.size()<4 && thresh>=100){
 		thresh-=5;
 	  	threshold(grayDiff, binDiff, thresh, 255, cv::THRESH_BINARY);
 	  	dilate(binDiff, binDiff, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
@@ -104,44 +96,25 @@ alar(160, 100, 100), Scalar(179, 255, 255), upper_red_hue_range);
 		blobDetect = SimpleBlobDetector::create(params);
 	   	blobDetect->detect( binDiff, keypoints );
 	}
+	if(thresh<100){
+	        b_loc.beacon_not_found = 1;
+		return b_loc;
+	}
 	while(keypoints.size()>4 && thresh<=255){
 		thresh+=.25;
-	  	threshold(grayDiff, binDiff, thresh, 255, cv::THRESH_BINARY);
-	  	dilate(binDiff, binDiff, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
-
+  		threshold(grayDiff, binDiff, thresh, 255, cv::THRESH_BINARY);
+  		dilate(binDiff, binDiff, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
 		blobDetect = SimpleBlobDetector::create(params);
 	   	blobDetect->detect( binDiff, keypoints );
 	}
+
 	diff=binDiff;
-
-
 
     cout<<thresh<<endl;
     cout<<keypoints.size()<<endl;
 
     Mat out;
     drawKeypoints(diff, keypoints, out, CV_RGB(0,0,0), DrawMatchesFlags::DEFAULT);
-  /*//finding if things are green or red
-  cvtColor(out, out, COLOR_BGR2HSV);
-  inRange(out, Scalar(hsv.hL, hsv.sL, hsv.vL),
-         Scalar(hsv.hH, hsv.sH, hsv.vH), out);
-  blobDetect.detect( out, keypoints );
-  drawKeypoints(out, keypoints, out, CV_RGB(0,0,0), DrawMatchesFlags::DEFAULT);
-
-  for(int i=0;i<diff.rows;i++){
-     for(int j=0;j<diff.cols;j++){
-            if(out.at<Vec3b>(i,j)[0]==0 && out.at<Vec3b>(i,j)[1]==0 && out.at<Vec3b>(i,j)[2]==0){
-                imgOriginalON.at<Vec3b>(i,j)=(0,0,0);
-            }
-       }
-    }
-    inRange(imgOriginalON, Scalar(hsv.hL, hsv.sL, hsv.vL),
-         Scalar(hsv.hH, hsv.sH, hsv.vH), out);
-    blobDetect.detect( out, keypoints );
-    drawKeypoints(out, keypoints, out, CV_RGB(0,0,0), DrawMatchesFlags::DEFAULT);
-    */
-
-    //keypoints=getTop4Keypoints(keypoints);
 
     //Circle blobs
     for(int i = 0; i < keypoints.size(); i++)

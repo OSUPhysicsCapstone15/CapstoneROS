@@ -47,6 +47,10 @@ int main(int argc, char **argv) {
       } else if ( command == "grab" ) {
 	std::cout << "Executing grab\n";
 	commandOrder = 3;
+      } else if ( command == "turnplace" ) {
+	std::cout << "Executing grab\n";
+	commandOrder = 5;
+	std::cin >> val;
       } else if (command == "exit") {
 	return 0;
       } else {

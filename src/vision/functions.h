@@ -41,5 +41,14 @@ void printDistanceFromLights(vector<KeyPoint> keypoints, beacon_loc* orientation
 
 Mat getPic(VideoCapture cap);
 
+void createWindows();
+
+void setupBlobParameters(SimpleBlobDetector::Params);
+
+void checkCameraOpen(VideoCapture);
+
+void checkImgFull(Mat);
+
+
 #endif
 
