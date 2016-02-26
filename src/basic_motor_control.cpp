@@ -24,7 +24,7 @@ using namespace std;
 
 // Some static constants
 static const double MOTOR_MAX = 310; // Max motor value (400 max)
-static const double PIVOT_SPEED = 0.50; // The speed to run the motors at in a pivot
+static const double PIVOT_SPEED = 0.55; // The speed to run the motors at in a pivot
 static const double ENC_FUDGE = 1.0;//1.26
 static const double BREAK_SPEED = -0.10; // Reverse with enough power to stop wheel motion
 static const double DRIVE_SPEED = 0.75;
@@ -56,6 +56,7 @@ auto startTime = std::chrono::system_clock::now();
 // Flags
 bool paused = false; // Whether or not the robot is paused
 bool turning = false; // Whether or not we should be executing a turn
+bool turningInPlace = false; // If turning, whether or not to turn in place
 bool driving = false; // Whether or not we are driving forward
 bool drivingFast = false; // Make it go faster
 bool grabbing = false; // Whether or not we are grabbing an object
@@ -125,6 +126,7 @@ void commandsCallback(const robot::Commands::ConstPtr& msg)
   case 2: // Turn to an angle
     turning = true;
     target_angle = msg->value; // The value is the angle (degrees)
+    turningInPlace = false;
     break;
   case 3: // Grab the target
     grabbing = true;
@@ -133,6 +135,11 @@ void commandsCallback(const robot::Commands::ConstPtr& msg)
     driving = true;
     drivingFast = true;
     target_distance = msg->value * 39.37; // The value is the distance (m -> in)
+    break;
+  case 5:
+    turning = true;
+    target_angle = msg->value;
+    turningInPlace = true;
     break;
   default: // Default is to do nothing
     break;
@@ -276,6 +283,31 @@ bool pivotOnWheel(double *leftWheelSpeed, double *rightWheelSpeed, double target
   return 0;
 }
 
+// Sets motor values, returns true if at destination
+bool turnInPlace(double *leftWheelSpeed, double *rightWheelSpeed, double target, double current) {
+  double diff = target - current; // How much we need to turn
+  if(diff>0){
+    diff *= .9;
+  }
+  if(abs(diff) < ANGLE_PRECISION) { // If we are closer than out precision, brake
+    *rightWheelSpeed = 0.5*BREAK_SPEED;
+    *leftWheelSpeed = 0.82*BREAK_SPEED;
+    return 1;
+  } else if(abs(diff) < target/12.0) { // If we are within 30 degrees, start braking
+    *leftWheelSpeed = 0.5*BREAK_SPEED;
+    *rightWheelSpeed = 0.5*BREAK_SPEED;
+    }
+  if(diff < 0) { // If we need to turn left
+    *rightWheelSpeed = PIVOT_SPEED;
+    *leftWheelSpeed = -1 * PIVOT_SPEED;
+  } else { // If we need to turn right
+    *leftWheelSpeed = PIVOT_SPEED;
+    *rightWheelSpeed = -1 * PIVOT_SPEED;
+  }
+  return 0;
+}
+
+
 
 // Reset local states
 void zero_system() {
@@ -383,7 +415,11 @@ int main(int argc, char **argv) {
 	 
        if(turning) {
 	 current_angle = enc2angle(leftEncoder-left_encoder_zeropoint, rightEncoder - right_encoder_zeropoint);
-	 turning = !(pivotOnWheel(&leftWheelSpeed, &rightWheelSpeed, target_angle, current_angle)); // Keep moving until we arrive
+	 if(turningInPlace){
+	   turning = !(turnInPlace(&leftWheelSpeed, &rightWheelSpeed, target_angle, current_angle)); // Keep moving until we arrive
+	 } else {
+	   turning = !(pivotOnWheel(&leftWheelSpeed, &rightWheelSpeed, target_angle, current_angle)); // Keep moving until we arrive
+	 }
 	 if(!turning) { // Must have just finished the turn
 	   std_msgs::Int32 msg; // Defined in msg directory 
 	   msg.data = 0;
