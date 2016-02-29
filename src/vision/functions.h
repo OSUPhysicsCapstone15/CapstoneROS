@@ -21,34 +21,44 @@ struct hsvParams{
   int hL, sL, vL, hH, sH, vH;
 };
 
+void removenoise(Mat);
 
+Mat findBiggestBlob(Mat);
 
-void removenoise(Mat&);
+void findGrass(Mat, Mat);
 
-Mat findBiggestBlob(Mat &src);
+void robot_angle(Mat, int, beacon_loc*);
 
-void findGrass(Mat &src, Mat &HSV);
-
-void robot_angle(Mat img, int object_rows, int object_cols, bool targetIsBeacon, beacon_loc* orientation);
-
-Point findkeyPoint(vector<KeyPoint> keypoints);
+Point findCenterPoint(vector<KeyPoint>);
 
 int blob_main();
 
 int beacon_main();
 
-void printDistanceFromLights(vector<KeyPoint> keypoints, beacon_loc* orientation);
+KeyPoint getLeftKeyPoint(vector<KeyPoint>);
+KeyPoint getRightKeyPoint(vector<KeyPoint>);
+KeyPoint getBottomKeyPoint(vector<KeyPoint>);
+KeyPoint getTopKeyPoint(vector<KeyPoint>);
 
-Mat getPic(VideoCapture cap);
+void printDistanceFromLights(vector<KeyPoint>, beacon_loc*);
+
+Mat getPic(VideoCapture);
 
 void createWindows();
 
-void setupBlobParameters(SimpleBlobDetector::Params);
+SimpleBlobDetector::Params setupBeaconBlobParams();
+SimpleBlobDetector::Params setupObjectBlobParams();
 
-void checkCameraOpen(VideoCapture);
+void showWindows(Mat, Mat, Mat, Mat, Mat, Mat, Mat);
 
-void checkImgFull(Mat);
+Mat drawAndCircleKeypoints(vector<KeyPoint>, Mat);
 
+void threshDilateDetect(Mat, Mat, double, SimpleBlobDetector::Params, vector<KeyPoint>&);
+
+void initializePointAndShoot();
+void zoomInFull();
+void zoomOutFull();
+void shootPic();
 
 #endif
 
