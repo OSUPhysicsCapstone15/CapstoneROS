@@ -1,8 +1,8 @@
-// Uncomment below for debug messages
+`// Uncomment below for debug messages
 //#define DEBUG
 //#define HEARTBEAT_MONITOR
 #define DEBUG_LITE
-//#define ANGLE_CORRECTION
+#define ANGLE_CORRECTION
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 #include "std_msgs/Float32.h"
@@ -33,7 +33,7 @@ static const double ANGLE_PRECISION = 5; // Units of degrees
 static const double FORWARD_PRECISION = 12; // Units of inches
 static const int PULSE_RATIO = 2400; // The number of pulses per full rotation in an encoder 
 static const double WHEEL_DIAMETER = 12; // Inches
-static const double WHEEL_BASE = 42; // Inches
+static const double WHEEL_BASE = 39; // Inches
 static const double K_p = 1; // PID proportional constant
 static const double K_i = 1; // PID integral constant
 
@@ -298,11 +298,11 @@ bool turnInPlace(double *leftWheelSpeed, double *rightWheelSpeed, double target,
     *rightWheelSpeed = 0.5*BREAK_SPEED;
     }
   if(diff < 0) { // If we need to turn left
-    *rightWheelSpeed = PIVOT_SPEED;
-    *leftWheelSpeed = -1 * PIVOT_SPEED;
+    *rightWheelSpeed = PIVOT_SPEED*0.85;
+    *leftWheelSpeed = -1 * PIVOT_SPEED*0.85;
   } else { // If we need to turn right
-    *leftWheelSpeed = PIVOT_SPEED;
-    *rightWheelSpeed = -1 * PIVOT_SPEED;
+    *leftWheelSpeed = PIVOT_SPEED*0.85;
+    *rightWheelSpeed = -1 * PIVOT_SPEED*0.85;
   }
   return 0;
 }
@@ -447,11 +447,11 @@ int main(int argc, char **argv) {
 
 	 if (current_angle > 8) {
 	   leftWheelSpeed = leftWheelSpeed*0.65;
-	   rightWheelSpeed = rightWheelSpeed*0.85;
+	   rightWheelSpeed = rightWheelSpeed*1.0;
 	   ROS_INFO("!!!!!!!!!!!!!!!!!!!!!BIG CORRECTION TO THE LEFT");
 	 } else if (current_angle < -8) {
 	   rightWheelSpeed = rightWheelSpeed*0.65;
-	   leftWheelSpeed = leftWheelSpeed*0.85;
+	   leftWheelSpeed = leftWheelSpeed*1.0;
 	   ROS_INFO("!!!!!!!!!!!!!!!1BIG CORRECTION TO THE RIGHT************");
 	 }
 #endif

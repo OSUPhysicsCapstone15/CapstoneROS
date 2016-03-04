@@ -103,14 +103,21 @@ int main(int argc, char **argv) {
     switch(state) {
     case 0: // Startup
       break;
+
     case 1: // Target Seeking
       break;
+
     case 2: // Returning
+      // Scanning range
       b_msg.angle_min = -150;
       b_msg.angle_max = 150;
-      while(beacon_request_pub.getNumSubscribers()<1) { // Wait until someone is listening to vision requests
+
+      // Wait until someone is listening to vision requests
+      while(beacon_request_pub.getNumSubscribers()<1) {
 	loop_rate.sleep();
       }
+
+      // Request a scan for the beacon
       beacon_request_pub.publish(b_msg); // Look for the beacon
       ros::spinOnce();
       waiting_on_vision = true;
@@ -119,26 +126,42 @@ int main(int argc, char **argv) {
 	loop_rate.sleep(); // TODO: Add a timeout here
 	ros::spinOnce();
       }
+
+      // Scan has returned, begin moving
       if(beacon_found) {
 	double driveDist = 0;
 	double angle = 0;
-	if(!only_bottom_light) { // We see the entire beacon
-	  if(x_est == 0) { // This handles the special case of being directly in front of the beacon
-	    if(y_est < Y_STAGE) { // Will need to turn around
-	      angle = last_angle_from_robot + 180;
-	    } else {
-	      angle = last_angle_from_robot; // In line with front of beacon. Avoid 1/0 error.
-	    }	
-	  } else { // If we are confident in our coordinates
-	    if(last_angle_from_beacon > 0){
-	      angle = last_angle_from_robot + (90 - last_angle_from_beacon - (180/M_PI)*atan((double)(y_pos - Y_STAGE)/x_pos));
-	    } else {
-	      angle = last_angle_from_robot - (90 + last_angle_from_beacon + (180/M_PI)*atan((double)(y_pos - Y_STAGE)/x_pos));
+
+	// If we are far enough away we see the entire beacon
+	if(!only_bottom_light) {
+
+	  // If we are confident in the orientation angle reported by vision
+	  if(true){//beacon_angle_conf) {
+	    // Calculate the angle and distance to the staging area
+	    if(x_est == 0) { // This handles the special case of being directly in front of the beacon
+	      if(y_est < Y_STAGE) { // Will need to turn around
+		angle = last_angle_from_robot + 180;
+	      } else {
+		angle = last_angle_from_robot; // In line with front of beacon. Avoid 1/0 error.
+	      }	
+	    } else { // If we are confident in our coordinates
+	      if(last_angle_from_beacon > 0){
+		angle = last_angle_from_robot + (90 - last_angle_from_beacon - (180/M_PI)*atan((double)(y_pos - Y_STAGE)/x_pos));
+	      } else {
+		angle = last_angle_from_robot + (-90 - last_angle_from_beacon - (180/M_PI)*atan((double)(y_pos - Y_STAGE)/x_pos));
+	      }
 	    }
+	    
 	  }
-	  double dist = sqrt(x_pos*x_pos + (y_pos-Y_STAGE)*(y_pos-Y_STAGE)); // Distance to staging area
+	  // Calculate distance to the staging position
+	  double dist = sqrt(x_pos*x_pos + (y_pos-Y_STAGE)*(y_pos-Y_STAGE));
+
+	  // Avoid excessive turns
 	  if(angle > 180) {
-	    angle = angle-360;
+	    angle = angle - 360;
+	  }
+	  if(angle < -180) {
+	    angle = angle + 360;
 	  }
 	  
 	  ROS_INFO("INFO: (x,y) is (%f, %f)", x_pos, y_pos);
