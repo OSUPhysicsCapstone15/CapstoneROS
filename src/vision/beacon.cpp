@@ -1,6 +1,68 @@
 #include "beacon.h"
 #include "functions.h"
 
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/calib3d/calib3d.hpp>
+#include <opencv2/highgui/highgui.hpp>
+
+const float WIDTH = 5.015625; //meters
+const float HEIGHT = 5.96875; //meters
+
+//returns true if success, false otherwise
+bool beaconLocation(vector<KeyPoint> keyPoints, beacon_loc *b_loc) {
+	//convert keypoints to point2f points
+	vector<Point2f> imgPoints;
+	KeyPoint::convert(keyPoints, imgPoints);
+
+	//fill known points with beacon dimensions
+	vector<Point3f> kwnPoints = {Point3f(0, HEIGHT/2, 0), //Top
+								Point3f(-WIDTH/2, 0, 0),  //Left
+								Point3f(WIDTH/2, 0, 0), //Right
+								Point3f(0, -HEIGHT/2, 0) //Bottom
+	}; 
+
+	//get saved calibration matrix 
+	string filename = "out_camera_data.xml";
+	FileStorage fs(filename, FileStorage::READ);
+	if(!fs.isOpened()) {
+		cout<<"Calibration file could not be opened"<<endl;
+		return false;
+	}
+	Mat cameraMatrix, distCoeffs;
+	fs["Camera_Matrix"]>>cameraMatrix;
+	fs["Distortion_Coefficients"]>>distCoeffs;
+	if(cameraMatrix.empty() || distCoeffs.empty()) {
+		cout<<"Calibration file not formatted correctly"<<endl;
+		return false;
+	} else {
+		cout<<"Camera Matrix"<<endl;
+		cout<<cameraMatrix<<endl;
+		cout<<"Distortion Coefficients"<<endl;
+		cout<<distCoeffs<<endl;
+	}
+
+	cout<<"Known Points"<<endl;
+	cout<<kwnPoints<<endl;
+	cout<<"Image Points"<<endl;
+	cout<<imgPoints<<endl;
+
+	//get roation-translation matrix
+	Mat rvec, tvec;
+	solvePnP(Mat(kwnPoints), Mat(imgPoints), cameraMatrix, distCoeffs, rvec, tvec, false);
+
+	//print out stuff for sanity check
+	cout<<"Rotation vector"<<endl;
+	cout<<rvec<<endl;
+	cout<<"Translation vector"<<endl;
+	cout<<tvec<<endl;
+
+	//fill beacon struct with appropriate values
+	//TODO
+
+	return true;
+
+}
 
 beacon_loc beacon_main(float min, float max)
  {
@@ -159,9 +221,13 @@ alar(160, 100, 100), Scalar(179, 255, 255), upper_red_hue_range);
       Point cent;
       cent=findkeyPoint(keypoints);
  //     cout<<"dist: "<<printDistanceFromLights(keypoints)<<endl;
-	 printDistanceFromLights(keypoints, &b_loc);
+	 //printDistanceFromLights(keypoints, &b_loc);
       circle(out, cent, 5, CV_RGB(0,100,0), -1, 8);
-      robot_angle(diff, cent.y, cent.x, 1, &b_loc);
+      //robot_angle(diff, cent.y, cent.x, 1, &b_loc);
+	if(!beaconLocation(keypoints, &b_loc)) {
+		cout<<"Error in finding beacon location"<<endl;
+		return b_loc;
+	}
     }else if(keypoints.size() == 1){
 		b_loc.beacon_not_found = 0;
 		b_loc.only_bottom = 1;
