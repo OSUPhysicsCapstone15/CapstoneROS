@@ -1,1 +1,1 @@
-rosrun rosserial_python serial_node.py /dev/ttyACM1 __name:='one'
+rosrun rosserial_python serial_node.py /dev/ttyACM0 __name:='one'

@@ -2,7 +2,7 @@
 //#define DEBUG
 //#define HEARTBEAT_MONITOR
 #define DEBUG_LITE
-#define ANGLE_CORRECTION
+//#define ANGLE_CORRECTION
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 #include "std_msgs/Float32.h"
@@ -23,7 +23,7 @@
 using namespace std;
 
 // Some static constants
-static const double MOTOR_MAX = 310; // Max motor value (400 max)
+static const double MOTOR_MAX = 400; // Max motor value (400 max)
 static const double PIVOT_SPEED = 0.55; // The speed to run the motors at in a pivot
 static const double ENC_FUDGE = 1.0;//1.26
 static const double BREAK_SPEED = -0.10; // Reverse with enough power to stop wheel motion

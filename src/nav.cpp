@@ -8,6 +8,8 @@
 #include <string>
 #include <cmath>
 
+static double Y_STAGE = 5; // Staging distance in front of beacon
+
 // Flags
 int state = 2; // 0: Startup, 1: Target seeking, 2: Returning, 3: BeaconApproach, 4: Paused 
 double last_angle_from_beacon = 0;
@@ -21,9 +23,13 @@ bool waiting_on_vision = false;
 int command_timeout = 100; //TODO: Add command timeout
 bool move_to_stage = false;
 
-// Coordinates
+// Reported position
 double x_pos = 0;
 double y_pos = 1;
+
+// Estimated position
+double x_est = 0;
+double y_est = 1;
 
 void beaconCallback(const robot::BeaconResponse::ConstPtr& msg) {
 	ROS_INFO("Response Recieved");
@@ -42,6 +48,8 @@ void beaconCallback(const robot::BeaconResponse::ConstPtr& msg) {
     if(true){//beacon_angle_conf) {
       y_pos = last_distance_to_beacon * cos(last_angle_from_beacon * M_PI/180);  //Vision sends deg
       x_pos = last_distance_to_beacon * sin(last_angle_from_beacon * M_PI/180);
+      y_est = y_pos;
+      x_est = x_pos;
     }
   }
   waiting_on_vision = false;
@@ -100,8 +108,9 @@ int main(int argc, char **argv) {
     case 2: // Returning
       b_msg.angle_min = -150;
       b_msg.angle_max = 150;
-      while(beacon_request_pub.getNumSubscribers()<1)
-	{loop_rate.sleep();}
+      while(beacon_request_pub.getNumSubscribers()<1) { // Wait until someone is listening to vision requests
+	loop_rate.sleep();
+      }
       beacon_request_pub.publish(b_msg); // Look for the beacon
       ros::spinOnce();
       waiting_on_vision = true;
@@ -112,29 +121,29 @@ int main(int argc, char **argv) {
       }
       if(beacon_found) {
 	double driveDist = 0;
-	if(!only_bottom_light) {
-	  double angle;
-	  if(x_pos == 0) {
-	    if(y_pos < 5) {
+	double angle = 0;
+	if(!only_bottom_light) { // We see the entire beacon
+	  if(x_est == 0) { // This handles the special case of being directly in front of the beacon
+	    if(y_est < Y_STAGE) { // Will need to turn around
 	      angle = last_angle_from_robot + 180;
 	    } else {
 	      angle = last_angle_from_robot; // In line with front of beacon. Avoid 1/0 error.
 	    }	
-	  } else {
+	  } else { // If we are confident in our coordinates
 	    if(last_angle_from_beacon > 0){
-	      angle = last_angle_from_robot + (90 - last_angle_from_beacon - (180/M_PI)*atan((double)(y_pos - 5)/x_pos));
+	      angle = last_angle_from_robot + (90 - last_angle_from_beacon - (180/M_PI)*atan((double)(y_pos - Y_STAGE)/x_pos));
 	    } else {
-	      angle = last_angle_from_robot - (90 + last_angle_from_beacon + (180/M_PI)*atan((double)(y_pos - 5)/x_pos));
+	      angle = last_angle_from_robot - (90 + last_angle_from_beacon + (180/M_PI)*atan((double)(y_pos - Y_STAGE)/x_pos));
 	    }
 	  }
-	  double dist = sqrt(x_pos*x_pos + (y_pos-5)*(y_pos-5)); // Distance to staging area
+	  double dist = sqrt(x_pos*x_pos + (y_pos-Y_STAGE)*(y_pos-Y_STAGE)); // Distance to staging area
 	  if(angle > 180) {
 	    angle = angle-360;
 	  }
 	  
 	  ROS_INFO("INFO: (x,y) is (%f, %f)", x_pos, y_pos);
-	  ROS_INFO("Alpha is: (180/M_PI)*atan(%f)",(double)(y_pos - 5)/x_pos);
-	  ROS_INFO("Alpha is: %f",(180/M_PI)*atan((double)(y_pos - 5)/x_pos));
+	  ROS_INFO("Alpha is: (180/M_PI)*atan(%f)",(double)(y_pos - Y_STAGE)/x_pos);
+	  ROS_INFO("Alpha is: %f",(180/M_PI)*atan((double)(y_pos - Y_STAGE)/x_pos));
 	  ROS_INFO("Angle from robot is: %f", last_angle_from_robot);
 	  ROS_INFO("Beacon Found, staging at Angle: %f, Distance: %f", angle, dist);
 	  if(dist < 0.5) {
@@ -183,7 +192,7 @@ int main(int argc, char **argv) {
 	    }
 	    
 	  }
-	} else { // We see the beacon, but only the bottom
+	} else { // We see the beacon, but only the bottom We will drive away Y_STAGE meters and try again
 	  c_msg.commandOrder = 2; // Turning, then driving
 	  c_msg.value = 180-last_angle_from_robot;
 	  command_pub.publish(c_msg);
@@ -194,7 +203,7 @@ int main(int argc, char **argv) {
 	    loop_rate.sleep(); // TODO: Add a timeout here
 	  }
 	  c_msg.commandOrder = 1; // Driving
-	  driveDist = 5;
+	  driveDist = Y_STAGE-0.5;
 	  c_msg.value = driveDist;
 	  command_pub.publish(c_msg);
 	  waiting_on_command = true;
@@ -227,7 +236,7 @@ int main(int argc, char **argv) {
 	
       }
       break;
-    case 3: // BeaconApproach
+    case 3: // Beacon Approach
       b_msg.angle_min = -150;
       b_msg.angle_max = 150;
       beacon_request_pub.publish(b_msg); // Look for the beacon
