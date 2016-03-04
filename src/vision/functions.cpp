@@ -200,37 +200,76 @@ KeyPoint getTopKeyPoint(vector<KeyPoint> keypoints)
     return topPoint;
 }
 
-//calculates the camera's distance from the beacon, as well as the beacon's orientation (though this should be separate)
+//calculates the camera's distance from the beacon
 void printDistanceFromLights(vector<KeyPoint> keypoints, beacon_loc* orientation)
+{
+    int top = getTopKeyPoint(keypoints).pt.y;
+    int bot = getBottomKeyPoint(keypoints).pt.y;
+
+    double height = bot - top;
+//        cout << "top = " << top << endl;
+//	cout << "bot = " << bot << endl;
+//	 cout << "height = " << height << endl;
+    int dist=40051*pow(height,-.997);
+
+    orientation->distance = dist * 0.0254; //convert inches to meters
+
+    cout << "Distance is " << dist << endl;
+}
+
+//calculates the orientation of the beacon
+void getBeaconOrientation(vector<KeyPoint> keypoints, beacon_loc* orientation)
 {
     KeyPoint topPoint = getTopKeyPoint(keypoints);
     KeyPoint botPoint = getBottomKeyPoint(keypoints);
+    KeyPoint leftPoint = getLeftKeyPoint(keypoints);
+    KeyPoint rightPoint = getRightKeyPoint(keypoints);
 
     int top = topPoint.pt.y;
     int bot = botPoint.pt.y;
     int left = getLeftKeyPoint(keypoints).pt.x;
     int right = getRightKeyPoint(keypoints).pt.x;
 
+//	cout << "top: (" << topPoint.pt.x << "," << topPoint.pt.y << ")" << endl;
+//	cout << "bot: (" << botPoint.pt.x << "," << botPoint.pt.y << ")" << endl;
+//	cout << "left: (" << leftPoint.pt.x << "," << leftPoint.pt.y << ")" << endl;
+//	cout << "right: (" << rightPoint.pt.x << "," << rightPoint.pt.y << ")" << endl;
+
+
+
+
     double centerLine = (topPoint.pt.x + botPoint.pt.x) / 2.0;
-    double height = top - bot;
     double width = right - left;
 
-    int dist=40051*pow(height,-.997);
+    int leftSeparation = centerLine - left;
+    int rightSeparation = right - centerLine;
 
-    //need improved orientation formula
-    double product = dist * width; //beacon orientation needs to be separate from distance
-    double beacon = -.00000000000194*product*product*product + .00000010489246*product*product - .00302298*product + 97.713;
+//    cout <<"leftSeparation = " << leftSeparation << endl;
+//    cout << "rightSeparation = " << rightSeparation << endl;
 
-    orientation->angle_from_beacon = beacon;
-    orientation->distance = dist * 0.0254; //convert inches to meters
+    double ratio = (double)rightSeparation / (double)leftSeparation;
 
-    if ((right - centerLine) < (centerLine - left)) //if right light appears closer to center of beacon
+//    cout << "ratio = " << ratio << endl;
+
+    if ((rightSeparation) > (leftSeparation)) //if left light appears closer to center of beacon
     {
         orientation->angle_from_beacon *= -1;
+		ratio = 1.0/ratio;
     }
-
-    cout << "beacon orientation is " << orientation->angle_from_beacon << endl;
-    cout << "Distance is " << dist << endl;
+    int leftx = getLeftKeyPoint(keypoints).pt.x;
+	int lefty=getLeftKeyPoint(keypoints).pt.y;
+    int rightx = getRightKeyPoint(keypoints).pt.x;
+    int righty = getRightKeyPoint(keypoints).pt.y;
+    double centerx = (topPoint.pt.x + botPoint.pt.x) / 2.0;
+    double centery = (topPoint.pt.y + botPoint.pt.y) / 2.0;
+	double leftlen=sqrt(pow((centerx-leftx),2)+pow((centery-lefty),2));
+	double rightlen=sqrt(pow((centerx-rightx),2)+pow((centery-righty),2));
+//cout<<"ratio of right/left: "<<rightlen/leftlen<<endl;
+double rat=rightlen/leftlen;
+double test=-110*rat*rat + 387.4*rat - 276.18;
+//cout<<"angle= "<<test<<endl;
+    orientation->angle_from_beacon = 887.52*ratio*ratio - 1877.7*ratio + 990.86;
+ //   cout << "beacon orientation is " << orientation->angle_from_beacon << endl;
 }
 
 //returns a picture taken with the given camera
@@ -380,4 +419,77 @@ void zoomOutFull()
 void shootPic()
 {
     system("yes | gphoto2 --capture-image-and-download --filename \"newPic.jpg\"");
+}
+
+//returns true if success, false otherwise
+bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc) {
+
+	const float WIDTH = 61; //inches
+	const float HEIGHT = 55; //inches
+
+	vector<KeyPoint> keyPoints(4);
+	keyPoints[0] = getRightKeyPoint(imgKeyPoints);
+        keyPoints[1] = getTopKeyPoint(imgKeyPoints);
+        keyPoints[2] = getBottomKeyPoint(imgKeyPoints);
+        keyPoints[3] = getLeftKeyPoint(imgKeyPoints);
+
+
+	//convert keypoints to point2f points
+	vector<Point2f> imgPoints;
+	KeyPoint::convert(keyPoints, imgPoints);
+
+	//fill known points with beacon dimensions
+	vector<Point3f> kwnPoints = {Point3f(0, HEIGHT/2, 0), //Top
+				     Point3f(-WIDTH/2, 0, 0), //Left
+				     Point3f(WIDTH/2, 0, 0),  //Right
+				     Point3f(0, -HEIGHT/2, 0) //Bottom
+	};
+
+	//get saved calibration matrix
+	string filename = "out_camera_data.xml";
+	FileStorage fs(filename, FileStorage::READ);
+
+	if(!fs.isOpened())
+	{
+		cout<<"Calibration file could not be opened"<<endl;
+		return false;
+	}
+
+	Mat cameraMatrix, distCoeffs;
+	fs["Camera_Matrix"] >> cameraMatrix;
+	fs["Distortion_Coefficients"] >> distCoeffs;
+
+	if(cameraMatrix.empty() || distCoeffs.empty())
+	{
+		cout << "Calibration file not formatted correctly" << endl;
+		return false;
+	}
+	else
+	{
+		cout << "Camera Matrix" << endl;
+		cout << cameraMatrix << endl;
+		cout << "Distortion Coefficients" << endl;
+		cout << distCoeffs << endl;
+	}
+
+	cout << "Known Points" << endl;
+	cout << kwnPoints << endl;
+	cout << "Image Points" << endl;
+	cout << imgPoints << endl;
+
+	//get rotation-translation matrix
+	Mat rvec, tvec;
+	solvePnP(Mat(kwnPoints), Mat(imgPoints), cameraMatrix, distCoeffs, rvec, tvec, false);
+
+	//print out stuff for sanity check
+	cout << "Rotation vector" << endl;
+	cout << rvec << endl;
+	cout << "Translation vector" << endl;
+	cout << tvec << endl;
+
+	//fill beacon struct with appropriate values
+	//TODO
+
+	return true;
+
 }

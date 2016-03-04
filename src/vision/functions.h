@@ -42,6 +42,8 @@ KeyPoint getTopKeyPoint(vector<KeyPoint>);
 
 void printDistanceFromLights(vector<KeyPoint>, beacon_loc*);
 
+void getBeaconOrientation(vector<KeyPoint>, beacon_loc*);
+
 Mat getPic(VideoCapture);
 
 void createWindows();
@@ -59,6 +61,8 @@ void initializePointAndShoot();
 void zoomInFull();
 void zoomOutFull();
 void shootPic();
+
+bool beaconLocation(vector<KeyPoint>, beacon_loc*);
 
 #endif
 

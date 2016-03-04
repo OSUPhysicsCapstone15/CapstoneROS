@@ -55,13 +55,15 @@ beacon_loc beacon_main(float min, float max)
     Ptr<SimpleBlobDetector> blobDetect = SimpleBlobDetector::create(params);
     blobDetect->detect(binDiff, keypoints);
 
+    cout << keypoints.size() << endl;
+
     while(keypoints.size() > 4 && thresh <= 255)
     {
         thresh += 5;
         threshDilateDetect(grayDiff, binDiff, thresh, params, keypoints);
     }
 
-    while(keypoints.size() < 4 && thresh <= 100)
+    while(keypoints.size() < 4 && thresh >= 100)
     {
         thresh -= 5;
         threshDilateDetect(grayDiff, binDiff, thresh, params, keypoints);
@@ -92,6 +94,9 @@ beacon_loc beacon_main(float min, float max)
 
         Point cent = findCenterPoint(keypoints);
 
+	beaconLocation(keypoints, &b_loc);
+
+	getBeaconOrientation(keypoints, &b_loc);
         printDistanceFromLights(keypoints, &b_loc);
         robot_angle(binDiff, cent.x, &b_loc);
 
