@@ -424,7 +424,7 @@ void shootPic()
 //returns true if success, false otherwise
 bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc) {
 
-	const float WIDTH = 61; //inches
+	const float WIDTH = 60; //inches
 	const float HEIGHT = 55; //inches
 
 	vector<KeyPoint> keyPoints(4);

@@ -131,6 +131,7 @@ int main(int argc, char **argv) {
       if(beacon_found) {
 	double driveDist = 0;
 	double angle = 0;
+	double dist = last_distance_to_beacon;
 
 	// If we are far enough away we see the entire beacon
 	if(!only_bottom_light) {
@@ -151,10 +152,10 @@ int main(int argc, char **argv) {
 		angle = last_angle_from_robot + (-90 - last_angle_from_beacon - (180/M_PI)*atan((double)(y_pos - Y_STAGE)/x_pos));
 	      }
 	    }
-	    
+	    dist = sqrt(x_pos*x_pos + (y_pos-Y_STAGE)*(y_pos-Y_STAGE));
+	  } else { // We are not confident in our orientation
+	    int z = 1;
 	  }
-	  // Calculate distance to the staging position
-	  double dist = sqrt(x_pos*x_pos + (y_pos-Y_STAGE)*(y_pos-Y_STAGE));
 
 	  // Avoid excessive turns
 	  if(angle > 180) {
