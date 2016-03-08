@@ -1,4 +1,4 @@
-`// Uncomment below for debug messages
+// Uncomment below for debug messages
 //#define DEBUG
 //#define HEARTBEAT_MONITOR
 #define DEBUG_LITE
@@ -24,7 +24,7 @@ using namespace std;
 
 // Some static constants
 static const double MOTOR_MAX = 400; // Max motor value (400 max)
-static const double PIVOT_SPEED = 0.55; // The speed to run the motors at in a pivot
+static const double PIVOT_SPEED = 1.0; // 0.55; // The speed to run the motors at in a pivot
 static const double ENC_FUDGE = 1.0;//1.26
 static const double BREAK_SPEED = -0.10; // Reverse with enough power to stop wheel motion
 static const double DRIVE_SPEED = 0.75;
@@ -289,7 +289,7 @@ bool turnInPlace(double *leftWheelSpeed, double *rightWheelSpeed, double target,
   if(diff>0){
     diff *= .9;
   }
-  if(abs(diff) < ANGLE_PRECISION) { // If we are closer than out precision, brake
+  if(abs(diff) < ANGLE_PRECISION) { // If we are closer than our precision, brake
     *rightWheelSpeed = 0.5*BREAK_SPEED;
     *leftWheelSpeed = 0.82*BREAK_SPEED;
     return 1;
@@ -298,11 +298,11 @@ bool turnInPlace(double *leftWheelSpeed, double *rightWheelSpeed, double target,
     *rightWheelSpeed = 0.5*BREAK_SPEED;
     }
   if(diff < 0) { // If we need to turn left
-    *rightWheelSpeed = PIVOT_SPEED*0.85;
-    *leftWheelSpeed = -1 * PIVOT_SPEED*0.85;
+    *rightWheelSpeed = PIVOT_SPEED;
+    *leftWheelSpeed = -1 * PIVOT_SPEED;
   } else { // If we need to turn right
-    *leftWheelSpeed = PIVOT_SPEED*0.85;
-    *rightWheelSpeed = -1 * PIVOT_SPEED*0.85;
+    *leftWheelSpeed = PIVOT_SPEED;
+    *rightWheelSpeed = -1 * PIVOT_SPEED;
   }
   return 0;
 }
