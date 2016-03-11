@@ -2,7 +2,7 @@
 //#define DEBUG
 //#define HEARTBEAT_MONITOR
 #define DEBUG_LITE
-#define ANGLE_CORRECTION
+//#define ANGLE_CORRECTION
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 #include "std_msgs/Float32.h"
