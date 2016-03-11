@@ -63,6 +63,8 @@ beacon_loc beacon_main(float min, float max)
         threshDilateDetect(grayDiff, binDiff, thresh, params, keypoints);
     }
 
+    cout << keypoints.size() << endl;
+
     while(keypoints.size() < 4 && thresh >= 50)
     {
         thresh -= 5;
@@ -71,9 +73,12 @@ beacon_loc beacon_main(float min, float max)
 
     if(thresh < 50)
     {
+	cout << "Failed to find beacon" << endl;
         b_loc.beacon_not_found = 1;
         return b_loc;
     }
+
+    cout << keypoints.size() << endl;
 
     while(keypoints.size() > 4 && thresh <= 255)
     {
@@ -93,6 +98,8 @@ beacon_loc beacon_main(float min, float max)
         b_loc.only_bottom = 0;
 
         Point cent = findCenterPoint(keypoints);
+
+	beaconLocation(keypoints, &b_loc);
 
 	getBeaconOrientation(keypoints, &b_loc);
         printDistanceFromLights(keypoints, &b_loc);

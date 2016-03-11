@@ -1,12 +1,20 @@
 #ifndef functions_H_INCLUDED
 #define functions_H_INCLUDED
 
+#include "beacon.h"
+#include "blob.h"
+#include <iostream>
 #include "opencv2/opencv.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
+#include <stdio.h>
+#include <stdlib.h>
 #include <vector>
+#include <unistd.h>
+#include <string>
+#include <ctime>
+#include <algorithm>
 #include "sys/time.h"
-#include "beacon.h"
 using namespace cv;
 using namespace std;
 
@@ -14,25 +22,46 @@ struct hsvParams{
   int hL, sL, vL, hH, sH, vH;
 };
 
+void removenoise(Mat);
 
+Mat findBiggestBlob(Mat);
 
-void removenoise(Mat&);
+void findGrass(Mat, Mat);
 
-Mat findBiggestBlob(Mat &src);
+template<typename T> void robot_angle(T* orientation, Mat img, int object_cols);
 
-void findGrass(Mat &src, Mat &HSV);
+void tilt_turn_degrees(Mat img, int object_rows, int object_cols, sample_loc* orientation);
 
-void robot_angle(Mat img, int object_rows, int object_cols, bool targetIsBeacon, beacon_loc* orientation);
+Point findCenterPoint(vector<KeyPoint>);
 
-Point findkeyPoint(vector<KeyPoint> keypoints);
+KeyPoint getLeftKeyPoint(vector<KeyPoint>);
+KeyPoint getRightKeyPoint(vector<KeyPoint>);
+KeyPoint getBottomKeyPoint(vector<KeyPoint>);
+KeyPoint getTopKeyPoint(vector<KeyPoint>);
 
-int blob_main();
+void printDistanceFromLights(vector<KeyPoint>, beacon_loc*);
 
-int beacon_main();
+void getBeaconOrientation(vector<KeyPoint>, beacon_loc*);
 
-void printDistanceFromLights(vector<KeyPoint> keypoints, beacon_loc* orientation);
+Mat getPic(VideoCapture);
 
-Mat getPic(VideoCapture cap);
+void createWindows();
+
+SimpleBlobDetector::Params setupBeaconBlobParams();
+SimpleBlobDetector::Params setupObjectBlobParams();
+
+void showWindows(Mat, Mat, Mat, Mat, Mat, Mat, Mat);
+
+Mat drawAndCircleKeypoints(vector<KeyPoint>, Mat);
+
+void threshDilateDetect(Mat, Mat, double, SimpleBlobDetector::Params, vector<KeyPoint>&);
+
+void initializePointAndShoot();
+void zoomInFull();
+void zoomOutFull();
+void shootPic();
+
+bool beaconLocation(vector<KeyPoint>, beacon_loc*);
 
 #endif
 

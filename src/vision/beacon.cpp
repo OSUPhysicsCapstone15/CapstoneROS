@@ -63,17 +63,22 @@ beacon_loc beacon_main(float min, float max)
         threshDilateDetect(grayDiff, binDiff, thresh, params, keypoints);
     }
 
-    while(keypoints.size() < 4 && thresh >= 100)
+    cout << keypoints.size() << endl;
+
+    while(keypoints.size() < 4 && thresh >= 50)
     {
         thresh -= 5;
         threshDilateDetect(grayDiff, binDiff, thresh, params, keypoints);
     }
 
-    if(thresh < 100)
+    if(thresh < 50)
     {
+	cout << "Failed to find beacon" << endl;
         b_loc.beacon_not_found = 1;
         return b_loc;
     }
+
+    cout << keypoints.size() << endl;
 
     while(keypoints.size() > 4 && thresh <= 255)
     {
@@ -98,7 +103,7 @@ beacon_loc beacon_main(float min, float max)
 
 	getBeaconOrientation(keypoints, &b_loc);
         printDistanceFromLights(keypoints, &b_loc);
-        robot_angle(binDiff, cent.x, &b_loc);
+        robot_angle(&b_loc, binDiff, cent.x);
 
         circle(out, cent, 5, CV_RGB(0,100,0), -1, 8);
     }
@@ -107,7 +112,7 @@ beacon_loc beacon_main(float min, float max)
         b_loc.beacon_not_found = 0;
         b_loc.only_bottom = 1;
 
-        robot_angle(binDiff, keypoints.front().pt.x, &b_loc);
+        robot_angle(&b_loc, binDiff, keypoints.front().pt.x);
     }
     else
     {

@@ -2,6 +2,7 @@
 #define functions_H_INCLUDED
 
 #include "beacon.h"
+#include "blob.h"
 #include <iostream>
 #include "opencv2/opencv.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
@@ -27,13 +28,12 @@ Mat findBiggestBlob(Mat);
 
 void findGrass(Mat, Mat);
 
-void robot_angle(Mat, int, beacon_loc*);
+void robot_angle(beacon_loc *orientation, Mat img, int object_cols);
+void robot_angle(sample_loc *orientation, Mat img, int object_cols);
+
+void tilt_turn_degrees(Mat img, int object_rows, int object_cols, sample_loc* orientation);
 
 Point findCenterPoint(vector<KeyPoint>);
-
-int blob_main();
-
-int beacon_main();
 
 KeyPoint getLeftKeyPoint(vector<KeyPoint>);
 KeyPoint getRightKeyPoint(vector<KeyPoint>);

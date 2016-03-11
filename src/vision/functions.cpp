@@ -48,13 +48,9 @@ void findGrass(Mat src, Mat HSV) //this should be separated into a few more read
     src.copyTo(temp);
 
     inRange(HSV, Scalar(iLowH, iLowS, iLowV), Scalar(iHighH, iHighS, iHighV), imgThresholded); //Threshold the image
-
-    erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
-    //dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
-
     //morphological closing (fill small holes in the foreground)
+    erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
     dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
-    //erode( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(50, 50)) );
 
     imgThresholded = findBiggestBlob(imgThresholded);
 
@@ -100,8 +96,47 @@ void removenoise(Mat image)
     erode(image,image,getStructuringElement(MORPH_ELLIPSE,Size(5,5)));
 }
 
+//get robot dist from sample
+void tilt_turn_degrees(Mat img, int object_rows, int object_cols, sample_loc* orientation){
+    double camera_height = .5;     // height of camera from ground in meters
+    int camera_diagonal_angle = 69; // diagonal angle of view for camera in degrees
+                                    // logitech c525 fov is 69 degrees, Samsung Galaxy S5 is 90 degrees
+
+    int rows = img.rows; // height of camera image in pixels
+    int cols = img.cols; // width of camera image in pixels
+    //cout << "Rows: " << rows << "\n" << "Cols: " << cols << endl;
+
+    //logitech c525 fov is 69 degrees, Samsung Galaxy S5 is 90 degrees
+    double camera_diagonal = 69; // the angle of the cameras diagonal in degrees
+    double pixel_diagonal = sqrt(rows * rows + cols * cols); // (pythagorean) diagonal length of image in pixels
+    double degrees_per_pixel = camera_diagonal / pixel_diagonal; // ratio of real world degrees to pixels in the image
+
+    int center_rows = rows / 2; // the center height is half of the total height
+    int center_cols = cols / 2; // the center width is half of the total width
+    //cout << "Center Rows: " << center_rows << "\n" << "Center Cols: " << center_cols << endl;
+
+    int diff_rows = center_rows - object_rows; // difference between center and object rows
+    int diff_cols = center_cols - object_cols; // difference between center and object cols
+    //cout << "Diff Rows: " << diff_rows << "\n" << "Diff Cols: " << diff_cols << endl;
+
+    double turn_robot_x_degrees = diff_cols * degrees_per_pixel; // positive -> turn left, negative -> turn right
+    double tilt_camera_x_degrees = diff_rows * degrees_per_pixel; // positive -> tilt up, negative -> tilt down
+    cout << "Turn robot " << turn_robot_x_degrees << " degrees.\n" << "Tilt camera " << tilt_camera_x_degrees << " degrees." << endl;
+
+    double tilted_degrees = 90 + tilt_camera_x_degrees; // assuming camera is parallel to ground (90 degrees)
+
+    double tilted_radians = tilted_degrees * 3.1415962 / 180.0; // c++ tan() function uses radians
+
+    double height = camera_height; // height of camera from the ground in meters
+
+    double distance = height * tan(tilted_radians); // triangle formula for finding distance
+
+    cout << "Distance is " << distance << " meters" << endl;
+    orientation->distance=distance;
+}
+
 //get angle from camera to keypoint
-void robot_angle(Mat img, int object_cols, beacon_loc* orientation)
+void robot_angle(sample_loc *orientation, Mat img, int object_cols)
 {
     double cols = img.cols;                         // width of camera image in pixels
 
@@ -111,7 +146,22 @@ void robot_angle(Mat img, int object_cols, beacon_loc* orientation)
 
     double turn_robot_x_degrees_other = .0758 * diff_cols - .2716;
 
-    cout << "Turn robot " << turn_robot_x_degrees_other << " degrees." << endl;
+//    cout << "Turn robot " << turn_robot_x_degrees_other << " degrees." << endl;
+    orientation->angle_from_robot = turn_robot_x_degrees_other;
+}
+
+//get angle from camera to keypoint
+void robot_angle(beacon_loc *orientation, Mat img, int object_cols)
+{
+    double cols = img.cols;                         // width of camera image in pixels
+
+    double center_cols = cols / 2.0;                // the center width is half of the total width
+
+    double diff_cols = center_cols - object_cols;   // difference between center and object cols
+
+    double turn_robot_x_degrees_other = .0758 * diff_cols - .2716;
+
+//    cout << "Turn robot " << turn_robot_x_degrees_other << " degrees." << endl;
     orientation->angle_from_robot = turn_robot_x_degrees_other;
 }
 
@@ -214,7 +264,7 @@ void printDistanceFromLights(vector<KeyPoint> keypoints, beacon_loc* orientation
 
     orientation->distance = dist * 0.0254; //convert inches to meters
 
-    cout << "Distance is " << dist << endl;
+//    cout << "Distance is " << dist << endl;
 }
 
 //calculates the orientation of the beacon
@@ -424,14 +474,16 @@ void shootPic()
 //returns true if success, false otherwise
 bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc) {
 
-	const float WIDTH = 60; //inches
-	const float HEIGHT = 55; //inches
+	const float BOTTOM_DIST = 22.0; //inches
+        const float TOP_DIST = -33.0; //up is negative y in solvePNP
+        const float LEFT_DIST = -30.75;
+	const float RIGHT_DIST = 30.0;
 
 	vector<KeyPoint> keyPoints(4);
-	keyPoints[0] = getRightKeyPoint(imgKeyPoints);
-        keyPoints[1] = getTopKeyPoint(imgKeyPoints);
-        keyPoints[2] = getBottomKeyPoint(imgKeyPoints);
-        keyPoints[3] = getLeftKeyPoint(imgKeyPoints);
+	keyPoints[0] = getTopKeyPoint(imgKeyPoints);
+        keyPoints[1] = getLeftKeyPoint(imgKeyPoints);
+        keyPoints[2] = getRightKeyPoint(imgKeyPoints);
+        keyPoints[3] = getBottomKeyPoint(imgKeyPoints);
 
 
 	//convert keypoints to point2f points
@@ -439,11 +491,13 @@ bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc) {
 	KeyPoint::convert(keyPoints, imgPoints);
 
 	//fill known points with beacon dimensions
-	vector<Point3f> kwnPoints = {Point3f(0, HEIGHT/2, 0), //Top
-				     Point3f(-WIDTH/2, 0, 0), //Left
-				     Point3f(WIDTH/2, 0, 0),  //Right
-				     Point3f(0, -HEIGHT/2, 0) //Bottom
+	vector<Point3f> kwnPoints = {Point3f(0, TOP_DIST, 0), //Top
+				     Point3f(LEFT_DIST, 0, 0), //Left
+				     Point3f(RIGHT_DIST, 0, 0),  //Right
+				     Point3f(0, BOTTOM_DIST, 0) //Bottom
 	};
+
+
 
 	//get saved calibration matrix
 	string filename = "out_camera_data.xml";
@@ -489,6 +543,14 @@ bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc) {
 
 	//fill beacon struct with appropriate values
 	//TODO
+	float bangle = (rvec.at<double>(1) / M_PI) * 180.0; //change from radians to degrees
+	float distance = sqrt(tvec.at<double>(2) * tvec.at<double>(2) + tvec.at<double>(0) * tvec.at<double>(0));
+	float rangle = 180.0 * atan(tvec.at<double>(0) / tvec.at<double>(2)) / M_PI;
+
+	cout << endl << endl;
+	cout << "Distance is " << distance << " inches." << endl;
+        cout << "Robot angle is " << rangle << " degrees." << endl;
+        cout << "Beacon angle is " << bangle << " degrees." << endl;
 
 	return true;
 

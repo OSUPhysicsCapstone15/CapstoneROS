@@ -1,0 +1,4 @@
+float32 angle_from_robot
+float32 distance
+bool sample_not_found
+bool sample_angle_conf
