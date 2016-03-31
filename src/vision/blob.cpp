@@ -4,14 +4,17 @@
 sample_loc blob_main(float min, float max)
 {
     sample_loc s_loc;
-    hsvParams hsv = {0,0,200,180,90,255};
-    
+    int obj=2;
+    hsvParams hsvWhite = {0,0,200,180,90,255};
+    hsvParams hsvPurple = {45,0,20,150,90,255};
+    hsvParams hsv = obj==1? hsvWhite:hsvPurple;
+
     //Set up blob detection parameters
     SimpleBlobDetector::Params params = setupObjectBlobParams();
 
     vector<KeyPoint> keypoints;
 
-    const string filename("/home/buckeye/catkin_ws/src/CapstoneROS/src/vision/pic2.jpg");
+    const string filename("/home/buckeye/catkin_ws/src/CapstoneROS/src/vision/medPurple.jpg");
     //Initialize camera
 /*    VideoCapture cap(1);
     if ( !cap.isOpened() ){
