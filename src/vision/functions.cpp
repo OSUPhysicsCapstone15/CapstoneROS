@@ -475,15 +475,15 @@ void shootPic()
 bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc) {
 
 	const float BOTTOM_DIST = 22.0; //inches
-        const float TOP_DIST = -33.0; //up is negative y in solvePNP
-        const float LEFT_DIST = -30.75;
+    const float TOP_DIST = -33.0; //up is negative y in solvePNP
+    const float LEFT_DIST = -30.75;
 	const float RIGHT_DIST = 30.0;
 
 	vector<KeyPoint> keyPoints(4);
 	keyPoints[0] = getTopKeyPoint(imgKeyPoints);
-        keyPoints[1] = getLeftKeyPoint(imgKeyPoints);
-        keyPoints[2] = getRightKeyPoint(imgKeyPoints);
-        keyPoints[3] = getBottomKeyPoint(imgKeyPoints);
+    keyPoints[1] = getLeftKeyPoint(imgKeyPoints);
+    keyPoints[2] = getRightKeyPoint(imgKeyPoints);
+    keyPoints[3] = getBottomKeyPoint(imgKeyPoints);
 
 
 	//convert keypoints to point2f points
@@ -532,8 +532,15 @@ bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc) {
 	cout << imgPoints << endl;
 
 	//get rotation-translation matrix
-	Mat rvec, tvec;
-	solvePnP(Mat(kwnPoints), Mat(imgPoints), cameraMatrix, distCoeffs, rvec, tvec, false);
+    //NOT SURE ABOUT THIS
+	Mat rvec(3, 1, CV_32F), tvec(3, 1, CV_32F);
+    *rvec.at<double>(0) = 0;
+    *rvec.at<double>(1) = b_loc.angle_from_robot;
+    *rvec.at<double>(2) = 0;
+    *tvec.at<double>(0) = b_loc->x;
+    *tvec.at<double>(1) = b_loc->y;
+    *tvec.at<double>(2) = 2;  //Need height of center of beacon
+	solvePnP(Mat(kwnPoints), Mat(imgPoints), cameraMatrix, distCoeffs, rvec, tvec, true);
 
 	//print out stuff for sanity check
 	cout << "Rotation vector" << endl;

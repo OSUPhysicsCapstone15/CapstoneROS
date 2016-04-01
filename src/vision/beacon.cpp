@@ -1,9 +1,8 @@
 #include "beacon.h"
 #include "functions.h"
 
-beacon_loc beacon_main(float min, float max)
+void beacon_main(beacon_loc &b_loc)
 {
-    beacon_loc b_loc;
     createWindows();
 
     //Set up blob detection parameters
@@ -16,7 +15,7 @@ beacon_loc beacon_main(float min, float max)
     if (!cap.isOpened())
     {
         cout << "Cannot open the web cam" << endl;
-        return b_loc;
+        return;
     }
 
     Mat imgOriginal1 = getPic(cap);
@@ -27,7 +26,7 @@ beacon_loc beacon_main(float min, float max)
     if(imgOriginal1.empty() || imgOriginal2.empty() ||imgOriginal3.empty() ||imgOriginal4.empty())
     {
         cout << "can not open " << endl;
-        return b_loc;
+        return;
     }
 
     //initialize mats
@@ -75,7 +74,7 @@ beacon_loc beacon_main(float min, float max)
     {
 	cout << "Failed to find beacon" << endl;
         b_loc.beacon_not_found = 1;
-        return b_loc;
+        return;
     }
 
     cout << keypoints.size() << endl;
@@ -101,11 +100,11 @@ beacon_loc beacon_main(float min, float max)
 
 	beaconLocation(keypoints, &b_loc);
 
-	getBeaconOrientation(keypoints, &b_loc);
-        printDistanceFromLights(keypoints, &b_loc);
-        robot_angle(&b_loc, binDiff, cent.x);
+	//getBeaconOrientation(keypoints, &b_loc);
+    //printDistanceFromLights(keypoints, &b_loc);
+    //robot_angle(&b_loc, binDiff, cent.x);
 
-        circle(out, cent, 5, CV_RGB(0,100,0), -1, 8);
+    circle(out, cent, 5, CV_RGB(0,100,0), -1, 8);
     }
     else if(keypoints.size() == 1)
     {
@@ -122,6 +121,5 @@ beacon_loc beacon_main(float min, float max)
     //output windows to view
     showWindows(imgOriginal1, imgOriginal2, imgOriginal3, imgOriginal4, diff1, diff2, out);
 
-    return b_loc;
 }
 
