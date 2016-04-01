@@ -24,14 +24,12 @@ void sigintHand(int sig) {
 void BeaconRequest_hand(const robot::BeaconRequest::ConstPtr& msg) {
 
 	//look for the beacon in the requested area
-	beacon_loc loc = beacon_main(msg->angle_min, msg->angle_max);
-	/*loc.angle_from_robot = 10;
-	loc.angle_from_beacon = 15;
-	loc.distance = 10;
-	loc.only_bottom = false;
-	loc.beacon_not_found = false;
-	loc.beacon_angle_conf = true;
-	*/
+	beacon_loc loc;
+	loc.x = msg->x;
+	loc.y = msg->y;
+	loc.angle_from_robot = msg->angle_from_robot;
+	beacon_main(loc);
+
 	//report findings
 	robot::BeaconResponse rsp;
 	rsp.angle_from_robot = loc.angle_from_robot;

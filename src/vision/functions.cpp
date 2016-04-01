@@ -475,8 +475,8 @@ void shootPic()
 bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc) {
 
 	const float BOTTOM_DIST = 22.0; //inches
-        const float TOP_DIST = -33.0; //up is negative y in solvePNP
-        const float LEFT_DIST = -30.75;
+    const float TOP_DIST = -33.0; //up is negative y in solvePNP
+    const float LEFT_DIST = -30.75;
 	const float RIGHT_DIST = 30.0;
 
 	vector<KeyPoint> keyPoints(4);
