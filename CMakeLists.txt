@@ -23,6 +23,8 @@ find_package(catkin REQUIRED COMPONENTS
    BeaconResponse.msg
    SampleRequest.msg
    SampleResponse.msg
+   TargetResponse.msg
+   TargetRequest.msg
  )
 
 # Generate services in the 'srv' folder

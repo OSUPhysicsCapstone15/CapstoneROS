@@ -3,6 +3,8 @@
 #include "robot/Commands.h"
 #include "robot/BeaconResponse.h"
 #include "robot/BeaconRequest.h"
+#include "robot/TargetRequest.h"
+#include "robot/TargetResponse.h"
 #include <cstdlib> 
 #include <iostream>
 #include <string>
@@ -11,7 +13,9 @@
 static double Y_STAGE = 5; // Staging distance in front of beacon
 
 // Flags
-int state = 2; // 0: Startup, 1: Target seeking, 2: Returning, 3: BeaconApproach, 4: Paused 
+int state = 3; // 0: Startup, 1: Target seeking, 2: Returning, 3: BeaconApproach, 4: Paused 
+
+//variables for beacon and approach
 double last_angle_from_beacon = 0;
 double last_angle_from_robot = 180;
 double last_distance_to_beacon = 12;
@@ -22,6 +26,12 @@ bool waiting_on_command = false;
 bool waiting_on_vision = false;
 int command_timeout = 100; //TODO: Add command timeout
 bool move_to_stage = false;
+
+//variables for target seeking
+double last_angle_from_target =0;
+double last_distance_from_target=0;
+bool target_found=false;
+
 
 // Reported position
 double x_pos = 0;
@@ -55,6 +65,12 @@ void beaconCallback(const robot::BeaconResponse::ConstPtr& msg) {
   waiting_on_vision = false;
 }
 
+
+void targetCallback(const robot::TargetResponse::ConstPtr& msg)
+{
+
+}
+
 void setState(const std_msgs::Int32::ConstPtr& msg) {
   state = msg->data;
 }
@@ -84,6 +100,11 @@ int main(int argc, char **argv) {
   
   // Subscribe to the "BeaconResponse" return from a beacon scan
   ros::Subscriber beacon_response_msg = n.subscribe("BeaconResponse", 1000, beaconCallback);
+
+  ros::Publisher target_request_pub = n.advertise<robot::TargetRequest>("TargetRequest",1000);
+
+
+  ros::Subscriber target_response_msg = n.subscribe("TargetResponse",1000,targetCallback);
   
   // Subscribe to the "SetState" return from a beacon scan
   ros::Subscriber set_state_msg = n.subscribe("SetState", 1000, setState);
@@ -105,6 +126,32 @@ int main(int argc, char **argv) {
       break;
 
     case 1: // Target Seeking
+	b_msg.angle_min=-150;
+	b_msg.angle_max=150;
+
+	while(target_request_pub.getNumSubscribers()<1)
+	{
+		loop_rate.sleep();
+	}
+	
+	target_request_pub.publish(b_msg);
+	ros::spinOnce();	
+	waiting_on_vision = true;
+	ROS_INFO("Target Request Published");
+	while(waiting_on_vision)
+	{
+		loop_rate.sleep();
+		ros::spinOnce();
+	}
+	
+	if(target_found)
+	{
+	
+	}
+	else
+	{
+
+	}
       break;
 
     case 2: // Returning
