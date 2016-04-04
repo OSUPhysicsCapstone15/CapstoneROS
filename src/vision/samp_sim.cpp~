@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
   	while (ros::ok()) {
 		s_msg.angle_min = -150;
       		s_msg.angle_max = 150;
-		s_msg.whiteSample=false;
+		//s_msg.whiteSample=false;
       		while(sample_request_pub.getNumSubscribers()<1){ //Wait for vision to subcribe to us
 			loop_rate.sleep();
 		}

@@ -6,8 +6,9 @@ struct sample_loc {
 	float distance=0; //meters
 	bool sample_not_found=0;
 	bool sample_angle_conf=0;
+	bool whiteSample=true;
 };
 
-sample_loc blob_main(float min, float max);
+void blob_main(sample_loc &s_loc);
 
 #endif

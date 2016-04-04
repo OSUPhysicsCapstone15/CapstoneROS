@@ -47,7 +47,13 @@ void BeaconRequest_hand(const robot::BeaconRequest::ConstPtr& msg) {
 void SampleRequest_hand(const robot::SampleRequest::ConstPtr& msg) {
 
 	//look for the sample in the requested area
-	sample_loc loc = blob_main(msg->angle_min, msg->angle_max);
+	sample_loc loc;
+	//loc.angle_min = msg->angle_min;
+	//loc.angle_max = msg->angle_max;
+	loc.whiteSample = msg->whiteSample;
+	blob_main(loc);
+	
+	//report findings
 	robot::SampleResponse rsp;
 	rsp.angle_from_robot = loc.angle_from_robot;
 	rsp.distance = loc.distance;
