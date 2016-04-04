@@ -28,7 +28,8 @@ Mat findBiggestBlob(Mat);
 
 void findGrass(Mat, Mat);
 
-template<typename T> void robot_angle(T* orientation, Mat img, int object_cols);
+//void robot_angle(beacon_loc *orientation, Mat img, int object_cols);
+void robot_angle(sample_loc *orientation, Mat img, int object_cols);
 
 void tilt_turn_degrees(Mat img, int object_rows, int object_cols, sample_loc* orientation);
 
@@ -38,11 +39,11 @@ KeyPoint getLeftKeyPoint(vector<KeyPoint>);
 KeyPoint getRightKeyPoint(vector<KeyPoint>);
 KeyPoint getBottomKeyPoint(vector<KeyPoint>);
 KeyPoint getTopKeyPoint(vector<KeyPoint>);
-
+/*
 void printDistanceFromLights(vector<KeyPoint>, beacon_loc*);
 
 void getBeaconOrientation(vector<KeyPoint>, beacon_loc*);
-
+*/
 Mat getPic(VideoCapture);
 
 void createWindows();

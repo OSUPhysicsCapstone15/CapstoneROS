@@ -39,11 +39,11 @@ KeyPoint getLeftKeyPoint(vector<KeyPoint>);
 KeyPoint getRightKeyPoint(vector<KeyPoint>);
 KeyPoint getBottomKeyPoint(vector<KeyPoint>);
 KeyPoint getTopKeyPoint(vector<KeyPoint>);
-
+/*
 void printDistanceFromLights(vector<KeyPoint>, beacon_loc*);
 
 void getBeaconOrientation(vector<KeyPoint>, beacon_loc*);
-
+*/
 Mat getPic(VideoCapture);
 
 void createWindows();

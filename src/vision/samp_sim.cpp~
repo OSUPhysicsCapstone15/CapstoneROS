@@ -5,7 +5,7 @@
 #include <string>
 
 bool waiting_on_vision = false;
-void sampleCallback(const robotsamp::SampleResponse::ConstPtr& msg){
+void sampleCallback(const robot::SampleResponse::ConstPtr& msg){
 	ROS_INFO("Response Recieved:\nSample Found: %s\nDistance: %fm\nAngle from robot: %f degrees\nSample Angle Confidence: %s", 
 		msg->sample_not_found? "false":"true", 
 		msg->distance,
@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
   	ros::NodeHandle n;
 	
   	// Publish a topic "SampleRequest", used to ask for a scan for the Sample
-  	ros::Publisher sample_request_pub = n.advertise<robotsamp::SampleRequest>("SampleRequest", 1000);
+  	ros::Publisher sample_request_pub = n.advertise<robot::SampleRequest>("SampleRequest", 1000);
   	
   	// Subscribe to the "SampleResponse" return from a sample scan
   	ros::Subscriber sample_response_msg = n.subscribe("SampleResponse", 1000, sampleCallback);
@@ -33,12 +33,13 @@ int main(int argc, char **argv) {
   	ros::Rate loop_rate(10); // This should be fast enough for us, since at 2 m/s this would be .2 meters an update at worst.
 	
   	// Make a sample request
-  	robotsamp::SampleRequest s_msg; // Defined in msg directory
+  	robot::SampleRequest s_msg; // Defined in msg directory
 	ROS_INFO("Initializing Complete");
   
   	while (ros::ok()) {
 		s_msg.angle_min = -150;
       		s_msg.angle_max = 150;
+		s_msg.whiteSample=false;
       		while(sample_request_pub.getNumSubscribers()<1){ //Wait for vision to subcribe to us
 			loop_rate.sleep();
 		}

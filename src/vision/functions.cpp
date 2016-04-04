@@ -250,6 +250,7 @@ KeyPoint getTopKeyPoint(vector<KeyPoint> keypoints)
     return topPoint;
 }
 
+/*
 //calculates the camera's distance from the beacon
 void printDistanceFromLights(vector<KeyPoint> keypoints, beacon_loc* orientation)
 {
@@ -321,6 +322,7 @@ double test=-110*rat*rat + 387.4*rat - 276.18;
     orientation->angle_from_beacon = 887.52*ratio*ratio - 1877.7*ratio + 990.86;
  //   cout << "beacon orientation is " << orientation->angle_from_beacon << endl;
 }
+*/
 
 //returns a picture taken with the given camera
 Mat getPic(VideoCapture cap)
@@ -534,12 +536,13 @@ bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc) {
 	//get rotation-translation matrix
     //NOT SURE ABOUT THIS
 	Mat rvec(3, 1, CV_32F), tvec(3, 1, CV_32F);
-    *rvec.at<double>(0) = 0;
-    *rvec.at<double>(1) = b_loc.angle_from_robot;
-    *rvec.at<double>(2) = 0;
-    *tvec.at<double>(0) = b_loc->x;
-    *tvec.at<double>(1) = b_loc->y;
-    *tvec.at<double>(2) = 2;  //Need height of center of beacon
+    rvec.at<double>(0) = 0;
+cout<<rvec.at<double>(0)<<endl;
+    rvec.at<double>(1) = b_loc->angle_from_robot;
+    rvec.at<double>(2) = 0;
+    tvec.at<double>(0) = b_loc->x;
+    tvec.at<double>(1) = b_loc->y;
+    tvec.at<double>(2) = 2;  //Need height of center of beacon
 	solvePnP(Mat(kwnPoints), Mat(imgPoints), cameraMatrix, distCoeffs, rvec, tvec, true);
 
 	//print out stuff for sanity check
