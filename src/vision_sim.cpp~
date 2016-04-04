@@ -10,7 +10,7 @@ ros::Publisher response_pub;
 void requestCallback(const robot::BeaconRequest::ConstPtr& msg)
 {
 	ROS_INFO("Request Recieved");
-	ROS_INFO("x: %f, y: %f, angle_from_robot: %f", msg->x, msg->y, msg->angle_from_robot);
+	ROS_INFO("%f", msg->angle_min);
 	float angle_from_robot = 0.0;
 	float x = 0.0;
 	float y = 0.0;

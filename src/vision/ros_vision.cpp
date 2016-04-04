@@ -33,8 +33,8 @@ void BeaconRequest_hand(const robot::BeaconRequest::ConstPtr& msg) {
 	//report findings
 	robot::BeaconResponse rsp;
 	rsp.angle_from_robot = loc.angle_from_robot;
-	rsp.distance = loc.distance;
-	rsp.angle_from_beacon = loc.angle_from_beacon;
+	rsp.x = loc.x;
+	rsp.y = loc.y;
 	rsp.only_bottom = loc.only_bottom;
 	rsp.beacon_not_found = loc.beacon_not_found;
 	rsp.beacon_angle_conf = loc.beacon_angle_conf;

@@ -23,6 +23,8 @@ find_package(catkin REQUIRED COMPONENTS
    BeaconResponse.msg
    SampleRequest.msg
    SampleResponse.msg
+   TargetResponse.msg
+   TargetRequest.msg
  )
 
 # Generate services in the 'srv' folder
@@ -80,7 +82,7 @@ set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
 #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lphidget21")
 
 #vision
-add_executable(vision src/vision/ros_vision.cpp src/vision/beacon.cpp src/vision/functions.cpp)
+add_executable(vision src/vision/ros_vision.cpp src/vision/beacon.cpp src/vision/blob.cpp src/vision/functions.cpp)
 add_executable(nav_sim src/vision/nav_sim.cpp)
 add_executable(samp_sim src/vision/samp_sim.cpp)
 find_package(OpenCV)

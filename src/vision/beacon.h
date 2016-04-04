@@ -12,6 +12,6 @@ struct beacon_loc {
 };
 
 
-beacon_loc beacon_main(float min, float max);
+void beacon_main(beacon_loc &b_loc);
 
 #endif

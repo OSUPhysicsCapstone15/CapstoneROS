@@ -8,8 +8,8 @@ bool waiting_on_vision = false;
 void beaconCallback(const robot::BeaconResponse::ConstPtr& msg){
 	ROS_INFO("Response Recieved:\nBeacon Found: %s\nDistance: %fm\nAngle from beacon: %f degrees\nAngle from robot: %f degrees\nOnly bottom: %s\nBeacon Angle Confidence: %s", 
 		msg->beacon_not_found? "false":"true", 
-		msg->distance,
-		msg->angle_from_beacon,
+		msg->x,
+		msg->y,
 		msg->angle_from_robot,
 		msg->only_bottom? "true":"false",
 		msg->beacon_angle_conf? "true":"false");
@@ -39,8 +39,9 @@ int main(int argc, char **argv) {
 	ROS_INFO("Initializing Complete");
   
   	while (ros::ok()) {
-		b_msg.angle_min = -150;
-      		b_msg.angle_max = 150;
+		b_msg.x = 0;
+      		b_msg.y = 0;
+		b_msg.angle_from_robot = 0;
       		while(beacon_request_pub.getNumSubscribers()<1){ //Wait for vision to subcribe to us
 			loop_rate.sleep();
 		}
