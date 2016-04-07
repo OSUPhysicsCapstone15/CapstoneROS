@@ -39,9 +39,13 @@ int main(int argc, char **argv) {
 	ROS_INFO("Initializing Complete");
   
   	while (ros::ok()) {
-		b_msg.x = 0;
-      		b_msg.y = 0;
-		b_msg.angle_from_robot = 0;
+		ROS_INFO("Enter y:");
+		std::cin>>b_msg.y;
+		ROS_INFO("Enter x:");
+		std::cin>>b_msg.x;
+		ROS_INFO("Enter angle from robot (degrees)");
+		std::cin>>b_msg.angle_from_robot;
+
       		while(beacon_request_pub.getNumSubscribers()<1){ //Wait for vision to subcribe to us
 			loop_rate.sleep();
 		}
@@ -52,8 +56,5 @@ int main(int argc, char **argv) {
 			loop_rate.sleep();
 			ros::spinOnce();
       		}
-		ROS_INFO("Press enter to make another request");
-		std::string str;
-		std::cin>>str;
 	}
 }

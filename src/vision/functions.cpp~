@@ -502,7 +502,7 @@ bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc) {
 
 
 	//get saved calibration matrix
-	string filename = "out_camera_data.xml";
+	string filename = "/home/buckeye/catkin_ws/src/CapstoneROS/src/vision/out_camera_data.xml";
 	FileStorage fs(filename, FileStorage::READ);
 
 	if(!fs.isOpened())
@@ -535,14 +535,18 @@ bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc) {
 
 	//get rotation-translation matrix
     //NOT SURE ABOUT THIS
-	Mat rvec(3, 1, CV_32F), tvec(3, 1, CV_32F);
-    rvec.at<double>(0) = 0;
-cout<<rvec.at<double>(0)<<endl;
-    rvec.at<double>(1) = b_loc.angle_from_robot;
-    rvec.at<double>(2) = 0;
-    tvec.at<double>(0) = b_loc->x;
-    tvec.at<double>(1) = b_loc->y;
-    tvec.at<double>(2) = 2;  //Need height of center of beacon
+	//Mat rvec(3, 1, CV_32F), tvec(3, 1, CV_32F);
+	Mat rvec=(Mat_<double>(3,1)<< 0,b_loc->angle_from_robot,0);
+	Mat tvec=(Mat_<double>(3,1)<< -1*b_loc->x,-10,b_loc->y);
+cout<<"rvec "<<rvec<<endl;
+cout<<"tvec "<<tvec<<endl;
+    //rvec.at<double>(0) = 0;
+    //rvec.at<double>(1) = b_loc->angle_from_robot;
+    cout<<rvec.at<double>(1)<<endl;
+    //rvec.at<double>(2) = 0;
+//    tvec.at<double>(0) = -1*b_loc->x;
+//    tvec.at<double>(1) = -10; //height of the camera relative to beacon
+//    tvec.at<double>(2) = b_loc->y;  
 	solvePnP(Mat(kwnPoints), Mat(imgPoints), cameraMatrix, distCoeffs, rvec, tvec, true);
 
 	//print out stuff for sanity check
@@ -553,9 +557,9 @@ cout<<rvec.at<double>(0)<<endl;
 
 	//fill beacon struct with appropriate values
 	//TODO
-	float bangle = (rvec.at<double>(1) / M_PI) * 180.0; //change from radians to degrees
+	float bangle = -1*(rvec.at<double>(1) / M_PI) * 180.0; //change from radians to degrees
 	float distance = sqrt(tvec.at<double>(2) * tvec.at<double>(2) + tvec.at<double>(0) * tvec.at<double>(0));
-	float rangle = 180.0 * atan(tvec.at<double>(0) / tvec.at<double>(2)) / M_PI;
+	float rangle = 180.0 * atan(-1*tvec.at<double>(0) / tvec.at<double>(2)) / M_PI;
 
 	cout << endl << endl;
 	cout << "Distance is " << distance << " inches." << endl;
