@@ -3,8 +3,8 @@
 #include "robot/Commands.h"
 #include "robot/BeaconResponse.h"
 #include "robot/BeaconRequest.h"
-#include "robot/TargetRequest.h"
-#include "robot/TargetResponse.h"
+#include "robot/SampleRequest.h"
+#include "robot/SampleResponse.h"
 #include <cstdlib> 
 #include <iostream>
 #include <string>
@@ -13,7 +13,7 @@
 static double Y_STAGE = 5; // Staging distance in front of beacon
 
 // Flags
-int state = 3; // 0: Startup, 1: Target seeking, 2: Returning, 3: BeaconApproach, 4: Paused 
+int state = 3; // 0: Startup, 1: Sample seeking, 2: Returning, 3: BeaconApproach, 4: Paused 
 
 //variables for beacon and approach
 double last_angle_from_beacon = 0;
@@ -27,11 +27,19 @@ bool waiting_on_vision = false;
 int command_timeout = 100; //TODO: Add command timeout
 bool move_to_stage = false;
 
-//variables for target seeking
-double last_angle_from_target =0;
-double last_distance_from_target=0;
-bool target_found=false;
+//variables for sample seeking
+double last_angle_from_sample =0;
+double last_distance_from_sample=0;
+bool sample_found=false;
+bool sample_angle_conf;
+int seeking_state=0; //0 for pcs, 1 for easy, 2 for done
+int looking_state=0; //0 for turn left, 1 turn right, 2 beacon look
 
+//variables for traveling to area
+double x_pcs = 100*0.3048;
+double y_psc = 60*0.3048;
+double x_easy = 10*0.3048;
+double y_easy = 50*0.3048;
 
 // Reported position
 double x_pos = 0;
@@ -42,7 +50,7 @@ double x_est = 0;
 double y_est = 1;
 
 void beaconCallback(const robot::BeaconResponse::ConstPtr& msg) {
-	ROS_INFO("Response Recieved");
+	ROS_INFO("Beacon Response Recieved");
   if(msg->beacon_not_found) {
     beacon_found = false;
     beacon_angle_conf = false;
@@ -66,9 +74,23 @@ void beaconCallback(const robot::BeaconResponse::ConstPtr& msg) {
 }
 
 
-void targetCallback(const robot::TargetResponse::ConstPtr& msg)
+void sampleCallback(const robot::SampleResponse::ConstPtr& msg)
 {
-
+	ROS_INFO("Sample Response Recieved");
+	if (msg->sample_not_found)
+	{
+		sample_found=false;
+		sample_angle_conf=false;
+		ROS_INFO("Target not found");
+	}
+	else
+	{
+		sample_found = true;
+		sample_angle_conf = msg-> sample_angle_conf;
+		last_angle_from_sample = msg->angle_from_robot;
+		last_distance_from_sample = msg->distance;
+		ROSINFO("From Target: %f, distance: %f", last_angle_from_sample, last_distance_from_sample);
+	}
 }
 
 void setState(const std_msgs::Int32::ConstPtr& msg) {
@@ -101,10 +123,10 @@ int main(int argc, char **argv) {
   // Subscribe to the "BeaconResponse" return from a beacon scan
   ros::Subscriber beacon_response_msg = n.subscribe("BeaconResponse", 1000, beaconCallback);
 
-  ros::Publisher target_request_pub = n.advertise<robot::TargetRequest>("TargetRequest",1000);
+  ros::Publisher sample_request_pub = n.advertise<robot::SampleRequest>("SampleRequest",1000);
 
 
-  ros::Subscriber target_response_msg = n.subscribe("TargetResponse",1000,targetCallback);
+  ros::Subscriber sample_response_msg = n.subscribe("SampleResponse",1000,sampleCallback);
   
   // Subscribe to the "SetState" return from a beacon scan
   ros::Subscriber set_state_msg = n.subscribe("SetState", 1000, setState);
@@ -123,35 +145,151 @@ int main(int argc, char **argv) {
 
     switch(state) {
     case 0: // Startup
-      break;
+    	double x_to_travel=0;
+    	double y_to_travel=0;
+    	double driveDist=0;
+    	double angle=0;
+    	if(seeking_state=0){
+    		x_to_travel = x_pcs;
+    		y_to_travel =y_psc;
+    	}
+    	else{
+    		x_to_travel = x_easy;
+    		y_to_travel =y_easy;
+    	}
+  		while(x_est<x_to_travel){
+    		c_msg.commandOrder = 1; // Driving
+	    	if(dist > 10) {
+	      	driveDist = 10;
+	    	} else {
+	      	driveDist = x_to_travel;
+	    	}
+	    	c_msg.value = driveDist;
+	    	command_pub.publish(c_msg);
+	    	waiting_on_command = true;
+	    	ROS_INFO("Requesting Drive of %f meters", driveDist);
+	    	while(waiting_on_command){
+	      	ros::spinOnce();
+	      	loop_rate.sleep(); // TODO: Add a timeout here
+	    	}
+	    	x_to_travel=x_to_Travel-driveDist;
+	    	x_est = x_est+driveDist;
+  		}
+  		c_msg.commandOrder = 2; // Turning, then driving
+	    c_msg.value = 90;
+	    command_pub.publish(c_msg);
+	    waiting_on_command = true;
+	    ROS_INFO("Requesting Turn of %f degrees", angle);	  
+	    while(waiting_on_command){
+	      ros::spinOnce();
+	      loop_rate.sleep(); // TODO: Add a timeout here
+	    }
+			while(y_est<y_to_travel){
+    		c_msg.commandOrder = 1; // Driving
+	    	if(dist > 10) {
+	      	driveDist = 10;
+	    	} else {
+	      	driveDist = x_to_travel;
+	    	}
+	    	c_msg.value = driveDist;
+	    	command_pub.publish(c_msg);
+	    	waiting_on_command = true;
+	    	ROS_INFO("Requesting Drive of %f meters", driveDist);
+	    	while(waiting_on_command){
+	      	ros::spinOnce();
+	      	loop_rate.sleep(); // TODO: Add a timeout here
+	    	}
+	    	y_to_travel=y_to_Travel-driveDist;
+	    	y_est=y_est+driveDist;
+  		}	    
+    }
+    break;
 
-    case 1: // Target Seeking
-	b_msg.angle_min=-150;
-	b_msg.angle_max=150;
-
-	while(target_request_pub.getNumSubscribers()<1)
-	{
-		loop_rate.sleep();
-	}
+    case 1: // Sample Seeking
+    
+			b_msg.angle_min=-150;
+			b_msg.angle_max=150;
+			if (sample_state==0){
+				b_msg.whiteSample=true;
+			}
+			else{
+				b_msg.whiteSample=false;
+			}
 	
-	target_request_pub.publish(b_msg);
-	ros::spinOnce();	
-	waiting_on_vision = true;
-	ROS_INFO("Target Request Published");
-	while(waiting_on_vision)
-	{
-		loop_rate.sleep();
-		ros::spinOnce();
-	}
+			sample_request_pub.publish(b_msg);
+			ros::spinOnce();	
+			waiting_on_vision = true;
+			ROS_INFO("Sample Request Published");
+			while(waiting_on_vision)
+			{
+				loop_rate.sleep();
+				ros::spinOnce();
+			}
 	
-	if(target_found)
-	{
-	
-	}
-	else
-	{
-
-	}
+			if(sample_found)
+			{
+				c_msg.commandOrder = 2; // Turning, then driving
+	    	c_msg.value = last_angle_from_sample;
+	    	command_pub.publish(c_msg);
+	    	waiting_on_command = true;
+	    	ROS_INFO("Requesting Turn of %f degrees", angle);	  
+	    	while(waiting_on_command){
+	      	ros::spinOnce();
+	      	loop_rate.sleep(); // TODO: Add a timeout here
+	    	}
+	    	c_msg.commandOrder = 1; // Driving
+	    	if(last_distance_from_sample > 10) {
+	      	driveDist = 10;
+	    	} else {
+	      	driveDist = last_distance_from_sample-0.5;
+	    	}
+		    c_msg.value = driveDist;
+	    	command_pub.publish(c_msg);
+	    	waiting_on_command = true;
+	    	ROS_INFO("Requesting Drive of %f meters", driveDist);
+	    	while(waiting_on_command){
+	      	ros::spinOnce();
+	      	loop_rate.sleep(); // TODO: Add a timeout here
+	    	}
+			}
+			else
+			{
+				if(looking_state==0){
+					c_msg.commandOrder = 2; // Turning
+	    		c_msg.value = 45;
+	    		command_pub.publish(c_msg);
+	    		waiting_on_command = true;
+	    		ROS_INFO("Requesting Turn of %f degrees", angle);	  
+	    		while(waiting_on_command){
+	      		ros::spinOnce();
+	      		loop_rate.sleep(); // TODO: Add a timeout here
+	    		}
+				}
+				else if (looking_state==1)
+				{
+					c_msg.commandOrder = 2; // Turning
+	    		c_msg.value = -90;
+	    		command_pub.publish(c_msg);
+	    		waiting_on_command = true;
+	    		ROS_INFO("Requesting Turn of %f degrees", angle);	  
+	    		while(waiting_on_command){
+	      		ros::spinOnce();
+	      		loop_rate.sleep(); // TODO: Add a timeout here
+	    		}
+				}
+				else {
+					  b_msg.angle_min = -150;
+      			b_msg.angle_max = 150;
+      			beacon_request_pub.publish(b_msg); // Look for the beacon
+      			ros::spinOnce();
+      			waiting_on_vision = true;
+      			ROS_INFO("Request Published");
+      			while(waiting_on_vision) {
+							loop_rate.sleep(); // TODO: Add a timeout here
+							ros::spinOnce();
+      			}
+				}
+			}
       break;
 
     case 2: // Returning
