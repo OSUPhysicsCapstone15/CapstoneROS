@@ -474,18 +474,18 @@ void shootPic()
 }
 
 //returns true if success, false otherwise
-bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc) 
-{
-    	const float BOTTOM_DIST = 22.0; //inches
-    	const float TOP_DIST = -33.0; //up is negative y in solvePNP
-    	const float LEFT_DIST = -30.75;
-    	const float RIGHT_DIST = 30.0;
+bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc) {
 
-    	vector<KeyPoint> keyPoints(4);
-    	keyPoints[0] = getTopKeyPoint(imgKeyPoints);
-    	keyPoints[1] = getLeftKeyPoint(imgKeyPoints);
-    	keyPoints[2] = getRightKeyPoint(imgKeyPoints);
-    	keyPoints[3] = getBottomKeyPoint(imgKeyPoints);
+	const float BOTTOM_DIST = 22.0; //inches
+    const float TOP_DIST = -33.0; //up is negative y in solvePNP
+    const float LEFT_DIST = -30.75;
+	const float RIGHT_DIST = 30.0;
+
+	vector<KeyPoint> keyPoints(4);
+	keyPoints[0] = getTopKeyPoint(imgKeyPoints);
+    keyPoints[1] = getLeftKeyPoint(imgKeyPoints);
+    keyPoints[2] = getRightKeyPoint(imgKeyPoints);
+    keyPoints[3] = getBottomKeyPoint(imgKeyPoints);
 
 
 	//convert keypoints to point2f points
@@ -533,52 +533,48 @@ bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc)
 	cout << "Image Points" << endl;
 	cout << imgPoints << endl;
 
-//        cout << "Camera Rotation vector" << 	//get rotation-translation matrix
+	//get rotation-translation matrix
     //NOT SURE ABOUT THIS
 	//Mat rvec(3, 1, CV_32F), tvec(3, 1, CV_32F);
-	//Mat rvec=(Mat_<double>(3,1)<< 0,(b_loc->angle_from_robot)*-1,0);
-	//Mat tvec=(Mat_<double>(3,1)<< -1*b_loc->x,-10,b_loc->y);
-	//cout<<"rvec "<<rvec<<endl;
-	//cout<<"tvec "<<tvec<<endl;
+	Mat rvec=(Mat_<double>(3,1)<< 0,(b_loc->angle_from_robot)*-1,0);
+	Mat tvec=(Mat_<double>(3,1)<< -1*b_loc->x,-10,b_loc->y);
+cout<<"rvec "<<rvec<<endl;
+cout<<"tvec "<<tvec<<endl;
     //rvec.at<double>(0) = 0;
     //rvec.at<double>(1) = b_loc->angle_from_robot;
-    //cout<<rvec.at<double>(1)<<endl;
+    cout<<rvec.at<double>(1)<<endl;
     //rvec.at<double>(2) = 0;
 //    tvec.at<double>(0) = -1*b_loc->x;
 //    tvec.at<double>(1) = -10; //height of the camera relative to beacon
-//    tvec.at<double>(2) = b_loc->y;
-
-	Mat rvec, tvec;
-	solvePnP(Mat(kwnPoints), Mat(imgPoints), cameraMatrix, distCoeffs, rvec, tvec, false);
+//    tvec.at<double>(2) = b_loc->y;  
+	solvePnP(Mat(kwnPoints), Mat(imgPoints), cameraMatrix, distCoeffs, rvec, tvec, true);
 
 	Mat R, camera_rvec, camera_tvec;
 
 	Rodrigues(rvec, R);
 	Rodrigues(R.t(), camera_rvec);
-
 	camera_tvec = -R.t() * tvec;
 
 	//print out stuff for sanity check
-        cout << "Rotation vector" << endl;
-        cout << rvec << endl;
-        cout << "Translation vector" << endl;
-        cout << tvec << endl;
-	cout << "Camera Rotation vector" << endl;
-	cout << camera_rvec << endl;
-	cout << "Camera Translation vector" << endl;
-	cout << camera_tvec << endl;
+	cout << "Rotation vector" << endl;
+	cout << rvec << endl;
+	cout << "Translation ve	cout << "Rotation vector" << endl;
+	cout << rvec << endl;
+	cout << "Translation vector" << endl;
+	cout << tvec << endl;
+ctor" << endl;
+	cout << tvec << endl;
+
 	//fill beacon struct with appropriate values
 	//TODO
-        float cam_distance = sqrt(camera_tvec.at<double>(2) * camera_tvec.at<double>(2) + camera_tvec.at<double>(0) * camera_tvec.at<double>(0));
-        float cam_rangle = 180.0 * atan(tvec.at<double>(0) / tvec.at<double>(2)) / M_PI;
+	float distance = sqrt(tvec.at<double>(2) * tvec.at<double>(2) + tvec.at<double>(0) * tvec.at<double>(0));
+	float rangle = 180.0 * atan(tvec.at<double>(0) / tvec.at<double>(2)) / M_PI;
+	float bangle = ((rvec.at<double>(1) - rangle) / M_PI) * 180.0; //change from radians to degrees
 
-        cout << endl << endl;
-        cout << "Distance is " << cam_distance << " inches." << endl;
-        cout << "Robot angle is " << cam_rangle << " degrees." << endl;
-        cout << "Beacon x is " << abs(camera_tvec.at<double>(0)) << " inches." << endl;
-        cout << "Beacon y is " << abs(camera_tvec.at<double>(2)) << " inches." << endl;
-
-
+	cout << endl << endl;
+	cout << "Distance is " << distance << " inches." << endl;
+        cout << "Robot angle is " << rangle << " degrees." << endl;
+        cout << "Beacon angle is " << bangle << " degrees." << endl;
 
 	return true;
 
