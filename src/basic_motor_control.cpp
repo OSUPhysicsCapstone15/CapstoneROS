@@ -23,12 +23,12 @@
 using namespace std;
 
 // Some static constants
-static const double MOTOR_MAX = 400; // Max motor value (400 max)
-static const double PIVOT_SPEED = 1.0; // 0.55; // The speed to run the motors at in a pivot
+static const double MOTOR_MAX = 1.0; // Max motor value (1.0 max)
+static const double PIVOT_SPEED = 0.55; // The speed to run the motors at in a pivot
 static const double ENC_FUDGE = 1.0;//1.26
-static const double BREAK_SPEED = -0.10; // Reverse with enough power to stop wheel motion
-static const double DRIVE_SPEED = 0.75;
-static const double DRIVE_SPEED_FAST = 1.0;
+static const double BREAK_SPEED = 0.0; // Reverse with enough power to stop wheel motion
+static const double DRIVE_SPEED = 0.5;
+static const double DRIVE_SPEED_FAST = 0.75;
 static const double ANGLE_PRECISION = 5; // Units of degrees
 static const double FORWARD_PRECISION = 12; // Units of inches
 static const int PULSE_RATIO = 2400; // The number of pulses per full rotation in an encoder 

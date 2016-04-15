@@ -536,7 +536,7 @@ bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc) {
 	//get rotation-translation matrix
     //NOT SURE ABOUT THIS
 	//Mat rvec(3, 1, CV_32F), tvec(3, 1, CV_32F);
-	Mat rvec=(Mat_<double>(3,1)<< 0,b_loc->angle_from_robot,0);
+	Mat rvec=(Mat_<double>(3,1)<< 0,(b_loc->angle_from_robot)*-1,0);
 	Mat tvec=(Mat_<double>(3,1)<< -1*b_loc->x,-10,b_loc->y);
 cout<<"rvec "<<rvec<<endl;
 cout<<"tvec "<<tvec<<endl;

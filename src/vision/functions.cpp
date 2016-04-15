@@ -557,9 +557,9 @@ cout<<"tvec "<<tvec<<endl;
 
 	//fill beacon struct with appropriate values
 	//TODO
-	float bangle = -1*(rvec.at<double>(1) / M_PI) * 180.0; //change from radians to degrees
 	float distance = sqrt(tvec.at<double>(2) * tvec.at<double>(2) + tvec.at<double>(0) * tvec.at<double>(0));
-	float rangle = 180.0 * atan(-1*tvec.at<double>(0) / tvec.at<double>(2)) / M_PI;
+	float rangle = 180.0 * atan(tvec.at<double>(0) / tvec.at<double>(2)) / M_PI;
+	float bangle = ((rvec.at<double>(1) - rangle) / M_PI) * 180.0; //change from radians to degrees
 
 	cout << endl << endl;
 	cout << "Distance is " << distance << " inches." << endl;
