@@ -246,7 +246,7 @@ bool goXInches(double *leftWheelSpeed, double *rightWheelSpeed, double target, d
     return 1;
   }
   if(std::abs(diff) < FORWARD_PRECISION) { // If we are closer than our chosen precision, stop
-    *rightWheelSpeed = 0.55*BREAK_SPEED;
+    *rightWheelSpeed = 1.0*BREAK_SPEED;
     *leftWheelSpeed = 0.82*BREAK_SPEED;
     return 1;
   }

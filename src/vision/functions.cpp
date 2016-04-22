@@ -409,7 +409,7 @@ SimpleBlobDetector::Params setupObjectBlobParams()
     params.filterByColor = false;
     params.filterByCircularity = false;
     params.filterByArea = true;
-    params.minThreshold = 200;
+    params.minThreshold = 100;
     params.maxThreshold = 250;
     params.thresholdStep = 1;
     params.minArea = 50;
@@ -476,9 +476,9 @@ void shootPic()
 //returns true if success, false otherwise
 bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc) 
 {
-    	const float BOTTOM_DIST = 22.0; //inches
-    	const float TOP_DIST = -33.0; //up is negative y in solvePNP
-    	const float LEFT_DIST = -30.75;
+    	const float BOTTOM_DIST = -20.0; //inches
+    	const float TOP_DIST = 33.5; //up is negative y in solvePNP
+    	const float LEFT_DIST = -30.0;
     	const float RIGHT_DIST = 30.0;
 
     	vector<KeyPoint> keyPoints(4);
@@ -493,10 +493,10 @@ bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc)
 	KeyPoint::convert(keyPoints, imgPoints);
 
 	//fill known points with beacon dimensions
-	vector<Point3f> kwnPoints = {Point3f(0, TOP_DIST, 0), //Top
+	vector<Point3f> kwnPoints = {Point3f(0, 0, TOP_DIST), //Top
 				     Point3f(LEFT_DIST, 0, 0), //Left
 				     Point3f(RIGHT_DIST, 0, 0),  //Right
-				     Point3f(0, BOTTOM_DIST, 0) //Bottom
+				     Point3f(-1.0, 0, BOTTOM_DIST) //Bottom
 	};
 
 
@@ -569,14 +569,14 @@ bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc)
 	cout << camera_tvec << endl;
 	//fill beacon struct with appropriate values
 	//TODO
-        float cam_distance = sqrt(camera_tvec.at<double>(2) * camera_tvec.at<double>(2) + camera_tvec.at<double>(0) * camera_tvec.at<double>(0));
+        float cam_distance = sqrt(camera_tvec.at<double>(2) * camera_tvec.at<double>(2) + camera_tvec.at<double>(0) * camera_tvec.at<double>(0) + camera_tvec.at<double>(1) * camera_tvec.at<double>(1));
         float cam_rangle = 180.0 * atan(tvec.at<double>(0) / tvec.at<double>(2)) / M_PI;
 
         cout << endl << endl;
         cout << "Distance is " << cam_distance << " inches." << endl;
         cout << "Robot angle is " << cam_rangle << " degrees." << endl;
-        cout << "Beacon x is " << abs(camera_tvec.at<double>(0)) << " inches." << endl;
-        cout << "Beacon y is " << abs(camera_tvec.at<double>(2)) << " inches." << endl;
+        cout << "Beacon x is " << -1*camera_tvec.at<double>(0) << " inches." << endl;
+        cout << "Beacon y is " << abs(camera_tvec.at<double>(1)) << " inches." << endl;
 
 
 

@@ -45,7 +45,7 @@ void beacon_main(beacon_loc &b_loc)
     cvtColor(diff_and, grayDiff, COLOR_BGR2GRAY); //Convert the captured
 
     //try to fill keypoints with exactly four points
-    double thresh = 200.0;
+    double thresh = 150.0;
     vector<KeyPoint> keypoints(0);
 
     threshold(grayDiff, binDiff, thresh, 255, THRESH_BINARY);
@@ -100,7 +100,7 @@ void beacon_main(beacon_loc &b_loc)
 
 	beaconLocation(keypoints, &b_loc);
 
-	//getBeaconOrientation(keypoints, &b_loc);
+    //getBeaconOrientation(keypoints, &b_loc);
     //printDistanceFromLights(keypoints, &b_loc);
     //robot_angle(&b_loc, binDiff, cent.x);
 
@@ -117,9 +117,8 @@ void beacon_main(beacon_loc &b_loc)
     {
         b_loc.beacon_not_found = 1;
     }
-
+cout << "HERE!" << endl;
     //output windows to view
     showWindows(imgOriginal1, imgOriginal2, imgOriginal3, imgOriginal4, diff1, diff2, out);
-
 }
 
