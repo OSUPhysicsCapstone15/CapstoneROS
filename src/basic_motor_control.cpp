@@ -467,15 +467,9 @@ int main(int argc, char **argv) {
 	   rightWheelSpeed = rightWheelSpeed*0.95;
 	   ROS_INFO("!!!!!!!!!!!!!!!!!!!!!BIG CORRECTION TO THE LEFT");
 	 } else if (current_angle < -8) {
-<<<<<<< HEAD
 	   rightWheelSpeed = rightWheelSpeed*0.6;
 	   leftWheelSpeed = leftWheelSpeed*0.95;
 	   ROS_INFO("!!!!!!!!!!!!!!!1BIG CORRECTION TO THE RIGHT************");
-=======
-	   rightWheelSpeed = rightWheelSpeed*0.65;
-	   leftWheelSpeed = leftWheelSpeed*1.0;
-	   ROS_INFO("!!!!!!!!!!!!!!!!!!!!!BIG CORRECTION TO THE RIGHT");
->>>>>>> 0828f9b6f886413bb3ba5897904389d6f6a2e4e3
 	 }
 #endif
 	 //forwardPID(&leftWheelSpeed, &rightWheelSpeed, leftEncoder, rightEncoder, &firstPIDspin, K_p, K_i);
