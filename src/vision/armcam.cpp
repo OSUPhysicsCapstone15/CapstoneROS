@@ -59,9 +59,10 @@ img = imread(filename, CV_LOAD_IMAGE_COLOR);
 	    float yBound = keypoints[0].y + keypoints[0].size;
 
 	//Find the distance between the sample and robot
-	      float distToSample =0;
+	      float distToSample =4.42*yBound-.0527*yBound+21.88;
+		cout<<"dist: "<<distToSample<<endl;
 
-	      if(yBound > maxGrassBuffer){
+	     /* if(yBound > maxGrassBuffer){
 		if(yBound < minGrassBuffer){
 		   distToSample =0;
 		}
@@ -71,9 +72,9 @@ img = imread(filename, CV_LOAD_IMAGE_COLOR);
 	      }
 	      else{
 		distToSample = maxGrassBuffer - yBound
-	      }
+	      }*/
 	
-		cout<<"dist: "<<distToSample<<endl;
+		
 
 	//find the angle that the robot must turn so that the claw lines up on the sample
 	    float xAngle = .0758 * xDiff - .2716;

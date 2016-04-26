@@ -2,7 +2,7 @@
 //#define DEBUG
 //#define HEARTBEAT_MONITOR
 #define DEBUG_LITE
-//#define ANGLE_CORRECTION
+#define ANGLE_CORRECTION
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 #include "std_msgs/Float32.h"
@@ -24,15 +24,15 @@ using namespace std;
 
 // Some static constants
 static const double MOTOR_MAX = 1.0; // Max motor value (1.0 max)
-static const double PIVOT_SPEED = 0.3; // The speed to run the motors at in a pivot
+static const double PIVOT_SPEED = 0.75; // The speed to run the motors at in a pivot
 static const double ENC_FUDGE = 1.0;//1.26
-static const double BREAK_SPEED = -0.05; // Reverse with enough power to stop wheel motion
-static const double DRIVE_SPEED = 0.5;
+static const double BREAK_SPEED = -0.1; // Reverse with enough power to stop wheel motion
+static const double DRIVE_SPEED = 0.70;
 static const double DRIVE_SPEED_FAST = 0.75;
 static const double ANGLE_PRECISION = 2; // Units of degrees
 static const double FORWARD_PRECISION = 12; // Units of inches
 static const int PULSE_RATIO = 2400; // The number of pulses per full rotation in an encoder 
-static const double WHEEL_DIAMETER = 12; // Inches
+static const double WHEEL_DIAMETER = 11.25; // Inches
 static const double WHEEL_BASE = 39; // Inches
 static const double K_p = 1; // PID proportional constant
 static const double K_i = 1; // PID integral constant
@@ -63,7 +63,7 @@ bool grabbing = false; // Whether or not we are grabbing an object
 bool retrievalgo = false;
 bool retrievalconfirm = false;
 bool firstPIDspin = true; // Something to initialize the clock
-
+bool turningLeft = true;
 // Prototypes
 void zero_system();
 
@@ -126,6 +126,7 @@ void commandsCallback(const robot::Commands::ConstPtr& msg)
   case 2: // Turn to an angle
     turning = true;
     target_angle = msg->value; // The value is the angle (degrees)
+    turningLeft = target_angle<0;
     turningInPlace = false;
     break;
   case 3: // Grab the target
@@ -262,17 +263,14 @@ bool goXInches(double *leftWheelSpeed, double *rightWheelSpeed, double target, d
 // Sets motor values, returns true if at destination
 bool pivotOnWheel(double *leftWheelSpeed, double *rightWheelSpeed, double target, double current) {
   double diff = target - current; // How much we need to turn
-  if(diff>0){
-    diff *= .9;
-  }
-  if(abs(diff) < ANGLE_PRECISION) { // If we are closer than out precision, brake
-    *rightWheelSpeed = 0.5*BREAK_SPEED;
+  if(abs(diff) < ANGLE_PRECISION || (diff>0 && turningLeft) || diff<0 && !turningLeft) { // If we are closer than out precision, brake
+    *rightWheelSpeed = 0.82*BREAK_SPEED;
     *leftWheelSpeed = 0.82*BREAK_SPEED;
     return 1;
-  } else if(abs(diff) < target/12.0) { // If we are within 30 degrees, start braking
+  } /*else if(abs(diff) < target/12.0) { // If we are within 30 degrees, start braking
     *leftWheelSpeed = 0.5*BREAK_SPEED;
     *rightWheelSpeed = 0.5*BREAK_SPEED;
-    }
+    }*/
   if(diff < 0) { // If we need to turn left
     *rightWheelSpeed = PIVOT_SPEED;
     *leftWheelSpeed = 0;
@@ -287,16 +285,16 @@ bool pivotOnWheel(double *leftWheelSpeed, double *rightWheelSpeed, double target
 bool turnInPlace(double *leftWheelSpeed, double *rightWheelSpeed, double target, double current) {
   double diff = target - current; // How much we need to turn
   if(diff>0){
-    diff *= .9;
+    diff *= 1.0;
   }
   if(abs(diff) < ANGLE_PRECISION) { // If we are closer than our precision, brake
-    *rightWheelSpeed = 0.5*BREAK_SPEED;
+    *rightWheelSpeed = 0.82*BREAK_SPEED;
     *leftWheelSpeed = 0.82*BREAK_SPEED;
     return 1;
-  } else if(abs(diff) < target/12.0) { // If we are within 30 degrees, start braking
+  } /*else if(abs(diff) < target/12.0) { // If we are within 30 degrees, start braking
     *leftWheelSpeed = 0.5*BREAK_SPEED;
     *rightWheelSpeed = 0.5*BREAK_SPEED;
-    }
+    }*/
   if(diff < 0) { // If we need to turn left
     *rightWheelSpeed = PIVOT_SPEED;
     *leftWheelSpeed = -1 * PIVOT_SPEED;
@@ -439,19 +437,19 @@ int main(int argc, char **argv) {
 	 }
 	 // Angle correction, replacement for PID
 #ifdef ANGLE_CORRECTION	
-	 if (current_angle > 3) {
+	 if (current_angle > 1) {
 	   leftWheelSpeed = leftWheelSpeed*0.85;
 	 } else if (current_angle < -3) {
 	   rightWheelSpeed = rightWheelSpeed*0.85;
 	 }
 
 	 if (current_angle > 8) {
-	   leftWheelSpeed = leftWheelSpeed*0.65;
-	   rightWheelSpeed = rightWheelSpeed*1.0;
+	   leftWheelSpeed = leftWheelSpeed*0.6;
+	   rightWheelSpeed = rightWheelSpeed*0.95;
 	   ROS_INFO("!!!!!!!!!!!!!!!!!!!!!BIG CORRECTION TO THE LEFT");
 	 } else if (current_angle < -8) {
-	   rightWheelSpeed = rightWheelSpeed*0.65;
-	   leftWheelSpeed = leftWheelSpeed*1.0;
+	   rightWheelSpeed = rightWheelSpeed*0.6;
+	   leftWheelSpeed = leftWheelSpeed*0.95;
 	   ROS_INFO("!!!!!!!!!!!!!!!1BIG CORRECTION TO THE RIGHT************");
 	 }
 #endif
