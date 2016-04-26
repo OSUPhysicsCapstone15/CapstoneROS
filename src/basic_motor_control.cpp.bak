@@ -2,7 +2,7 @@
 //#define DEBUG
 //#define HEARTBEAT_MONITOR
 #define DEBUG_LITE
-#define ANGLE_CORRECTION
+//#define ANGLE_CORRECTION
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 #include "std_msgs/Float32.h"
@@ -24,21 +24,18 @@ using namespace std;
 
 // Some static constants
 static const double MOTOR_MAX = 1.0; // Max motor value (1.0 max)
-static const double PIVOT_SPEED = 0.75; // The speed to run the motors at in a pivot
+static const double PIVOT_SPEED = 0.3; // The speed to run the motors at in a pivot
 static const double ENC_FUDGE = 1.0;//1.26
-static const double BREAK_SPEED = -0.1; // Reverse with enough power to stop wheel motion
-static const double DRIVE_SPEED = 0.70;
+static const double BREAK_SPEED = -0.05; // Reverse with enough power to stop wheel motion
+static const double DRIVE_SPEED = 0.5;
 static const double DRIVE_SPEED_FAST = 0.75;
 static const double ANGLE_PRECISION = 2; // Units of degrees
 static const double FORWARD_PRECISION = 12; // Units of inches
 static const int PULSE_RATIO = 2400; // The number of pulses per full rotation in an encoder 
-static const double WHEEL_DIAMETER = 11.25; // Inches
+static const double WHEEL_DIAMETER = 12; // Inches
 static const double WHEEL_BASE = 39; // Inches
 static const double K_p = 1; // PID proportional constant
 static const double K_i = 1; // PID integral constant
-static const double RAMP_STEP = 24;
-static const double RAMP_ANGLE_STEP = 5;
-static const double RAMP_TIME = 1500;
 
 // Global variables
 long long rightEncoder = 0; // Right encoder count
@@ -55,10 +52,6 @@ long long left_encoder_zeropoint = 0; // Zeropoints for the encoders
 long long right_encoder_zeropoint = 0; // These are subtracted from final values.
 double left_fudge_factor = 1.0; // Used to correct for drift. 1.0
 auto startTime = std::chrono::system_clock::now();
-double ramping_millis = 0; // The number of milliseconds ramped
-double ramp_factor = 0.5; // Percentage ramped
-double ramping_distance = 0;
-double ramping_angle = 0;
 
 // Flags
 bool paused = false; // Whether or not the robot is paused
@@ -70,9 +63,7 @@ bool grabbing = false; // Whether or not we are grabbing an object
 bool retrievalgo = false;
 bool retrievalconfirm = false;
 bool firstPIDspin = true; // Something to initialize the clock
-bool turningLeft = true;
-bool rampingStart = true; // Start the ramping sequence
-bool ramping = false; // Whether ramping should run at all
+
 // Prototypes
 void zero_system();
 
@@ -131,16 +122,11 @@ void commandsCallback(const robot::Commands::ConstPtr& msg)
     driving = true;
     drivingFast = false;
     target_distance = msg->value * 39.37; // The value is the distance (m -> in)
-    ramping = true;
-    rampingStart = true;
     break;
   case 2: // Turn to an angle
     turning = true;
     target_angle = msg->value; // The value is the angle (degrees)
-    turningLeft = target_angle<0;
     turningInPlace = false;
-    ramping = true;
-    rampingStart = true;
     break;
   case 3: // Grab the target
     grabbing = true;
@@ -149,13 +135,11 @@ void commandsCallback(const robot::Commands::ConstPtr& msg)
     driving = true;
     drivingFast = true;
     target_distance = msg->value * 39.37; // The value is the distance (m -> in)
-    ramping = false;
     break;
-  case 5: // Turn in place
+  case 5:
     turning = true;
     target_angle = msg->value;
     turningInPlace = true;
-    rampingStart = true;
     break;
   default: // Default is to do nothing
     break;
@@ -278,14 +262,17 @@ bool goXInches(double *leftWheelSpeed, double *rightWheelSpeed, double target, d
 // Sets motor values, returns true if at destination
 bool pivotOnWheel(double *leftWheelSpeed, double *rightWheelSpeed, double target, double current) {
   double diff = target - current; // How much we need to turn
-  if(abs(diff) < ANGLE_PRECISION || (diff>0 && turningLeft) || diff<0 && !turningLeft) { // If we are closer than out precision, brake
-    *rightWheelSpeed = 0.82*BREAK_SPEED;
+  if(diff>0){
+    diff *= .9;
+  }
+  if(abs(diff) < ANGLE_PRECISION) { // If we are closer than out precision, brake
+    *rightWheelSpeed = 0.5*BREAK_SPEED;
     *leftWheelSpeed = 0.82*BREAK_SPEED;
     return 1;
-  } /*else if(abs(diff) < target/12.0) { // If we are within 30 degrees, start braking
+  } else if(abs(diff) < target/12.0) { // If we are within 30 degrees, start braking
     *leftWheelSpeed = 0.5*BREAK_SPEED;
     *rightWheelSpeed = 0.5*BREAK_SPEED;
-    }*/
+    }
   if(diff < 0) { // If we need to turn left
     *rightWheelSpeed = PIVOT_SPEED;
     *leftWheelSpeed = 0;
@@ -300,16 +287,16 @@ bool pivotOnWheel(double *leftWheelSpeed, double *rightWheelSpeed, double target
 bool turnInPlace(double *leftWheelSpeed, double *rightWheelSpeed, double target, double current) {
   double diff = target - current; // How much we need to turn
   if(diff>0){
-    diff *= 1.0;
+    diff *= .9;
   }
   if(abs(diff) < ANGLE_PRECISION) { // If we are closer than our precision, brake
-    *rightWheelSpeed = 0.82*BREAK_SPEED;
+    *rightWheelSpeed = 0.5*BREAK_SPEED;
     *leftWheelSpeed = 0.82*BREAK_SPEED;
     return 1;
-  } /*else if(abs(diff) < target/12.0) { // If we are within 30 degrees, start braking
+  } else if(abs(diff) < target/12.0) { // If we are within 30 degrees, start braking
     *leftWheelSpeed = 0.5*BREAK_SPEED;
     *rightWheelSpeed = 0.5*BREAK_SPEED;
-    }*/
+    }
   if(diff < 0) { // If we need to turn left
     *rightWheelSpeed = PIVOT_SPEED;
     *leftWheelSpeed = -1 * PIVOT_SPEED;
@@ -409,7 +396,6 @@ int main(int argc, char **argv) {
 #endif
     ros::spinOnce();
 
-    // This code monitors a heartbeat generated by an external source, and pauses the robot if the heatbeat fails
 #ifdef HEARBEAT_MONITOR
     // Make sure that the encoders are responding
     if (heartbeatconfirm < heartbeat-15) {
@@ -438,7 +424,6 @@ int main(int argc, char **argv) {
 	   std_msgs::Int32 msg; // Defined in msg directory 
 	   msg.data = 0;
 	   command_done_pub.publish(msg);
-	   ramping = false;
 	 }
 	 ROS_INFO("Trying to turn: %f %f", leftWheelSpeed, rightWheelSpeed);
        } else if(driving) { // If we are driving forward right now
@@ -451,31 +436,23 @@ int main(int argc, char **argv) {
 	   std_msgs::Int32 msg; // Defined in msg directory 
 	   msg.data = 0;
 	   command_done_pub.publish(msg);
-	   ramping = false;
 	 }
-
 	 // Angle correction, replacement for PID
 #ifdef ANGLE_CORRECTION	
-	 if (current_angle > 1) {
+	 if (current_angle > 3) {
 	   leftWheelSpeed = leftWheelSpeed*0.85;
 	 } else if (current_angle < -3) {
 	   rightWheelSpeed = rightWheelSpeed*0.85;
 	 }
 
 	 if (current_angle > 8) {
-	   leftWheelSpeed = leftWheelSpeed*0.6;
-	   rightWheelSpeed = rightWheelSpeed*0.95;
+	   leftWheelSpeed = leftWheelSpeed*0.65;
+	   rightWheelSpeed = rightWheelSpeed*1.0;
 	   ROS_INFO("!!!!!!!!!!!!!!!!!!!!!BIG CORRECTION TO THE LEFT");
 	 } else if (current_angle < -8) {
-<<<<<<< HEAD
-	   rightWheelSpeed = rightWheelSpeed*0.6;
-	   leftWheelSpeed = leftWheelSpeed*0.95;
-	   ROS_INFO("!!!!!!!!!!!!!!!1BIG CORRECTION TO THE RIGHT************");
-=======
 	   rightWheelSpeed = rightWheelSpeed*0.65;
 	   leftWheelSpeed = leftWheelSpeed*1.0;
-	   ROS_INFO("!!!!!!!!!!!!!!!!!!!!!BIG CORRECTION TO THE RIGHT");
->>>>>>> 0828f9b6f886413bb3ba5897904389d6f6a2e4e3
+	   ROS_INFO("!!!!!!!!!!!!!!!1BIG CORRECTION TO THE RIGHT************");
 	 }
 #endif
 	 //forwardPID(&leftWheelSpeed, &rightWheelSpeed, leftEncoder, rightEncoder, &firstPIDspin, K_p, K_i);
@@ -510,51 +487,14 @@ int main(int argc, char **argv) {
     } else {
       ROS_INFO("I AM PAUSED");
     }
-
-    // Ramping Code
-    if(ramping){
-      if(driving && rampingStart) { // If this is the beginning of motion
-	ramp_factor = 0.5;
-	rampingStart = false;
-	ramping_millis = millis();
-	ramping_distance = current_distance;
-      } else if(driving) {
-	if((current_distance - ramping_distance) < RAMP_STEP && (millis() - ramping_millis) > RAMP_TIME) { // Less than step, over time
-	  ramp_factor += 0.1; // Ramp 10%
-	  ramping_millis = millis(); // Reset ramp timer
-	  ROS_INFO("RAMPING TO: %f", ramp_factor);
-	} else if(ramping_distance > RAMP_STEP) { // Made it to the next checkpoint 
-	  ramp_factor += 0.05; // A little extra push
-	  ramping_millis = millis(); // Reset ramp timer
-	  ramping_distance = current_distance; // start analyzing the next step
-	}
-      }
-
-      if(turning && rampingStart) { // If this is the beginning of motion
-	ramp_factor = 0.5;
-	rampingStart = false;
-	ramping_millis = millis();
-	ramping_angle = current_angle;
-      } else if(driving) {
-	if((current_angle - ramping_angle) < RAMP_ANGLE_STEP && (millis() - ramping_millis) > RAMP_TIME) { // Less than step, over time
-	  ramp_factor += 0.1; // Ramp 10%
-	  ramping_millis = millis(); // Reset ramp timer
-	  ROS_INFO("RAMPING TO: %f", ramp_factor);
-	} else if(ramping_angle > RAMP_STEP) { // Made it to the next checkpoint 
-	  ramp_factor += 0.05; // A little extra push
-	  ramping_millis = millis(); // Reset ramp timer
-	  ramping_angle = current_angle; // start analyzing the next step
-	}
-      }
-    }
-
+    
 
     // Values decided, pass to arduinos
     // Pack the motor values into a message object
     std_msgs::Float32 right_msg; // Defined in msg directory
     std_msgs::Float32 left_msg;
-    left_msg.data = leftWheelSpeed * ramp_factor * MOTOR_MAX;
-    right_msg.data = rightWheelSpeed * ramp_factor * MOTOR_MAX;
+    left_msg.data = leftWheelSpeed * MOTOR_MAX;
+    right_msg.data = rightWheelSpeed * MOTOR_MAX;
 	 
     // Publish the motor speed message. Notice that the msg type matches the advertise template <>
     left_motor_pub.publish(left_msg); // Send the new speeds for the arduino to pick up.
