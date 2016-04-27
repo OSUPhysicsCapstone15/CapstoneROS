@@ -533,33 +533,28 @@ bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc)
 	cout << "Image Points" << endl;
 	cout << imgPoints << endl;
 
-//        cout << "Camera Rotation vector" << 	//get rotation-translation matrix
-    //NOT SURE ABOUT THIS
-	//Mat rvec(3, 1, CV_32F), tvec(3, 1, CV_32F);
-	Mat rvec=(Mat_<double>(3,1)<<   0,
+	Mat rvec, tvec, R;
+    bool guess;
+    if(!b_loc->beacon_not_found) {
+        guess = true;
+    	rvec=(Mat_<double>(3,1)<<   0,
                                     atan(b_loc->x / b_loc->y)- M_PI*b_loc->angle_from_robot/180.0,
                                     0);
 
-	Mat tvec=(Mat_<double>(3,1)<<   -1*b_loc->x,
+    	tvec=(Mat_<double>(3,1)<<   -1*b_loc->x,
                                     6, 
                                     -1*b_loc->y);
-	//cout<<"rvec "<<rvec<<endl;
-	//cout<<"tvec "<<tvec<<endl;
-    //rvec.at<double>(0) = 0;
-    //rvec.at<double>(1) = b_loc->angle_from_robot;
-    //cout<<rvec.at<double>(1)<<endl;
-    //rvec.at<double>(2) = 0;
-//    tvec.at<double>(0) = -1*b_loc->x;
-//    tvec.at<double>(1) = -10; //height of the camera relative to beacon
-//    tvec.at<double>(2) = b_loc->y;
 
-    Mat R;    
-    Rodrigues(rvec, R);
-    tvec = -R.t() * tvec;
-    Rodrigues(R.t(), rvec);
+        Rodrigues(rvec, R);
+        tvec = -R.t() * tvec;
+        Rodrigues(R.t(), rvec);
+
+    } else {
+        guess = false;
+    }
 
 	//Mat rvec, tvec;
-	bool succ = solvePnP(Mat(kwnPoints), Mat(imgPoints), cameraMatrix, distCoeffs, rvec, tvec, true);
+	bool succ = solvePnP(Mat(kwnPoints), Mat(imgPoints), cameraMatrix, distCoeffs, rvec, tvec, guess);
 
     if(!succ) {
         cout<<"Could not calculate position of beacon"<<endl;
