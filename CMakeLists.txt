@@ -82,13 +82,13 @@ set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
 #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lphidget21")
 
 #vision
-#add_executable(vision src/vision/ros_vision.cpp src/vision/beacon.cpp src/vision/blob.cpp src/vision/functions.cpp)
-#add_executable(nav_sim src/vision/nav_sim.cpp)
-#add_executable(samp_sim src/vision/samp_sim.cpp)
-#find_package(OpenCV)
-#target_link_libraries(vision ${catkin_LIBRARIES})
-#target_link_libraries(vision ${OpenCV_LIBS})
-#target_link_libraries(nav_sim ${catkin_LIBRARIES})
-#target_link_libraries(samp_sim ${catkin_LIBRARIES})
+add_executable(vision src/vision/ros_vision.cpp src/vision/beacon.cpp src/vision/blob.cpp src/vision/functions.cpp)
+add_executable(nav_sim src/vision/nav_sim.cpp)
+add_executable(samp_sim src/vision/samp_sim.cpp)
+find_package(OpenCV)
+target_link_libraries(vision ${catkin_LIBRARIES})
+target_link_libraries(vision ${OpenCV_LIBS})
+target_link_libraries(nav_sim ${catkin_LIBRARIES})
+target_link_libraries(samp_sim ${catkin_LIBRARIES})
 #
 

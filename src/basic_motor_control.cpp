@@ -2,7 +2,7 @@
 //#define DEBUG
 //#define HEARTBEAT_MONITOR
 #define DEBUG_LITE
-#define ANGLE_CORRECTION
+//#define ANGLE_CORRECTION
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 #include "std_msgs/Float32.h"
@@ -30,15 +30,15 @@ static const double BREAK_SPEED = -0.1; // Reverse with enough power to stop whe
 static const double DRIVE_SPEED = 0.70;
 static const double DRIVE_SPEED_FAST = 0.75;
 static const double ANGLE_PRECISION = 2; // Units of degrees
-static const double FORWARD_PRECISION = 12; // Units of inches
+static const double FORWARD_PRECISION = 20; // Units of inches
 static const int PULSE_RATIO = 2400; // The number of pulses per full rotation in an encoder 
 static const double WHEEL_DIAMETER = 11.25; // Inches
 static const double WHEEL_BASE = 39; // Inches
 static const double K_p = 1; // PID proportional constant
 static const double K_i = 1; // PID integral constant
-static const double RAMP_STEP = 24;
+static const double RAMP_STEP = 40;
 static const double RAMP_ANGLE_STEP = 5;
-static const double RAMP_TIME = 1500;
+static const double RAMP_TIME = 1.5;
 
 // Global variables
 long long rightEncoder = 0; // Right encoder count
@@ -55,7 +55,7 @@ long long left_encoder_zeropoint = 0; // Zeropoints for the encoders
 long long right_encoder_zeropoint = 0; // These are subtracted from final values.
 double left_fudge_factor = 1.0; // Used to correct for drift. 1.0
 auto startTime = std::chrono::system_clock::now();
-double ramping_millis = 0; // The number of milliseconds ramped
+double ramping_seconds = 0; // The number of seconds ramped
 double ramp_factor = 0.5; // Percentage ramped
 double ramping_distance = 0;
 double ramping_angle = 0;
@@ -193,7 +193,7 @@ double enc2angle(long long encL, long long encR) {
   return 360.0 * enc2distance(diff)/((2*3.14159)*WHEEL_BASE);
 }
 
-double millis() {
+double seconds() {
   auto endTime = std::chrono::system_clock::now();
   std::chrono::duration<double> diff = endTime - startTime;
   return diff.count();
@@ -203,7 +203,7 @@ double millis() {
  *    Movement corrections    *
  ******************************/
 
-double newtime = millis();
+double newtime = seconds();
 int newRightEnc, newLeftEnc;
 double leftErrorSum = 0;
 double rightErrorSum = 0;
@@ -219,7 +219,7 @@ void forwardPID(double *leftWheelSpeed, double *rightWheelSpeed, int leftEnc, in
 
   // Time
   double oldtime = newtime;
-  newtime = millis(); // TODO: Replace
+  newtime = seconds(); // TODO: Replace
   double timediff = newtime - oldtime;
   
   // Right Encoders
@@ -510,38 +510,48 @@ int main(int argc, char **argv) {
       if(driving && rampingStart) { // If this is the beginning of motion
 	ramp_factor = 0.5;
 	rampingStart = false;
-	ramping_millis = millis();
+	ramping_seconds = seconds();
 	ramping_distance = current_distance;
       } else if(driving) {
-	if((current_distance - ramping_distance) < RAMP_STEP && (millis() - ramping_millis) > RAMP_TIME) { // Less than step, over time
+	if((current_distance - ramping_distance) < RAMP_STEP && (seconds() - ramping_seconds) > RAMP_TIME) { // Less than step, over time
 	  ramp_factor += 0.1; // Ramp 10%
-	  ramping_millis = millis(); // Reset ramp timer
+	  ramping_seconds = seconds(); // Reset ramp timer
 	  ROS_INFO("RAMPING TO: %f", ramp_factor);
-	} else if(ramping_distance > RAMP_STEP) { // Made it to the next checkpoint 
-	  ramp_factor += 0.05; // A little extra push
-	  ramping_millis = millis(); // Reset ramp timer
+	} else if(current_distance - ramping_distance > RAMP_STEP) { // Made it to the next checkpoint 
+	  //ramp_factor += 0.05; // A little extra push
+	  ramping_seconds = seconds(); // Reset ramp timer
 	  ramping_distance = current_distance; // start analyzing the next step
 	}
       }
 
+      ROS_INFO("Time to ramp: %f / %f", seconds() - ramping_seconds, RAMP_TIME);
+      ROS_INFO("Drive Checkpoint in : %f / %f", current_distance - ramping_distance, RAMP_STEP);
+
       if(turning && rampingStart) { // If this is the beginning of motion
-	ramp_factor = 0.5;
+	ramp_factor = 0.2;
 	rampingStart = false;
-	ramping_millis = millis();
+	ramping_seconds = seconds();
 	ramping_angle = current_angle;
-      } else if(driving) {
-	if((current_angle - ramping_angle) < RAMP_ANGLE_STEP && (millis() - ramping_millis) > RAMP_TIME) { // Less than step, over time
+      } else if(turning) {
+	if((current_angle - ramping_angle) < RAMP_ANGLE_STEP && (seconds() - ramping_seconds) > RAMP_TIME) { // Less than step, over time
 	  ramp_factor += 0.1; // Ramp 10%
-	  ramping_millis = millis(); // Reset ramp timer
+	  ramping_seconds = seconds(); // Reset ramp timer
 	  ROS_INFO("RAMPING TO: %f", ramp_factor);
-	} else if(ramping_angle > RAMP_STEP) { // Made it to the next checkpoint 
-	  ramp_factor += 0.05; // A little extra push
-	  ramping_millis = millis(); // Reset ramp timer
+	} else if(current_angle - ramping_angle > RAMP_ANGLE_STEP) { // Made it to the next checkpoint 
+	  //ramp_factor += 0.05; // A little extra push
+	  ramping_seconds = seconds(); // Reset ramp timer
 	  ramping_angle = current_angle; // start analyzing the next step
 	}
       }
+      ROS_INFO("Turn Checkpoint in : %f / %f", current_angle - ramping_distance, RAMP_ANGLE_STEP);
+
+    } else {
+      ramp_factor = 1.0;
     }
 
+    if(ramp_factor > 1.0) {
+      ramp_factor = 1.0;
+    }
 
     // Values decided, pass to arduinos
     // Pack the motor values into a message object

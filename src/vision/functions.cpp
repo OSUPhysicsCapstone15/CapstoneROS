@@ -35,7 +35,7 @@ Mat findBiggestBlob(Mat src)
 void findGrass(Mat src, Mat HSV) //this should be separated into a few more readable functions
 {
     int iLowH = 30;
-    int iHighH = 50;
+    int iHighH = 70;
 
     int iLowS = 60;
     int iHighS = 255;
@@ -98,7 +98,8 @@ void removenoise(Mat image)
 
 //get robot dist from sample
 void tilt_turn_degrees(Mat img, int object_rows, int object_cols, sample_loc* orientation){
-    double camera_height = .5;     // height of camera from ground in meters
+    double camera_height = .61;     // height of camera from ground in meters
+    double camera_angle = 90;	    //angle of camera
     int camera_diagonal_angle = 69; // diagonal angle of view for camera in degrees
                                     // logitech c525 fov is 69 degrees, Samsung Galaxy S5 is 90 degrees
 
@@ -125,7 +126,8 @@ void tilt_turn_degrees(Mat img, int object_rows, int object_cols, sample_loc* or
 
     double tilted_degrees = 90 + tilt_camera_x_degrees; // assuming camera is parallel to ground (90 degrees)
 
-    double tilted_radians = tilted_degrees * 3.1415962 / 180.0; // c++ tan() function uses radians
+    double tilted_radians = tilted_degrees * M_PI / 180.0; // c++ tan() function uses radians
+    double camera_radians = camera_angle * M_PI / 180.0;
 
     double height = camera_height; // height of camera from the ground in meters
 
