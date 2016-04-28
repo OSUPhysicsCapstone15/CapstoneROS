@@ -2,7 +2,7 @@
 //#define DEBUG
 //#define HEARTBEAT_MONITOR
 #define DEBUG_LITE
-//#define ANGLE_CORRECTION
+#define ANGLE_CORRECTION
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 #include "std_msgs/Float32.h"
@@ -24,21 +24,21 @@ using namespace std;
 
 // Some static constants
 static const double MOTOR_MAX = 1.0; // Max motor value (1.0 max)
-static const double PIVOT_SPEED = 0.75; // The speed to run the motors at in a pivot
+static const double PIVOT_SPEED = 0.8; // The speed to run the motors at in a pivot
 static const double ENC_FUDGE = 1.0;//1.26
 static const double BREAK_SPEED = -0.1; // Reverse with enough power to stop wheel motion
-static const double DRIVE_SPEED = 0.70;
+static const double DRIVE_SPEED = 0.80;
 static const double DRIVE_SPEED_FAST = 0.75;
-static const double ANGLE_PRECISION = 2; // Units of degrees
+static const double ANGLE_PRECISION = 5; // Units of degrees
 static const double FORWARD_PRECISION = 20; // Units of inches
 static const int PULSE_RATIO = 2400; // The number of pulses per full rotation in an encoder 
-static const double WHEEL_DIAMETER = 11.25; // Inches
+static const double WHEEL_DIAMETER = 11.5; // Inches
 static const double WHEEL_BASE = 39; // Inches
 static const double K_p = 1; // PID proportional constant
 static const double K_i = 1; // PID integral constant
-static const double RAMP_STEP = 40;
+static const double RAMP_STEP = 53;
 static const double RAMP_ANGLE_STEP = 5;
-static const double RAMP_TIME = 1.5;
+static const double RAMP_TIME = 2.0;
 
 // Global variables
 long long rightEncoder = 0; // Right encoder count
@@ -263,7 +263,7 @@ bool goXInches(double *leftWheelSpeed, double *rightWheelSpeed, double target, d
   }
   if(std::abs(diff) < FORWARD_PRECISION) { // If we are closer than our chosen precision, stop
     *rightWheelSpeed = 1.0*BREAK_SPEED;
-    *leftWheelSpeed = 0.82*BREAK_SPEED;
+    *leftWheelSpeed = 1.0*BREAK_SPEED;
     return 1;
   }
   *rightWheelSpeed = speed; // Other wise move ahead
@@ -456,17 +456,17 @@ int main(int argc, char **argv) {
 
 	 // Angle correction, replacement for PID
 #ifdef ANGLE_CORRECTION	
-	 if (current_angle > 1) {
+	 if (current_angle > 3) {
 	   leftWheelSpeed = leftWheelSpeed*0.85;
 	 } else if (current_angle < -3) {
 	   rightWheelSpeed = rightWheelSpeed*0.85;
 	 }
 
-	 if (current_angle > 8) {
+	 if (current_angle > 15) {
 	   leftWheelSpeed = leftWheelSpeed*0.6;
 	   rightWheelSpeed = rightWheelSpeed*0.95;
 	   ROS_INFO("!!!!!!!!!!!!!!!!!!!!!BIG CORRECTION TO THE LEFT");
-	 } else if (current_angle < -8) {
+	 } else if (current_angle < -15) {
 	   rightWheelSpeed = rightWheelSpeed*0.6;
 	   leftWheelSpeed = leftWheelSpeed*0.95;
 	   ROS_INFO("!!!!!!!!!!!!!!!1BIG CORRECTION TO THE RIGHT************");
@@ -508,11 +508,12 @@ int main(int argc, char **argv) {
     // Ramping Code
     if(ramping){
       if(driving && rampingStart) { // If this is the beginning of motion
-	ramp_factor = 0.5;
+	ramp_factor = 0.3;
 	rampingStart = false;
 	ramping_seconds = seconds();
 	ramping_distance = current_distance;
       } else if(driving) {
+	ROS_INFO("Drive Checkpoint in : %f / %f", current_distance - ramping_distance, RAMP_STEP);
 	if((current_distance - ramping_distance) < RAMP_STEP && (seconds() - ramping_seconds) > RAMP_TIME) { // Less than step, over time
 	  ramp_factor += 0.1; // Ramp 10%
 	  ramping_seconds = seconds(); // Reset ramp timer
@@ -525,7 +526,6 @@ int main(int argc, char **argv) {
       }
 
       ROS_INFO("Time to ramp: %f / %f", seconds() - ramping_seconds, RAMP_TIME);
-      ROS_INFO("Drive Checkpoint in : %f / %f", current_distance - ramping_distance, RAMP_STEP);
 
       if(turning && rampingStart) { // If this is the beginning of motion
 	ramp_factor = 0.2;
@@ -533,6 +533,8 @@ int main(int argc, char **argv) {
 	ramping_seconds = seconds();
 	ramping_angle = current_angle;
       } else if(turning) {
+	ROS_INFO("Turn Checkpoint in : %f / %f", current_angle - ramping_angle, RAMP_ANGLE_STEP);
+
 	if((current_angle - ramping_angle) < RAMP_ANGLE_STEP && (seconds() - ramping_seconds) > RAMP_TIME) { // Less than step, over time
 	  ramp_factor += 0.1; // Ramp 10%
 	  ramping_seconds = seconds(); // Reset ramp timer
@@ -543,7 +545,6 @@ int main(int argc, char **argv) {
 	  ramping_angle = current_angle; // start analyzing the next step
 	}
       }
-      ROS_INFO("Turn Checkpoint in : %f / %f", current_angle - ramping_distance, RAMP_ANGLE_STEP);
 
     } else {
       ramp_factor = 1.0;
