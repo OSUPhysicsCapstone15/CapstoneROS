@@ -414,7 +414,7 @@ SimpleBlobDetector::Params setupObjectBlobParams()
     params.minThreshold = 100;
     params.maxThreshold = 250;
     params.thresholdStep = 1;
-    params.minArea = 50;
+    params.minArea = 10;
     params.minConvexity = 0.3;
     params.minInertiaRatio = 0.15;
     params.maxArea = 8000;
@@ -546,6 +546,11 @@ bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc)
     	tvec=(Mat_<double>(3,1)<<   -1*b_loc->x,
                                     6, 
                                     -1*b_loc->y);
+
+	cout << "Guessed Rotation vector" << endl;
+        cout << rvec << endl;
+        cout << "Guessed Translation vector" << endl;
+        cout << tvec << endl;
 
         Rodrigues(rvec, R);
         tvec = -R.t() * tvec;

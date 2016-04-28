@@ -3,8 +3,9 @@
 
 void blob_main(sample_loc &s_loc)
 {
-    hsvParams hsvWhite = {0,0,200,180,90,255};
-    hsvParams hsvPurple = {80,100,0,130,255,255};
+    hsvParams hsvWhite = {20,0,0,180,80,255};
+    hsvParams hsvPurple = {80,60,0,130,255,255};
+hsvPurple=hsvWhite;
     hsvParams hsv = s_loc.whiteSample==true? hsvWhite:hsvPurple;
 
     //Set up blob detection parameters
@@ -12,7 +13,7 @@ void blob_main(sample_loc &s_loc)
 
     vector<KeyPoint> keypoints;
 
-    const string filename("/home/buckeye/catkin_ws/src/CapstoneROS/src/vision/samplePics/25ft2.jpg");
+    const string filename("/home/buckeye/catkin_ws/src/CapstoneROS/src/vision/samplePics/8ft3.jpg");
     //Initialize camera
 /*    VideoCapture cap(1);
     if ( !cap.isOpened() ){
