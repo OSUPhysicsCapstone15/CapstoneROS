@@ -7,17 +7,19 @@
 
 ros::Publisher response_pub; 
 
+// ROS callback function for a beacon request being published
 void requestCallback(const robot::BeaconRequest::ConstPtr& msg)
 {
-	ROS_INFO("Request Recieved");
+	ROS_INFO("Request Recieved");// Report a published beacon request 
 	ROS_INFO("x: %f, y: %f, angle_from_robot: %f", msg->x, msg->y, msg->angle_from_robot);
-	float angle_from_robot = 0.0;
+	float angle_from_robot = 0.0; // Initialize the variables we are reporting back
 	float x = 0.0;
 	float y = 0.0;
 	bool only_bottom = 0;
 	bool beacon_not_found =0;
 	bool beacon_angle_conf = 0;
 
+	// Enter all the reported values from the command line
 	std::cout << "Enter angle from robot: ";
 	std::cin >> angle_from_robot;
 	std::cout << "Enter x distance: ";
@@ -31,6 +33,7 @@ void requestCallback(const robot::BeaconRequest::ConstPtr& msg)
 	std::cout << "Enter 1 if confident in angle, 0 if not: ";
 	std::cin >> beacon_angle_conf;
 
+	// Assemble this new message, and report it back
 	robot::BeaconResponse responseMsg;
 	responseMsg.angle_from_robot=angle_from_robot;
 	responseMsg.x = x;
@@ -46,12 +49,12 @@ void requestCallback(const robot::BeaconRequest::ConstPtr& msg)
 
 int main(int argc, char **argv)
 {
-	ros::init(argc, argv, "vision_sim");
+	ros::init(argc, argv, "vision_sim"); // Initialize ROS
 	ros::NodeHandle n;
-	response_pub =n.advertise<robot::BeaconResponse>("BeaconResponse",1000);
-	ros::Subscriber request_sub = n.subscribe("BeaconRequest",1000, requestCallback);
+	response_pub =n.advertise<robot::BeaconResponse>("BeaconResponse",1000); // Publish beacon response
+	ros::Subscriber request_sub = n.subscribe("BeaconRequest",1000, requestCallback); // Subscribe to the beacon resquest
 	ros::Rate loop_rate(10);
-	ROS_INFO("Started");
+	ROS_INFO("Started"); // Now just keep running the program until terminated, and let the callback function take care of it
 	while(ros::ok())
 	{
 	  ros::spinOnce();

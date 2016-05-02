@@ -49,13 +49,14 @@ double y_pos = 1;
 double x_est = 0;
 double y_est = 1;
 
+// Callback function that records newest beacon location data
 void beaconCallback(const robot::BeaconResponse::ConstPtr& msg) {
   ROS_INFO("Beacon Response Recieved");
-  if(msg->beacon_not_found) {
+  if(msg->beacon_not_found) { // If the beacon isn't found, mark it as lost
     beacon_found = false;
     beacon_angle_conf = false;
     ROS_INFO("Beacon Lost");
-  } else {
+  } else { // If the beacon is found, record its position data
     last_angle_from_beacon = msg->angle_from_beacon;
     last_angle_from_robot = msg->angle_from_robot;
     last_distance_to_beacon = msg->distance;
@@ -64,26 +65,26 @@ void beaconCallback(const robot::BeaconResponse::ConstPtr& msg) {
     beacon_angle_conf = msg->beacon_angle_conf; 
     ROS_INFO("From beacon: %f, From robot: %f, Distance: %f", last_angle_from_beacon, last_angle_from_robot, last_distance_to_beacon);
     if(true){//beacon_angle_conf) {
-      y_pos = last_distance_to_beacon * cos(last_angle_from_beacon * M_PI/180);  //Vision sends deg
+      y_pos = last_distance_to_beacon * cos(last_angle_from_beacon * M_PI/180);  //Vision sends degrees, so we convert to radians
       x_pos = last_distance_to_beacon * sin(last_angle_from_beacon * M_PI/180);
       y_est = y_pos;
       x_est = x_pos;
     }
   }
-  waiting_on_vision = false;
+  waiting_on_vision = false; // Stop waiting for vision to respond
 }
 
-
+// Callback function for sample location
 void sampleCallback(const robot::SampleResponse::ConstPtr& msg)
 {
   ROS_INFO("Sample Response Recieved");
-  if (msg->sample_not_found)
+  if (msg->sample_not_found) // If the target isn't found, mark it as such
     {
       sample_found=false;
       sample_angle_conf=false;
       ROS_INFO("Target not found");
     }
-  else
+  else // Otherwise mark the sample as found, and record its positions
     {
       sample_found = true;
       sample_angle_conf = msg-> sample_angle_conf;
@@ -93,10 +94,12 @@ void sampleCallback(const robot::SampleResponse::ConstPtr& msg)
     }
 }
 
+// An external callback that can set the state of the system
 void setState(const std_msgs::Int32::ConstPtr& msg) {
   state = msg->data;
 }
 
+// Callback function to report a command finshing
 void commandDone(const std_msgs::Int32::ConstPtr& msg) {
   waiting_on_command = false;
 }
@@ -104,7 +107,7 @@ void commandDone(const std_msgs::Int32::ConstPtr& msg) {
 
   
 /**
- * Early prototype of the robot navigation
+ * Robot navigation
  */
 int main(int argc, char **argv) {
 	ROS_INFO("Initializing...");
