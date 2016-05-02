@@ -1,11 +1,7 @@
-// - Encoder simple -
-// This example simply creates an Encoder handle, hooks the event handlers, and then waits for an encoder is attached.
-// Once it is attached, the program will wait for user input so that we can see the event data on the screen when using the
-// encoder.
-//
-// Copyright 2008 Phidgets Inc.  All rights reserved.
-// This work is licensed under the Creative Commons Attribution 2.5 Canada License. 
-// view a copy of this license, visit http://creativecommons.org/licenses/by/2.5/ca/
+/* Encoder Reader
+ * Adapted from the Phidget Encoder's example client, this program reports encoder values.
+ * It updates the ros publishers each time a step is detected in the encoder.
+*/
 
 #include "ros/ros.h"
 #include "std_msgs/Int32.h"
@@ -23,27 +19,31 @@ ros::Publisher pub_RightEncoder;
 ros::Publisher pub_confirmHeartbeat;
 
 // Static constants
-static int freqDiv = 10;
-static int heartbeat = 0;
+static int freqDiv = 10; // Only a count that is a multiple of this is reported, to prevent saturation.
+static int heartbeat = 0; // Used to detect whether or not the system remains attached (to calling ROS program)
 
 // Gobals
-long long countR, countL;
-bool resetFlag = false;
+long long countR, countL; // The counts of each encoder
+bool resetFlag = false; // Whether or not there should be a reset
 
+// ROS callback, sets the frequency division value
 void FreqDivCallback(const std_msgs::Int32& msg) {
   freqDiv = msg.data;
 }
 
+// ROS callback, begins a heartbeat check
 void HeartbeatCheckCallback(const std_msgs::Int32& msg) {
   heartbeat = msg.data;
 }
 
+// ROS callback, resets the encoder values
 void RunResetCallback(const std_msgs::Bool& msg) {
   if (msg.data) {
-    resetFlag = true;
+    resetFlag = true; // Tells the system to run a reset
   }
 }
 
+// Attach to new device - Unchanged from example
 int CCONV AttachHandler(CPhidgetHandle ENC, void *userptr)
 {
   int serialNo;
@@ -67,7 +67,7 @@ int CCONV AttachHandler(CPhidgetHandle ENC, void *userptr)
   return 0;
 }
 
-
+// Detach from the board - Unchanged from example
 int CCONV DetachHandler(CPhidgetHandle ENC, void *userptr)
 {
   int serialNo;
@@ -77,6 +77,7 @@ int CCONV DetachHandler(CPhidgetHandle ENC, void *userptr)
   return 0;
 }
 
+// Error handling - Unchanged from example
 int CCONV ErrorHandler(CPhidgetHandle ENC, void *userptr, int ErrorCode, const char *Description)
 {
   printf("Error handled. %d - %s \n", ErrorCode, Description);
@@ -84,6 +85,7 @@ int CCONV ErrorHandler(CPhidgetHandle ENC, void *userptr, int ErrorCode, const c
   return 0;
 }
 
+// Responds to a change on an input pin of the board
 int CCONV InputChangeHandler(CPhidgetEncoderHandle ENC, void *usrptr, int Index, int State)
 {
   printf("Input #%i - State: %i \n", Index, State);
@@ -91,10 +93,13 @@ int CCONV InputChangeHandler(CPhidgetEncoderHandle ENC, void *usrptr, int Index,
   return 0;
 }
 
+// Responds to position changes from the attached encoders. Rewritten to update the new counts over ROS
 int CCONV PositionChangeHandler(CPhidgetEncoderHandle ENC, void *usrptr, int Index, int Time, int RelativePosition)
 {
   int Position;
-  CPhidgetEncoder_getPosition(ENC, Index, &Position);
+  CPhidgetEncoder_getPosition(ENC, Index, &Position); // Get the updated position
+
+  // Update the correct side with the new count, if it is a multiple of freqDiv
   if(Index == 0) { // Left
     leftencoder_msg.data = Position;
     if(Position % freqDiv == 0){
@@ -108,6 +113,7 @@ int CCONV PositionChangeHandler(CPhidgetEncoderHandle ENC, void *usrptr, int Ind
     } 
     ros::spinOnce();
   }
+  // Print the update
   printf("Encoder #%i - Position: %5d -- Relative Change %2d -- Elapsed Time: %5d \n", Index, Position, RelativePosition, Time);
   
   return 0;
@@ -134,6 +140,7 @@ int display_properties(CPhidgetEncoderHandle phid)
   return 0;
 }
 
+// Runs the encoder program until ROS is told to exit
 int encoder_simple()
 {
   int result;
@@ -175,9 +182,7 @@ int encoder_simple()
   //read encoder event data
   printf("Reading.....\n");
   
-  //keep displaying encoder data until user input is read
-  printf("Press any key to end\n");
-  char endChar = 'z';
+  // Keep running until ROS kills the node
   while(ros::ok()) {
     if(heartbeat != 0) {
       confirmheartbeat_msg.data = heartbeat;
@@ -204,22 +209,23 @@ int encoder_simple()
 
 int main(int argc, char* argv[])
 {
-  ros::init(argc, argv, "phidgetEncoder");
+  ros::init(argc, argv, "phidgetEncoder"); // Initialize this ROS node
   
-  ros::NodeHandle  n;  
+  ros::NodeHandle  n;  // Setup ROS handler
 
+  // Subscribe to the publishers repsonsible for giving commands to this node
   ros::Subscriber fd = n.subscribe("FreqDiv", 1000, FreqDivCallback);
   ros::Subscriber checkHeartbeat = n.subscribe("Heartbeat", 1000, HeartbeatCheckCallback);
   ros::Subscriber encReset = n.subscribe("EncReset", 1000, RunResetCallback);
 
-
-  pub_LeftEncoder = n.advertise<std_msgs::Int64>("LeftEncoder", 1000);
-  pub_RightEncoder = n.advertise<std_msgs::Int64>("RightEncoder", 1000);
-  pub_confirmHeartbeat = n.advertise<std_msgs::Int32>("ConfHeartbeat", 1000);
+  //Set up the publishers
+  pub_LeftEncoder = n.advertise<std_msgs::Int64>("LeftEncoder", 1000); // The left encoder's position
+  pub_RightEncoder = n.advertise<std_msgs::Int64>("RightEncoder", 1000); // The right encoder's position
+  pub_confirmHeartbeat = n.advertise<std_msgs::Int32>("ConfHeartbeat", 1000); // The hearbeat ID responder
   
-  ros::spinOnce();
+  ros::spinOnce(); // First report to ROS
   
-  encoder_simple();
+  encoder_simple(); // This will run encoder monitoring until ROS node is shut down
   return 0;
 }
 
