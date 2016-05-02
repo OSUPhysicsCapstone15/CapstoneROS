@@ -40,7 +40,7 @@ static const double K_p = 1; // PID proportional constant (unused)
 static const double K_i = 1; // PID integral constant (unused)
 static const double RAMP_STEP = 53; // The distance that the robot has to move in RAMP_TIME
 static const double RAMP_ANGLE_STEP = 5; // The angle that the robot has to move in RAMP_TIME
-vstatic const double RAMP_TIME = 2.0; // The time the checkpoints are checked for the ramping procedure
+static const double RAMP_TIME = 2.0; // The time the checkpoints are checked for the ramping procedure
 
 // Global variables
 long long rightEncoder = 0; // Right encoder count
