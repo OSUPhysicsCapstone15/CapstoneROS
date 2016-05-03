@@ -105,6 +105,7 @@ int CCONV PositionChangeHandler(CPhidgetEncoderHandle ENC, void *usrptr, int Ind
     if(Position % freqDiv == 0){
       pub_LeftEncoder.publish(leftencoder_msg);
     }
+    printf("Updating LEFT \n");
     ros::spinOnce();
   } else if(Index == 1) { // Right
     rightencoder_msg.data = Position;
