@@ -119,13 +119,16 @@ void beacon_main(beacon_loc &b_loc)
     {
         b_loc.beacon_not_found = 1;
     }
-    imwrite("testPics/imgOriginal1.jpg", imgOriginal1);
-    imwrite("testPics/imgOriginal2.jpg", imgOriginal2);
-    imwrite("testPics/imgOriginal3.jpg", imgOriginal3);
-    imwrite("testPics/imgOriginal4.jpg", imgOriginal4);
-    imwrite("testPics/diff1.jpg", diff1);
-    imwrite("testPics/diff2.jpg", diff2);
-    imwrite("testPics/out.jpg", out);
+    
+    String foldername = "testPics";
+    
+    imwrite(foldername + "/imgOriginal1.jpg", imgOriginal1);
+    imwrite(foldername + "/imgOriginal2.jpg", imgOriginal2);
+    imwrite(foldername + "/imgOriginal3.jpg", imgOriginal3);
+    imwrite(foldername + "/imgOriginal4.jpg", imgOriginal4);
+    imwrite(foldername + "/diff1.jpg", diff1);
+    imwrite(foldername + "/diff2.jpg", diff2);
+    imwrite(foldername + "/out.jpg", out);0
 
 cout << "HERE!" << endl;
     //output windows to view
