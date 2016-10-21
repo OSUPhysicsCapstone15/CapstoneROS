@@ -1,0 +1,96 @@
+#include "functions.h"
+#include "blob.h"
+
+void blob_main(sample_loc &s_loc)
+{
+    /*
+	OpenCV defines HSV colors by the following ranges: 
+	H: 0-180, S: 0-255, V: 0-255
+	*/
+
+	// hsvParams hsvWhite = {20,0,0,180,80,255}; // original
+	hsvParams hsvWhite = {0, 0, 230, 180, 20, 255}; // edited
+    hsvParams hsvPurple = {80,60,0,130,255,255};
+
+    hsvParams hsv = hsvWhite; // s_loc.whiteSample==true? hsvWhite:hsvPurple;
+
+    //Set up blob detection parameters
+    SimpleBlobDetector::Params params = setupObjectBlobParams();
+
+    vector<KeyPoint> keypoints;
+
+    // const string filename("/home/buckeye/catkin_ws/src/CapstoneROS/src/vision/samplePics/25ft3.jpg");
+    //Initialize camera
+/* 
+    VideoCapture cap(0);
+    if ( !cap.isOpened() ){
+        cout << "Cannot open the web cam" << endl;
+        return;
+    }
+*/
+    while(true){
+      for(int n=1; n=4; n++)
+	{
+	  stringstream ss;
+	  ss << n;
+	  string num = ss.str();
+        Mat img, imgHSV, imgTHRESH, out;
+		/* img = imread(filename, CV_LOAD_IMAGE_COLOR); */
+		
+    	// cap>>img;
+		img = imread("samplePics/pic"+num+".jpg", CV_LOAD_IMAGE_COLOR);
+        
+        if(img.empty()){
+            cout << "can not open image" << endl;
+	    s_loc.sample_not_found=true;
+            return;
+        }
+
+        //convert color to HSV, threshold and remove noise
+        cvtColor(img, imgHSV, COLOR_BGR2HSV);
+        findGrass(img,imgHSV);
+        cvtColor(img, imgHSV, COLOR_BGR2HSV);
+
+        inRange(imgHSV, Scalar(hsv.hL, hsv.sL, hsv.vL), Scalar(hsv.hH, hsv.sH, hsv.vH), imgTHRESH);
+        removenoise(imgTHRESH);
+
+        namedWindow("Input", WINDOW_AUTOSIZE);
+        namedWindow("Detection", WINDOW_AUTOSIZE);
+	
+        Ptr<SimpleBlobDetector> blobDetect = SimpleBlobDetector::create(params);
+        blobDetect->detect( imgTHRESH, keypoints );
+
+        drawKeypoints(imgTHRESH, keypoints, out, CV_RGB(0,0,255), DrawMatchesFlags::DEFAULT);
+
+        /* Circle blobs
+        for(int i = 0; i < keypoints.size(); i++)
+            circle(out, keypoints[i].pt, 1.5*keypoints[i].size, CV_RGB(0,255,0), 20, 8);
+        */
+
+        // Find largest keypoint blob, and use that in determining angle and distance
+        if(keypoints.size() >= 1){
+			int index = 0;
+			for (int i = 0; i < keypoints.size(); i++){
+				if( keypoints[i].size > keypoints[index].size ) { 
+					index = i;
+				}
+			}
+            cout<<endl<<endl<<"Object Found"<<endl;
+            tilt_turn_degrees(imgTHRESH, keypoints[index].pt.y, keypoints[index].pt.x, &s_loc);
+	    	robot_angle(&s_loc, imgTHRESH, keypoints[index].pt.x);
+        }
+        else{
+            cout<<"No Object Found"<<endl;
+        }
+
+        imshow("Input", img);
+        // imwrite("exampleOfFindGrass.jpg", img);
+        imshow("Detection", out);
+        // imwrite("showingKeypoints.jpg", out);
+        waitKey(-1);
+	}
+    }
+  }
+
+
+
