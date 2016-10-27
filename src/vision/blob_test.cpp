@@ -28,7 +28,7 @@ void blob_main(sample_loc &s_loc)
         return;
     }
 */
-    while(true){
+    //while(true){
         Mat img, imgHSV, imgTHRESH, out;
 		/* img = imread(filename, CV_LOAD_IMAGE_COLOR); */
 		
@@ -77,14 +77,22 @@ void blob_main(sample_loc &s_loc)
         else{
             cout<<"No Object Found"<<endl;
         }
-
+		
+		String foldername = "blobtestPics/";
+		std::string note = "";
+		cout << "File prefix for pictures: " << endl;
+    	cin >> note;
+    	
+		imwrite(foldername + note + "_img.jpg", img);
+    	imwrite(foldername + note + "_out.jpg", out);
+		
         imshow("Input", img);
         // imwrite("exampleOfFindGrass.jpg", img);
         imshow("Detection", out);
         // imwrite("showingKeypoints.jpg", out);
         waitKey(-1);
 
-    }
+    //}
   }
 
 
