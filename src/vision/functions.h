@@ -45,7 +45,7 @@ void printDistanceFromLights(vector<KeyPoint>, beacon_loc*);
 void getBeaconOrientation(vector<KeyPoint>, beacon_loc*);
 */
 Mat getPic(VideoCapture);
-
+double getPicture(VideoCapture);
 void createWindows();
 
 SimpleBlobDetector::Params setupBeaconBlobParams();

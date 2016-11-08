@@ -34,9 +34,9 @@ Mat findBiggestBlob(Mat src)
 //finds the continuous region of grass in a picture, along with everything inside of it
 void findGrass(Mat src, Mat HSV) //this should be separated into a few more readable functions
 {
-    int iLowH = 30;
-    int iHighH = 70;
-
+    int iLowH = 40; // 30
+    int iHighH = 60; // 70
+    
     int iLowS = 60;
     int iHighS = 255;
 
@@ -330,7 +330,21 @@ double test=-110*rat*rat + 387.4*rat - 276.18;
 Mat getPic(VideoCapture cap)
 {
     Mat img;
-    /* Previous Code (2015)
+	
+	//Takes pic at a much more consistent time (Denny)
+	auto t = std::chrono::high_resolution_clock::now();
+    auto t0 = std::chrono::high_resolution_clock::now();
+    while( std::chrono::duration_cast<std::chrono::milliseconds>(t0-t).count() < 1000) {
+    	cap >> img; // keep this here
+    	t0 = std::chrono::high_resolution_clock::now();
+    }
+    cap >> img;
+    cout << "Time taken: " << std::chrono::duration_cast<std::chrono::milliseconds>(t0-t).count() << endl;
+    return img;
+    
+    /* 
+    PREVIOUS CODE (2015)
+    
     struct timeval tv1,tv2;
     double duration = 0;
     double timer = 0.2;
@@ -351,16 +365,9 @@ Mat getPic(VideoCapture cap)
 
     //cout << "Taking pic" << endl;
     cap >> img;
+    
+    END PREVIOUS CODE
 	*/
-	//Takes pic at a much more consistent time (Denny)
-	auto t = std::chrono::high_resolution_clock::now();
-    auto t0 = std::chrono::high_resolution_clock::now();
-    while( std::chrono::duration_cast<std::chrono::milliseconds>(t0-t).count() < 230) {
-    	t0 = std::chrono::high_resolution_clock::now();
-    }
-    cap >> img;
-   //cout << std::chrono::duration_cast<std::chrono::milliseconds>(t0-t).count() << endl;
-    return img;
 }
 
 double getPicture(VideoCapture cap)//returns time instead of picture (by Kaeli)

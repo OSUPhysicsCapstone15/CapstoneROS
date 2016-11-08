@@ -3,7 +3,7 @@
 
 void beacon_main(beacon_loc &b_loc)
 {
-    createWindows();
+
 
     //Set up blob detection parameters
     SimpleBlobDetector::Params params = setupBeaconBlobParams();
@@ -60,11 +60,25 @@ void beacon_main(beacon_loc &b_loc)
 	cout << std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count() << endl;
 	}
 	*/
+	
+	// auto t1 = std::chrono::high_resolution_clock::now();
 	Mat noimg = getPic(cap); //first pic out of sync
+	// auto t2 = std::chrono::high_resolution_clock::now();
     Mat imgOriginal1 = getPic(cap);
+    // auto t3 = std::chrono::high_resolution_clock::now();
     Mat imgOriginal2 = getPic(cap);
+    // auto t4 = std::chrono::high_resolution_clock::now();
     Mat imgOriginal3 = getPic(cap);
+    // auto t5 = std::chrono::high_resolution_clock::now();
     Mat imgOriginal4 = getPic(cap);	
+    /* 
+    auto t6 = std::chrono::high_resolution_clock::now();
+    cout << "first diff not used "<< std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count() << endl;
+    cout << "2nd " << std::chrono::duration_cast<std::chrono::milliseconds>(t3-t2).count() << endl;
+    cout << "3rd " << std::chrono::duration_cast<std::chrono::milliseconds>(t4-t3).count() << endl;
+    cout << "4th " << std::chrono::duration_cast<std::chrono::milliseconds>(t5-t4).count() << endl;
+    cout << "5th " << std::chrono::duration_cast<std::chrono::milliseconds>(t6-t5).count() << endl;
+    */
     
     if(imgOriginal1.empty() || imgOriginal2.empty() ||imgOriginal3.empty() ||imgOriginal4.empty())
     {
@@ -97,15 +111,15 @@ void beacon_main(beacon_loc &b_loc)
     Ptr<SimpleBlobDetector> blobDetect = SimpleBlobDetector::create(params);
     blobDetect->detect(binDiff, keypoints);
     
-        String foldername = "testPics/";
+        String foldername = "test_11-3_atrium_different distances/";
     std::string note = "";
 	cout << "File prefix for pictures: " << endl;
     cin >> note;
     
-    imwrite(foldername + note + "imgOriginal1.jpg", imgOriginal1);
-    imwrite(foldername + note  + "imgOriginal2.jpg", imgOriginal2);
-    imwrite(foldername + note  + "imgOriginal3.jpg", imgOriginal3);
-    imwrite(foldername + note  + "imgOriginal4.jpg", imgOriginal4);
+    imwrite(foldername + note + "_imgOriginal1.jpg", imgOriginal1);
+    imwrite(foldername + note  + "_imgOriginal2.jpg", imgOriginal2);
+    imwrite(foldername + note  + "_imgOriginal3.jpg", imgOriginal3);
+    imwrite(foldername + note  + "_imgOriginal4.jpg", imgOriginal4);
 
     cout << "Keypoints size: " << keypoints.size() << endl;
 
@@ -171,12 +185,13 @@ void beacon_main(beacon_loc &b_loc)
         b_loc.beacon_not_found = 1;
     }
     
-    imwrite(foldername + note  + "diff1.jpg", diff1);
-    imwrite(foldername + note  + "diff2.jpg", diff2);
-    imwrite(foldername + note  + "out.jpg", out);
+    imwrite(foldername + note  + "_diff1.jpg", diff1);
+    imwrite(foldername + note  + "_diff2.jpg", diff2);
+    imwrite(foldername + note  + "_out.jpg", out);
 
 	cout << "HERE!" << endl;
     //output windows to view
+    createWindows();
     showWindows(imgOriginal1, imgOriginal2, imgOriginal3, imgOriginal4, diff1, diff2, out);
 }
 

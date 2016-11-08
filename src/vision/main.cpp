@@ -13,10 +13,10 @@ int main(){
 	beacon_main(bloc);
 
 /* to test blob.cpp
-
+ 
 	sample_loc sloc;
 	blob_main(sloc);
-*/
+	//*/
 
 return 0;
 }

@@ -34,9 +34,9 @@ Mat findBiggestBlob(Mat src)
 //finds the continuous region of grass in a picture, along with everything inside of it
 void findGrass(Mat src, Mat HSV) //this should be separated into a few more readable functions
 {
-    int iLowH = 30;
-    int iHighH = 70;
-
+    int iLowH = 40; // 30
+    int iHighH = 60; // 70
+    
     int iLowS = 60;
     int iHighS = 255;
 
@@ -330,11 +330,27 @@ double test=-110*rat*rat + 387.4*rat - 276.18;
 Mat getPic(VideoCapture cap)
 {
     Mat img;
+	
+	//Takes pic at a much more consistent time (Denny)
+	auto t = std::chrono::high_resolution_clock::now();
+    auto t0 = std::chrono::high_resolution_clock::now();
+    while( std::chrono::duration_cast<std::chrono::milliseconds>(t0-t).count() < 500) {
+    	cap >> img; // keep this here
+    	t0 = std::chrono::high_resolution_clock::now();
+    }
+    cap >> img;
+    cout << "Time taken: " << std::chrono::duration_cast<std::chrono::milliseconds>(t0-t).count() << endl;
+    return img;
+    
+    /* 
+    PREVIOUS CODE (2015)
+    
     struct timeval tv1,tv2;
     double duration = 0;
-    double timer = .2;
+    double timer = 0.2;
 
-    cout << "Taking pic in " << timer << " s"<<endl;
+    //cout << "Taking pic in " << timer << " s"<<endl;
+    
 
     gettimeofday(&tv1, NULL);
     duration=0;
@@ -345,12 +361,60 @@ Mat getPic(VideoCapture cap)
         gettimeofday(&tv2, NULL);
         duration = ((double)((tv2.tv_sec*1000000+tv2.tv_usec)-(tv1.tv_sec*1000000+tv1.tv_usec)))/1000000.00;
     }
+    //cout << "duration is " << duration << endl;
 
-    cout << "Taking pic" << endl;
+    //cout << "Taking pic" << endl;
+    cap >> img;
+    
+    END PREVIOUS CODE
+	*/
+}
+
+double getPicture(VideoCapture cap)//returns time instead of picture (by Kaeli)
+{
+    Mat img;
+    struct timeval tv1,tv2;
+    double duration = 0;
+    double timer = 1;
+
+    //cout << "Taking pic in " << timer << " s"<<endl;
+    
+
+    gettimeofday(&tv1, NULL);
+    duration=0;
+
+    while(duration<timer)
+    {
+        //cap >> img;
+        gettimeofday(&tv2, NULL);
+        duration = ((double)((tv2.tv_sec*1000000+tv2.tv_usec)-(tv1.tv_sec*1000000+tv1.tv_usec)))/1000000.00;
+    }
+    //cout << "duration is " << duration << endl;
+
+    // cout << "Taking pic" << endl;
     cap >> img;
 
-    return img;
+    return duration;
 }
+
+/*
+void timer_start(std::function<void(void)> func, unsigned int interval)
+{
+    std::thread([func, interval]() {
+        while (true)
+        {
+            func();
+            std::this_thread::sleep_for(std::chrono::milliseconds(interval));
+        }
+    }).detach();
+}
+
+Mat timerPic(VideoCapture cap)
+{
+  Mat img;
+  cap >> img;
+  return img;
+  }*/
 
 //creates viewable windows (view using showWindows())
 void createWindows()
@@ -374,7 +438,8 @@ void showWindows(Mat img1, Mat img2, Mat img3, Mat img4, Mat diff1, Mat diff2, M
     imshow("Diff1", diff1 );
     imshow("Diff2", diff2 );
     imshow("bit_and", out);
-    waitKey(20);
+    // set to # of milliseconds for images to show for (0 for indefinite)
+    waitKey(0);
 }
 
 //sets up the parameters for SimpleBlobDetector to find beacon(just to clean up the main code)
@@ -478,10 +543,10 @@ void shootPic()
 //returns true if success, false otherwise
 bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc) 
 {
-    	const float BOTTOM_DIST = 20.0; //inches
-    	const float TOP_DIST = 33.5; //up is negative y in solvePNP
-    	const float LEFT_DIST = 30.0;
-    	const float RIGHT_DIST = 30.0;
+    	const float BOTTOM_DIST = 0.55; //meters
+    	const float TOP_DIST = 0.8; //up is negative y in solvePNP
+    	const float LEFT_DIST = 0.76;
+    	const float RIGHT_DIST = 0.76;
 
     	vector<KeyPoint> keyPoints(4);
     	keyPoints[0] = getTopKeyPoint(imgKeyPoints);
@@ -505,7 +570,7 @@ bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc)
 
 	//get saved calibration matrix
 	string filename = "/home/buckeye/catkin_ws/src/CapstoneROS/src/vision/out_camera_data.xml";
-	FileStorage fs(filename, FileStorage::READ);
+	FileStorage fs(filename, FileStorage::READ);//callibration file that somehow has data that describes camera and distortion coefficients
 
 	if(!fs.isOpened())
 	{
@@ -523,40 +588,45 @@ bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc)
 		return false;
 	}
 	else
-	{
+	  { //output callibration matrices for camera and distortion
 		cout << "Camera Matrix" << endl;
 		cout << cameraMatrix << endl;
 		cout << "Distortion Coefficients" << endl;
 		cout << distCoeffs << endl;
 	}
 
-	cout << "Known Points" << endl;
+	cout << "Known Points (m) of beacon" << endl;
 	cout << kwnPoints << endl;
-	cout << "Image Points" << endl;
+	cout << "Image Points (where keypoints are, in pixels)" << endl;
 	cout << imgPoints << endl;
 
 	Mat rvec, tvec, R;
     bool guess;
-    if(!b_loc->beacon_not_found) {
+    if(!b_loc->beacon_not_found) {//if you find beacon calculate rvec and tvec
         guess = true;
     	rvec=(Mat_<double>(3,1)<<   0,
                                     atan(b_loc->x / b_loc->y)- M_PI*b_loc->angle_from_robot/180.0,
-                                    0);
+	      0);//calculated based on information from nav team
 
     	tvec=(Mat_<double>(3,1)<<   -1*b_loc->x,
                                     6, 
-                                    -1*b_loc->y);
+	      -1*b_loc->y);// calculated based on information from nav team
 
-        Rodrigues(rvec, R);
-        tvec = -R.t() * tvec;
-        Rodrigues(R.t(), rvec);
+	cout << "Guessed Rotation vector" << endl;
+        cout << rvec << endl;
+        cout << "Guessed Translation vector" << endl;
+        cout << tvec << endl;
+
+        Rodrigues(rvec, R);//convert rotation vector to rotation matrix R
+        tvec = -R.t() * tvec;//calculate tvec from R
+        Rodrigues(R.t(), rvec);//calculate rvec from r
 
     } else {
         guess = false;
     }
 
 	//Mat rvec, tvec;
-	bool succ = solvePnP(Mat(kwnPoints), Mat(imgPoints), cameraMatrix, distCoeffs, rvec, tvec, guess);
+    bool succ = solvePnP(Mat(kwnPoints), Mat(imgPoints), cameraMatrix, distCoeffs, rvec, tvec, guess);//checks to see if object was found
 
     if(!succ) {
         cout<<"Could not calculate position of beacon"<<endl;
@@ -586,11 +656,11 @@ bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc)
     float rangle = bangle - 180.0 * camera_rvec.at<double>(1) / M_PI;
 
     cout << endl << endl;
-    cout << "Distance is " << distance << " inches." << endl;
+    cout << "Distance is " << distance << " meters." << endl;
     cout << "Angle from beacon is " << bangle << " degrees." << endl;
     cout << "Angle from robot is " << rangle << " degrees." << endl;
-    cout << "Beacon x is " << -1*camera_tvec.at<double>(0) << " inches." << endl;
-    cout << "Beacon y is " << -1*camera_tvec.at<double>(2) << " inches." << endl;
+    cout << "Beacon x is " << -1*camera_tvec.at<double>(0) << " meters." << endl;
+    cout << "Beacon y is " << -1*camera_tvec.at<double>(2) << " meters." << endl;
 
     b_loc->x = -1*camera_tvec.at<double>(0);
     b_loc->y = -1*camera_tvec.at<double>(2);

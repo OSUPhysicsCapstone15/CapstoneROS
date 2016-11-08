@@ -13,24 +13,27 @@ void blob_main(sample_loc &s_loc)
 
     vector<KeyPoint> keypoints;
 
-    const string filename("/home/buckeye/catkin_ws/src/CapstoneROS/src/vision/samplePics/25ft3.jpg");
+    // const string filename("/home/buckeye/catkin_ws/src/CapstoneROS/src/vision/samplePics/25ft3.jpg");
     //Initialize camera
-/*    VideoCapture cap(1);
+    VideoCapture cap(0);
     if ( !cap.isOpened() ){
         cout << "Cannot open the web cam" << endl;
-        return -1;
+        return;
     }
-*/
+
     while(true){
         Mat img, imgHSV, imgTHRESH, out;
-img = imread(filename, CV_LOAD_IMAGE_COLOR);
-       // cap>>img;
+// img = imread(filename, CV_LOAD_IMAGE_COLOR);
+       cap>>img;
 
         if(img.empty()){
             cout << "can not open image" << endl;
 	    s_loc.sample_not_found=true;
             return;
         }
+	
+	namedWindow("First", WINDOW_AUTOSIZE);
+	imshow("First", img);
 
         //convert color to HSV, threshold and remove noise
         cvtColor(img, imgHSV, COLOR_BGR2HSV);

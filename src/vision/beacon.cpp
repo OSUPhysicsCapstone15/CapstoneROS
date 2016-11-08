@@ -54,7 +54,7 @@ void beacon_main(beacon_loc &b_loc)
     Ptr<SimpleBlobDetector> blobDetect = SimpleBlobDetector::create(params);
     blobDetect->detect(binDiff, keypoints);
 
-    cout << keypoints.size() << endl;
+    cout << "Keypoints size: " << keypoints.size() << endl;
 
     while(keypoints.size() > 4 && thresh <= 255)
     {
@@ -62,7 +62,7 @@ void beacon_main(beacon_loc &b_loc)
         threshDilateDetect(grayDiff, binDiff, thresh, params, keypoints);
     }
 
-    cout << keypoints.size() << endl;
+    cout << "Keypoints size: " << keypoints.size() << endl;
 
     while(keypoints.size() < 4 && thresh >= 50)
     {
@@ -77,7 +77,7 @@ void beacon_main(beacon_loc &b_loc)
         return;
     }
 
-    cout << keypoints.size() << endl;
+    cout << "Keypoints size: " << keypoints.size() << endl;
 
     while(keypoints.size() > 4 && thresh <= 255)
     {
@@ -85,8 +85,8 @@ void beacon_main(beacon_loc &b_loc)
         threshDilateDetect(grayDiff, binDiff, thresh, params, keypoints);
     }
 
-    cout << thresh << endl;
-    cout << keypoints.size() << endl;
+    cout << "Thresh: " << thresh << endl;
+    cout << "Keypoints size: " << keypoints.size() << endl;
 
     //draw important points for output
     Mat out = drawAndCircleKeypoints(keypoints, binDiff);
@@ -100,9 +100,9 @@ void beacon_main(beacon_loc &b_loc)
 
 	beaconLocation(keypoints, &b_loc);
 
-    //getBeaconOrientation(keypoints, &b_loc);
-    //printDistanceFromLights(keypoints, &b_loc);
-    //robot_angle(&b_loc, binDiff, cent.x);
+    // getBeaconOrientation(keypoints, &b_loc);
+    // printDistanceFromLights(keypoints, &b_loc);
+    robot_angle(&b_loc, binDiff, cent.x);
 
     circle(out, cent, 5, CV_RGB(0,100,0), -1, 8);
     }
@@ -117,6 +117,14 @@ void beacon_main(beacon_loc &b_loc)
     {
         b_loc.beacon_not_found = 1;
     }
+    imwrite("testPics/imgOriginal1.jpg", imgOriginal1);
+    imwrite("testPics/imgOriginal2.jpg", imgOriginal2);
+    imwrite("testPics/imgOriginal3.jpg", imgOriginal3);
+    imwrite("testPics/imgOriginal4.jpg", imgOriginal4);
+    imwrite("testPics/diff1.jpg", diff1);
+    imwrite("testPics/diff2.jpg", diff2);
+    imwrite("testPics/out.jpg", out);
+
 cout << "HERE!" << endl;
     //output windows to view
     showWindows(imgOriginal1, imgOriginal2, imgOriginal3, imgOriginal4, diff1, diff2, out);

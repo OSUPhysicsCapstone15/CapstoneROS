@@ -33,7 +33,7 @@ void blob_main(sample_loc &s_loc)
 		/* img = imread(filename, CV_LOAD_IMAGE_COLOR); */
 		
     	// cap>>img;
-		img = imread("samplePics/15ft3.jpg", CV_LOAD_IMAGE_COLOR);
+		img = imread("samplePics/25ft3.jpg", CV_LOAD_IMAGE_COLOR);
         
         if(img.empty()){
             cout << "can not open image" << endl;
@@ -57,10 +57,10 @@ void blob_main(sample_loc &s_loc)
 
         drawKeypoints(imgTHRESH, keypoints, out, CV_RGB(0,0,255), DrawMatchesFlags::DEFAULT);
 
-        /* Circle blobs
+        // Circle blobs
         for(int i = 0; i < keypoints.size(); i++)
             circle(out, keypoints[i].pt, 1.5*keypoints[i].size, CV_RGB(0,255,0), 20, 8);
-        */
+        
 
         // Find largest keypoint blob, and use that in determining angle and distance
         if(keypoints.size() >= 1){
@@ -80,16 +80,16 @@ void blob_main(sample_loc &s_loc)
 		
 		String foldername = "blobtestPics/";
 		std::string note = "";
-		cout << "File prefix for pictures: " << endl;
-    	cin >> note;
+		// cout << "File prefix for pictures: " << endl;
+    	// cin >> note;
     	
-		imwrite(foldername + note + "_img.jpg", img);
-    	imwrite(foldername + note + "_out.jpg", out);
+		// imwrite(foldername + note + "_img.jpg", img);
+    	// imwrite(foldername + note + "_out.jpg", out);
 		
         imshow("Input", img);
-        // imwrite("exampleOfFindGrass.jpg", img);
+        imwrite(foldername + "exampleOfFindGrass.jpg", img);
         imshow("Detection", out);
-        // imwrite("showingKeypoints.jpg", out);
+        imwrite(foldername + "showingKeypoints.jpg", out);
         waitKey(-1);
 
     //}

@@ -1,6 +1,8 @@
 #ifndef beacon_H_INCLUDED
 #define beacon_H_INCLUDED
-
+#include <sstream>
+#include <chrono>
+#include <thread>
 
 struct beacon_loc {
 	float angle_from_robot=0; //degrees for all angles
