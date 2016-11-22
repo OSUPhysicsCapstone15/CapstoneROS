@@ -28,7 +28,7 @@ Mat findBiggestBlob(Mat);
 
 void findGrass(Mat, Mat);
 
-//void robot_angle(beacon_loc *orientation, Mat img, int object_cols);
+void robot_angle(beacon_loc *orientation, Mat img, int object_cols);
 void robot_angle(sample_loc *orientation, Mat img, int object_cols);
 
 void tilt_turn_degrees(Mat img, int object_rows, int object_cols, sample_loc* orientation);
@@ -45,7 +45,7 @@ void printDistanceFromLights(vector<KeyPoint>, beacon_loc*);
 void getBeaconOrientation(vector<KeyPoint>, beacon_loc*);
 */
 Mat getPic(VideoCapture);
-
+double getPicture(VideoCapture);
 void createWindows();
 
 SimpleBlobDetector::Params setupBeaconBlobParams();

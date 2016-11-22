@@ -5,10 +5,10 @@
 int main(){
 /*
   to test beacon.cpp */
-
+	
 	beacon_loc bloc;
-	bloc.x=0;
-	bloc.y=9;
+	bloc.x=7;
+	bloc.y=5;
 	bloc.angle_from_robot=0;
 	beacon_main(bloc);
 

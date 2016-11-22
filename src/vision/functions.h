@@ -51,7 +51,7 @@ void createWindows();
 SimpleBlobDetector::Params setupBeaconBlobParams();
 SimpleBlobDetector::Params setupObjectBlobParams();
 
-void showWindows(Mat, Mat, Mat, Mat, Mat, Mat, Mat);
+void showWindows(Mat, Mat, Mat, Mat, Mat, Mat, Mat, Mat);
 
 Mat drawAndCircleKeypoints(vector<KeyPoint>, Mat);
 

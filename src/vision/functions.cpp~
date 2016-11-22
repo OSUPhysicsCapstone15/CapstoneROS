@@ -329,18 +329,30 @@ double test=-110*rat*rat + 387.4*rat - 276.18;
 //returns a picture taken with the given camera
 Mat getPic(VideoCapture cap)
 {
+	//Takes pic a more consistent time (still need to be tested on beacon as of 11/14) Denny
     Mat img;
-	
+    double t0 = cap.get(CAP_PROP_POS_MSEC);
+    double t1 = cap.get(CAP_PROP_POS_MSEC);
+    bool vid = true;
+    while(t1-t0 < 996 && vid) {
+    	vid = cap.grab();
+    	t1 = cap.get(CAP_PROP_POS_MSEC);
+    }
+    cap.retrieve(img, 0);
+    cout << "Time taken: " << t1-t0 << endl;
+    return img;
+	/*
 	//Takes pic at a much more consistent time (Denny)
 	auto t = std::chrono::high_resolution_clock::now();
     auto t0 = std::chrono::high_resolution_clock::now();
-    while( std::chrono::duration_cast<std::chrono::milliseconds>(t0-t).count() < 500) {
+    while( std::chrono::duration_cast<std::chrono::milliseconds>(t0-t).count() < 1000) {
     	cap >> img; // keep this here
     	t0 = std::chrono::high_resolution_clock::now();
     }
     cap >> img;
     cout << "Time taken: " << std::chrono::duration_cast<std::chrono::milliseconds>(t0-t).count() << endl;
     return img;
+    */
     
     /* 
     PREVIOUS CODE (2015)
@@ -425,11 +437,12 @@ void createWindows()
     namedWindow("Original 4", WINDOW_NORMAL);
     namedWindow("Diff1", WINDOW_NORMAL);
     namedWindow("Diff2", WINDOW_NORMAL);
-    namedWindow("bit_and", WINDOW_NORMAL);
+    namedWindow("Diff_and", WINDOW_NORMAL);
+    namedWindow("out", WINDOW_NORMAL);
 }
 
 //show the windows previously created with createWindows()
-void showWindows(Mat img1, Mat img2, Mat img3, Mat img4, Mat diff1, Mat diff2, Mat out)
+void showWindows(Mat img1, Mat img2, Mat img3, Mat img4, Mat diff1, Mat diff2,  Mat out)
 {
     imshow("Original 1", img1);
     imshow("Original 2", img2);
@@ -437,7 +450,8 @@ void showWindows(Mat img1, Mat img2, Mat img3, Mat img4, Mat diff1, Mat diff2, M
     imshow("Original 4", img4);
     imshow("Diff1", diff1 );
     imshow("Diff2", diff2 );
-    imshow("bit_and", out);
+    imshow("Diff_and", diff_and);
+    imshow("out", out);
     // set to # of milliseconds for images to show for (0 for indefinite)
     waitKey(0);
 }
@@ -541,8 +555,9 @@ void shootPic()
 }
 
 //returns true if success, false otherwise
-bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc) 
+bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc)
 {
+    	// distances from the center -Sam
     	const float BOTTOM_DIST = 0.55; //meters
     	const float TOP_DIST = 0.8; //up is negative y in solvePNP
     	const float LEFT_DIST = 0.76;
@@ -555,18 +570,17 @@ bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc)
     	keyPoints[3] = getBottomKeyPoint(imgKeyPoints);
 
 
-	//convert keypoints to point2f points
+	//convert keypoints to point2f points, just an (x,y) coord
 	vector<Point2f> imgPoints;
 	KeyPoint::convert(keyPoints, imgPoints);
 
 	//fill known points with beacon dimensions
-	vector<Point3f> kwnPoints = {Point3f(0, -1*TOP_DIST, 0), //Top
-				     Point3f(-1*LEFT_DIST, 0, 0), //Left
-				     Point3f(RIGHT_DIST, 0, 0),  //Right
-				     Point3f(0, BOTTOM_DIST, 0) //Bottom
+	vector<Point3f> kwnPoints = {
+		Point3f(0, -1*TOP_DIST, 0), //Top
+		Point3f(-1*LEFT_DIST, 0, 0), //Left
+		Point3f(RIGHT_DIST, 0, 0),  //Right
+		Point3f(0, BOTTOM_DIST, 0) //Bottom
 	};
-
-
 
 	//get saved calibration matrix
 	string filename = "/home/buckeye/catkin_ws/src/CapstoneROS/src/vision/out_camera_data.xml";
@@ -588,7 +602,8 @@ bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc)
 		return false;
 	}
 	else
-	  { //output callibration matrices for camera and distortion
+	{ 
+		//output callibration matrices for camera and distortion
 		cout << "Camera Matrix" << endl;
 		cout << cameraMatrix << endl;
 		cout << "Distortion Coefficients" << endl;
@@ -608,8 +623,9 @@ bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc)
                                     atan(b_loc->x / b_loc->y)- M_PI*b_loc->angle_from_robot/180.0,
 	      0);//calculated based on information from nav team
 
+    	/* changed the y component of this tvec from "6" to "0" : Sam */
     	tvec=(Mat_<double>(3,1)<<   -1*b_loc->x,
-                                    6, 
+                                    0, 
 	      -1*b_loc->y);// calculated based on information from nav team
 
 	cout << "Guessed Rotation vector" << endl;
@@ -618,6 +634,9 @@ bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc)
         cout << tvec << endl;
 
         Rodrigues(rvec, R);//convert rotation vector to rotation matrix R
+        
+        // R.t() returns the transposition of R, but doesn't update it - Sam
+        
         tvec = -R.t() * tvec;//calculate tvec from R
         Rodrigues(R.t(), rvec);//calculate rvec from r
 
@@ -626,7 +645,7 @@ bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc)
     }
 
 	//Mat rvec, tvec;
-    bool succ = solvePnP(Mat(kwnPoints), Mat(imgPoints), cameraMatrix, distCoeffs, rvec, tvec, guess);//checks to see if object was found
+    bool succ = solvePnP(kwnPoints, imgPoints, cameraMatrix, distCoeffs, rvec, tvec, guess);//checks to see if object was found
 
     if(!succ) {
         cout<<"Could not calculate position of beacon"<<endl;
@@ -635,7 +654,6 @@ bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc)
     }
 
 	Mat camera_rvec, camera_tvec;
-
 	Rodrigues(rvec, R);
 	Rodrigues(R.t(), camera_rvec);
 
@@ -651,7 +669,9 @@ bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc)
 	cout << "Camera Translation vector" << endl;
 	cout << camera_tvec << endl;
 	//fill beacon struct with appropriate values
+	
     float distance = sqrt(camera_tvec.at<double>(0) * camera_tvec.at<double>(0) + camera_tvec.at<double>(2) * camera_tvec.at<double>(2));
+    
     float bangle = 180.0 * atan(camera_tvec.at<double>(0) / camera_tvec.at<double>(2)) / M_PI;
     float rangle = bangle - 180.0 * camera_rvec.at<double>(1) / M_PI;
 
