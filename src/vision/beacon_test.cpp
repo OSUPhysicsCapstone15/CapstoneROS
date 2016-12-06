@@ -206,13 +206,13 @@ void beacon_main(beacon_loc &b_loc)
 
         Point cent = findCenterPoint(keypoints);
 
-	beaconLocation(keypoints, &b_loc);
+		beaconLocation(keypoints, &b_loc);
 
-    // getBeaconOrientation(keypoints, &b_loc);
-    // printDistanceFromLights(keypoints, &b_loc);
-    robot_angle(&b_loc, binDiff, cent.x);
+		// getBeaconOrientation(keypoints, &b_loc);
+		// printDistanceFromLights(keypoints, &b_loc);
+		robot_angle(&b_loc, binDiff, cent.x);
 
-    circle(out, cent, 5, CV_RGB(0,100,0), -1, 8);
+		circle(out, cent, 5, CV_RGB(0,100,0), -1, 8);
     }
     else if(keypoints.size() == 1)
     {
@@ -237,6 +237,6 @@ void beacon_main(beacon_loc &b_loc)
 	cout << "HERE!" << endl;
     //output windows to view
     createWindows();
-    showWindows(imgOriginal1, imgOriginal2, imgOriginal3, imgOriginal4, diff1, diff2, diff_and, out);
+    showWindows(imgOriginal1, imgOriginal2, imgOriginal3, imgOriginal4, diff1, diff2, grayDiff, out);
 }
 

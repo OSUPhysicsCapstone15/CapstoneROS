@@ -472,7 +472,7 @@ SimpleBlobDetector::Params setupBeaconBlobParams()
     params.thresholdStep = 1;
     params.minArea = 0;
     params.minConvexity = 0.50;
-    params.minInertiaRatio = 0.50;
+    params.minInertiaRatio = 0.30; // used to be: 0.50, changed by Sam
     params.maxArea = 2000;
     params.maxConvexity = 10;
 

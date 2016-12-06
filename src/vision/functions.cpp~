@@ -442,7 +442,7 @@ void createWindows()
 }
 
 //show the windows previously created with createWindows()
-void showWindows(Mat img1, Mat img2, Mat img3, Mat img4, Mat diff1, Mat diff2,  Mat out)
+void showWindows(Mat img1, Mat img2, Mat img3, Mat img4, Mat diff1, Mat diff2, Mat diff_and, Mat out)
 {
     imshow("Original 1", img1);
     imshow("Original 2", img2);
@@ -472,7 +472,7 @@ SimpleBlobDetector::Params setupBeaconBlobParams()
     params.thresholdStep = 1;
     params.minArea = 0;
     params.minConvexity = 0.50;
-    params.minInertiaRatio = 0.50;
+    params.minInertiaRatio = 0.30; // used to be: 0.50, changed by Sam
     params.maxArea = 2000;
     params.maxConvexity = 10;
 

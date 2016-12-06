@@ -127,7 +127,14 @@ void beacon_main(beacon_loc &b_loc)
 
     //logical AND diff1 and diff2 to eliminate people behind beacon
     bitwise_and(diff1,diff2,diff_and);
-
+    
+    /* 
+    	Instead of converting to grayscale immediately, we may want to filter out
+    	any non-green colors. This would minimize the number of keypoints, and 
+    	then repeated threshing won't accidentally remove the keypoints we want.
+    */
+    
+    
     //convert to grayscale
     cvtColor(diff_and, grayDiff, COLOR_BGR2GRAY); //Convert the captured
 
@@ -199,13 +206,13 @@ void beacon_main(beacon_loc &b_loc)
 
         Point cent = findCenterPoint(keypoints);
 
-	beaconLocation(keypoints, &b_loc);
+		beaconLocation(keypoints, &b_loc);
 
-    // getBeaconOrientation(keypoints, &b_loc);
-    // printDistanceFromLights(keypoints, &b_loc);
-    robot_angle(&b_loc, binDiff, cent.x);
+		// getBeaconOrientation(keypoints, &b_loc);
+		// printDistanceFromLights(keypoints, &b_loc);
+		robot_angle(&b_loc, binDiff, cent.x);
 
-    circle(out, cent, 5, CV_RGB(0,100,0), -1, 8);
+		circle(out, cent, 5, CV_RGB(0,100,0), -1, 8);
     }
     else if(keypoints.size() == 1)
     {
