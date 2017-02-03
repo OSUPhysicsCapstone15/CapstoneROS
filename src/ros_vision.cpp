@@ -1,0 +1,96 @@
+#include "ros/ros.h"
+#include "robot/BeaconRequest.h"
+#include "robot/BeaconResponse.h"
+#include "robot/SampleRequest.h"
+#include "robot/SampleResponse.h"
+#include "beacon.h"
+#include "blob.h"
+#include <signal.h>
+
+//create beacon publisher
+ros::Publisher becn_rsp;
+//create beacon subscriber
+ros::Subscriber becn_req;
+//create sample publisher
+ros::Publisher samp_rsp;
+//create sample subscriber
+ros::Subscriber samp_req;
+
+void sigintHand(int sig) {
+	ros::shutdown();
+}
+
+//handler for beacon request
+void BeaconRequest_hand(const robot::BeaconRequest::ConstPtr& msg) {
+
+	//look for the beacon in the requested area
+	beacon_loc loc;
+	loc.x = msg->x;
+	loc.y = msg->y;
+	loc.angle_from_robot = msg->angle_from_robot;
+	beacon_main(loc);
+
+	//report findings
+	robot::BeaconResponse rsp;
+	rsp.angle_from_robot = loc.angle_from_robot;
+	rsp.x = loc.x;
+	rsp.y = loc.y;
+	rsp.only_bottom = loc.only_bottom;
+	rsp.beacon_not_found = loc.beacon_not_found;
+	rsp.beacon_angle_conf = loc.beacon_angle_conf;
+
+	becn_rsp.publish(rsp);
+
+}
+ 
+//handler for sample request
+void SampleRequest_hand(const robot::SampleRequest::ConstPtr& msg) {
+
+	//look for the sample in the requested area
+	sample_loc loc;
+	//loc.angle_min = msg->angle_min;
+	//loc.angle_max = msg->angle_max;
+	loc.whiteSample = msg->whiteSample;
+	blob_main(loc);
+	
+	//report findings
+	robot::SampleResponse rsp;
+	rsp.angle_from_robot = loc.angle_from_robot;
+	rsp.distance = loc.distance;
+	rsp.sample_not_found = loc.sample_not_found;
+	rsp.sample_angle_conf = loc.sample_angle_conf;
+
+	samp_rsp.publish(rsp);
+
+}
+
+int main(int argc, char **argv) {
+	//initialize ros with "vision" node
+	ros::init(argc, argv, "vision");
+
+	//create handle for node
+	ros::NodeHandle n;
+
+	//advertise response	
+	becn_rsp = n.advertise<robot::BeaconResponse>("BeaconResponse", 1000);
+	samp_rsp = n.advertise<robot::SampleResponse>("SampleResponse", 1000);
+
+	//subscribe to beacon request
+	becn_req = n.subscribe("BeaconRequest", 1000, BeaconRequest_hand);
+	//subscribe to sample request
+	samp_req = n.subscribe("SampleRequest", 1000, SampleRequest_hand);
+
+	//set loop rate 
+	ros::Rate loop_rate(10);
+	ROS_INFO("Started"); //logs 
+
+	//make SIGINT handler
+	signal(SIGINT, sigintHand);
+	//ok() will return true as long as the node is still running and Ctrl-C hasnt been pressed
+	while (ros::ok()) { 
+	   //SpinOnce processes any subscriber handlers waiting on the queue
+	   ros::spinOnce();
+	   loop_rate.sleep();
+    }
+
+}

@@ -39,11 +39,8 @@ KeyPoint getLeftKeyPoint(vector<KeyPoint>);
 KeyPoint getRightKeyPoint(vector<KeyPoint>);
 KeyPoint getBottomKeyPoint(vector<KeyPoint>);
 KeyPoint getTopKeyPoint(vector<KeyPoint>);
-/*
-void printDistanceFromLights(vector<KeyPoint>, beacon_loc*);
 
 void getBeaconOrientation(vector<KeyPoint>, beacon_loc*);
-*/
 Mat getPic(VideoCapture);
 double getPicture(VideoCapture);
 void createWindows();
@@ -51,7 +48,7 @@ void createWindows();
 SimpleBlobDetector::Params setupBeaconBlobParams();
 SimpleBlobDetector::Params setupObjectBlobParams();
 
-void showWindows(Mat, Mat, Mat, Mat, Mat, Mat, Mat);
+void showWindows(Mat, Mat, Mat, Mat, Mat, Mat, Mat, Mat);
 
 Mat drawAndCircleKeypoints(vector<KeyPoint>, Mat);
 
@@ -63,6 +60,12 @@ void zoomOutFull();
 void shootPic();
 
 bool beaconLocation(vector<KeyPoint>, beacon_loc*);
+
+/*
+Old, unused functions
+
+void printDistanceFromLights(vector<KeyPoint>, beacon_loc*);
+*/
 
 #endif
 

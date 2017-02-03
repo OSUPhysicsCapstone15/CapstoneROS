@@ -76,6 +76,14 @@ target_link_libraries(basic_motor_control ${catkin_LIBRARIES})
 add_executable(nav src/nav.cpp)
 target_link_libraries(nav ${catkin_LIBRARIES})
 add_executable(vision_sim src/vision_sim.cpp)
+
+
+# BEGIN TESTING EXECUTABLES
+add_executable(beacon_return src/beacon_return.cpp)
+target_link_libraries(beacon_return ${catkin_LIBRARIES})
+
+# END TESTING EXECUATBLES
+
 target_link_libraries(vision_sim ${catkin_LIBRARIES})
 #set(CMAKE_CXX_FLAGS "-std=c++0x -lphidget21 ${CMAKE_CXX_FLAGS}")
 set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")

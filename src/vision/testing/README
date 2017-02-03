@@ -1,0 +1,16 @@
+Purpose: Use beacon_timer.cpp to get some pictures that have meaningful names for
+	checking the accuracy of beacon.cpp so far, and possibly correcting the 
+	calculated distance by some factor.
+
+A set of four images share the same name. "NAME_img0x.jpg"
+
+Images should be named in accordance with the known distance to the beacon and the 
+	angle if required. Use commas to seperate decimal points.
+
+Run these images through a beacon.cpp test directly and find how distance 
+	or angle changes.
+
+Plot the results and how true and calculated distances relate to find a 
+	"distance correction factor" or function.
+	
+*Don't forget to update the "best guess" coordinates in main.cpp when testing.

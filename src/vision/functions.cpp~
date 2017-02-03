@@ -252,80 +252,6 @@ KeyPoint getTopKeyPoint(vector<KeyPoint> keypoints)
     return topPoint;
 }
 
-/*
-//calculates the camera's distance from the beacon
-void printDistanceFromLights(vector<KeyPoint> keypoints, beacon_loc* orientation)
-{
-    int top = getTopKeyPoint(keypoints).pt.y;
-    int bot = getBottomKeyPoint(keypoints).pt.y;
-
-    double height = bot - top;
-//        cout << "top = " << top << endl;
-//	cout << "bot = " << bot << endl;
-//	 cout << "height = " << height << endl;
-    int dist=40051*pow(height,-.997);
-
-    orientation->distance = dist * 0.0254; //convert inches to meters
-
-//    cout << "Distance is " << dist << endl;
-}
-
-//calculates the orientation of the beacon
-void getBeaconOrientation(vector<KeyPoint> keypoints, beacon_loc* orientation)
-{
-    KeyPoint topPoint = getTopKeyPoint(keypoints);
-    KeyPoint botPoint = getBottomKeyPoint(keypoints);
-    KeyPoint leftPoint = getLeftKeyPoint(keypoints);
-    KeyPoint rightPoint = getRightKeyPoint(keypoints);
-
-    int top = topPoint.pt.y;
-    int bot = botPoint.pt.y;
-    int left = getLeftKeyPoint(keypoints).pt.x;
-    int right = getRightKeyPoint(keypoints).pt.x;
-
-//	cout << "top: (" << topPoint.pt.x << "," << topPoint.pt.y << ")" << endl;
-//	cout << "bot: (" << botPoint.pt.x << "," << botPoint.pt.y << ")" << endl;
-//	cout << "left: (" << leftPoint.pt.x << "," << leftPoint.pt.y << ")" << endl;
-//	cout << "right: (" << rightPoint.pt.x << "," << rightPoint.pt.y << ")" << endl;
-
-
-
-
-    double centerLine = (topPoint.pt.x + botPoint.pt.x) / 2.0;
-    double width = right - left;
-
-    int leftSeparation = centerLine - left;
-    int rightSeparation = right - centerLine;
-
-//    cout <<"leftSeparation = " << leftSeparation << endl;
-//    cout << "rightSeparation = " << rightSeparation << endl;
-
-    double ratio = (double)rightSeparation / (double)leftSeparation;
-
-//    cout << "ratio = " << ratio << endl;
-
-    if ((rightSeparation) > (leftSeparation)) //if left light appears closer to center of beacon
-    {
-        orientation->angle_from_beacon *= -1;
-		ratio = 1.0/ratio;
-    }
-    int leftx = getLeftKeyPoint(keypoints).pt.x;
-	int lefty=getLeftKeyPoint(keypoints).pt.y;
-    int rightx = getRightKeyPoint(keypoints).pt.x;
-    int righty = getRightKeyPoint(keypoints).pt.y;
-    double centerx = (topPoint.pt.x + botPoint.pt.x) / 2.0;
-    double centery = (topPoint.pt.y + botPoint.pt.y) / 2.0;
-	double leftlen=sqrt(pow((centerx-leftx),2)+pow((centery-lefty),2));
-	double rightlen=sqrt(pow((centerx-rightx),2)+pow((centery-righty),2));
-//cout<<"ratio of right/left: "<<rightlen/leftlen<<endl;
-double rat=rightlen/leftlen;
-double test=-110*rat*rat + 387.4*rat - 276.18;
-//cout<<"angle= "<<test<<endl;
-    orientation->angle_from_beacon = 887.52*ratio*ratio - 1877.7*ratio + 990.86;
- //   cout << "beacon orientation is " << orientation->angle_from_beacon << endl;
-}
-*/
-
 //returns a picture taken with the given camera
 Mat getPic(VideoCapture cap)
 {
@@ -604,34 +530,40 @@ bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc)
 	else
 	{ 
 		//output callibration matrices for camera and distortion
+/*
 		cout << "Camera Matrix" << endl;
 		cout << cameraMatrix << endl;
 		cout << "Distortion Coefficients" << endl;
 		cout << distCoeffs << endl;
+*/
 	}
-
+/*
 	cout << "Known Points (m) of beacon" << endl;
 	cout << kwnPoints << endl;
 	cout << "Image Points (where keypoints are, in pixels)" << endl;
 	cout << imgPoints << endl;
-
+*/
 	Mat rvec, tvec, R;
     bool guess;
     if(!b_loc->beacon_not_found) {//if you find beacon calculate rvec and tvec
         guess = true;
     	rvec=(Mat_<double>(3,1)<<   0,
                                     atan(b_loc->x / b_loc->y)- M_PI*b_loc->angle_from_robot/180.0,
-	      0);//calculated based on information from nav team
+	      							0);
+	    //calculated based on information from nav team
 
     	/* changed the y component of this tvec from "6" to "0" : Sam */
     	tvec=(Mat_<double>(3,1)<<   -1*b_loc->x,
-                                    0, 
-	      -1*b_loc->y);// calculated based on information from nav team
-
-	cout << "Guessed Rotation vector" << endl;
+                                    0.48,
+	      							-1*b_loc->y);
+	    // calculated based on information from nav team
+	    
+/*
+		cout << "Guessed Rotation vector" << endl;
         cout << rvec << endl;
         cout << "Guessed Translation vector" << endl;
         cout << tvec << endl;
+*/
 
         Rodrigues(rvec, R);//convert rotation vector to rotation matrix R
         
@@ -660,6 +592,7 @@ bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc)
 	camera_tvec = -R.t() * tvec;
 
 	//print out stuff for sanity check
+/*
         cout << "Rotation vector" << endl;
         cout << rvec << endl;
         cout << "Translation vector" << endl;
@@ -668,6 +601,7 @@ bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc)
 	cout << camera_rvec << endl;
 	cout << "Camera Translation vector" << endl;
 	cout << camera_tvec << endl;
+*/
 	//fill beacon struct with appropriate values
 	
     float distance = sqrt(camera_tvec.at<double>(0) * camera_tvec.at<double>(0) + camera_tvec.at<double>(2) * camera_tvec.at<double>(2));
@@ -690,3 +624,79 @@ bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc)
 	return true;
 
 }
+
+/*
+Old, unused functions
+
+//calculates the orientation of the beacon
+void getBeaconOrientation(vector<KeyPoint> keypoints, beacon_loc* orientation)
+{
+    KeyPoint topPoint = getTopKeyPoint(keypoints);
+    KeyPoint botPoint = getBottomKeyPoint(keypoints);
+    KeyPoint leftPoint = getLeftKeyPoint(keypoints);
+    KeyPoint rightPoint = getRightKeyPoint(keypoints);
+
+    int top = topPoint.pt.y;
+    int bot = botPoint.pt.y;
+    int left = getLeftKeyPoint(keypoints).pt.x;
+    int right = getRightKeyPoint(keypoints).pt.x;
+
+	cout << "top: (" << topPoint.pt.x << "," << topPoint.pt.y << ")" << endl;
+	cout << "bot: (" << botPoint.pt.x << "," << botPoint.pt.y << ")" << endl;
+	cout << "left: (" << leftPoint.pt.x << "," << leftPoint.pt.y << ")" << endl;
+	cout << "right: (" << rightPoint.pt.x << "," << rightPoint.pt.y << ")" << endl;
+
+
+
+
+    double centerLine = (topPoint.pt.x + botPoint.pt.x) / 2.0;
+    double width = right - left;
+
+    int leftSeparation = centerLine - left;
+    int rightSeparation = right - centerLine;
+
+    cout <<"leftSeparation = " << leftSeparation << endl;
+    cout << "rightSeparation = " << rightSeparation << endl;
+
+    double ratio = (double)rightSeparation / (double)leftSeparation;
+
+//    cout << "ratio = " << ratio << endl;
+
+    if ((rightSeparation) > (leftSeparation)) //if left light appears closer to center of beacon
+    {
+        orientation->angle_from_beacon *= -1;
+		ratio = 1.0/ratio;
+    }
+    int leftx = getLeftKeyPoint(keypoints).pt.x;
+	int lefty=getLeftKeyPoint(keypoints).pt.y;
+    int rightx = getRightKeyPoint(keypoints).pt.x;
+    int righty = getRightKeyPoint(keypoints).pt.y;
+    double centerx = (topPoint.pt.x + botPoint.pt.x) / 2.0;
+    double centery = (topPoint.pt.y + botPoint.pt.y) / 2.0;
+	double leftlen=sqrt(pow((centerx-leftx),2)+pow((centery-lefty),2));
+	double rightlen=sqrt(pow((centerx-rightx),2)+pow((centery-righty),2));
+//cout<<"ratio of right/left: "<<rightlen/leftlen<<endl;
+double rat=rightlen/leftlen;
+double test=-110*rat*rat + 387.4*rat - 276.18;
+//cout<<"angle= "<<test<<endl;
+    orientation->angle_from_beacon = 887.52*ratio*ratio - 1877.7*ratio + 990.86;
+    cout << "beacon orientation is " << orientation->angle_from_beacon << endl;
+}
+
+//calculates the camera's distance from the beacon
+void printDistanceFromLights(vector<KeyPoint> keypoints, beacon_loc* orientation)
+{
+    int top = getTopKeyPoint(keypoints).pt.y;
+    int bot = getBottomKeyPoint(keypoints).pt.y;
+
+    double height = bot - top;
+//        cout << "top = " << top << endl;
+//	cout << "bot = " << bot << endl;
+//	 cout << "height = " << height << endl;
+    int dist=40051*pow(height,-.997);
+
+    orientation->distance = dist * 0.0254; //convert inches to meters
+
+    cout << "Distance is " << dist << endl;
+}
+*/

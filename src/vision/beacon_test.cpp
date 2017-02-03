@@ -7,17 +7,10 @@ void beacon_main(beacon_loc &b_loc)
 
     //Set up blob detection parameters
     SimpleBlobDetector::Params params = setupBeaconBlobParams();
-    /* commented out by Kaeli for testing purposes 
+    // commented out by Kaeli for testing purposes 
     //capture the video from web cam
-	VideoCapture cap(0);
-	
-    //if not success, exit program
-    if (!cap.isOpened())
-    {
-        cout << "Cannot open the web cam" << endl;
-        return;    
-        }
-        
+    //	VideoCapture cap(0);
+  
         
     /*    
     Mat img;
@@ -32,23 +25,24 @@ void beacon_main(beacon_loc &b_loc)
     cout << std::chrono::duration_cast<std::chrono::milliseconds>(t0-t).count() << endl;
     }
     */
+    
     /*
     //t1-t4 added by Kaeli, on Nov 1 for testing
 	Mat imgOriginal1, imgOriginal2, imgOriginal3, imgOriginal4;
-    auto t1 = std::chrono::high_resolution_clock::now();
+	//auto t1 = std::chrono::high_resolution_clock::now();
     imgOriginal1 = getPic(cap); // imread("testPics2/imgOriginal1.jpg", CV_LOAD_IMAGE_COLOR);
-    auto t2 = std::chrono::high_resolution_clock::now();
+    //auto t2 = std::chrono::high_resolution_clock::now();
     imgOriginal2 = getPic(cap); //imread("testPics2/imgOriginal2.jpg", CV_LOAD_IMAGE_COLOR); //getPic(cap);
-    auto t3 = std::chrono::high_resolution_clock::now();
+    //auto t3 = std::chrono::high_resolution_clock::now();
     imgOriginal3 = getPic(cap); //imread("testPics2/imgOriginal3.jpg", CV_LOAD_IMAGE_COLOR); //getPic(cap);
-    auto t4 = std::chrono::high_resolution_clock::now();
-    imgOriginal4 = getPic(cap); //imread("testPics2/imgOriginal4.jpg", CV_LOAD_IMAGE_COLOR); //getPic(cap);
-
+    //auto t4 = std::chrono::high_resolution_clock::now();
+    imgOriginal4 = getPic(cap); //imread("testPics2/imgOriginal4.jpg", CV_LOAD_IMAGE_COLOR); //getPic(cap);*/
+    /*
     cout << "time difference was " <<endl;
     cout << std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count() << endl;
-    cout << std::chrono::duration_cast<std::chrono::milliseconds>(t3-t2).count() << endl;
+    cout<<< std::chrono::duration_cast<std::chrono::milliseconds>(t3-t2).count() << endl;
     cout << std::chrono::duration_cast<std::chrono::milliseconds>(t4-t3).count() << endl;
-    */
+    */    
     /*
     Mat img;//testing purposes (Kaeli)
     Mat img2;//testing purposes (Kaeli)
@@ -71,8 +65,8 @@ void beacon_main(beacon_loc &b_loc)
     cout << "5th " << std::chrono::duration_cast<std::chrono::milliseconds>(t6-t5).count() << endl;
     */
     
-    /*			********** BEST CODE *********** */
-    /*
+    //  			********** BEST CODE *********** 
+    
     VideoCapture cap(-1);
 	
     //if not success, exit program
@@ -92,30 +86,32 @@ void beacon_main(beacon_loc &b_loc)
     auto t5 = std::chrono::high_resolution_clock::now();
     Mat imgOriginal4 = getPic(cap);	
     
-    */
     
-    string test;
-    cout << "Name of picture set: ";
-    cin >> test;
-    
-	Mat imgOriginal1 = imread("11-18-16 atrium testing/" + test + "_img01.jpg");
-	Mat imgOriginal2 = imread("11-18-16 atrium testing/" + test + "_img02.jpg");
-	Mat imgOriginal3 = imread("11-18-16 atrium testing/" + test + "_img03.jpg");
-	Mat imgOriginal4 = imread("11-18-16 atrium testing/" + test + "_img04.jpg");
+
+
+    //Kaeli Feb 17    
+    //string test;
+    //cout << "Name of picture set: ";
+    //cin >> test;
+    /*    
+	// Mat imgOriginal1 = imread("11-18-16 atrium testing/" + test + "_img01.jpg");
+	// Mat imgOriginal2 = imread("11-18-16 atrium testing/" + test + "_img02.jpg");
+	// Mat imgOriginal3 = imread("11-18-16 atrium testing/" + test + "_img03.jpg");
+	// Mat imgOriginal4 = imread("11-18-16 atrium testing/" + test + "_img04.jpg");
 	
-	/*
-	Mat imgOriginal1 = imread("11-3-16 atrium testing/" + test + "_imgOriginal1.jpg");
-	Mat imgOriginal2 = imread("11-3-16 atrium testing/" + test + "_imgOriginal2.jpg");
-	Mat imgOriginal3 = imread("11-3-16 atrium testing/" + test + "_imgOriginal3.jpg");
-	Mat imgOriginal4 = imread("11-3-16 atrium testing/" + test + "_imgOriginal4.jpg");
-	*/
+	
+	Mat imgOriginal1 = imread("test_1-20_outside/pics/" + test + "_imgOriginal1.jpg");
+	Mat imgOriginal2 = imread("test_1-20_outside/pics/" + test + "_imgOriginal2.jpg");
+	Mat imgOriginal3 = imread("test_1-20_outside/pics/" + test + "_imgOriginal3.jpg");
+	Mat imgOriginal4 = imread("test_1-20_outside/pics/" + test + "_imgOriginal4.jpg");
+	
     
     if(imgOriginal1.empty() || imgOriginal2.empty() ||imgOriginal3.empty() ||imgOriginal4.empty())
     {
         cout << "can not open " << endl;
         return;
     }
-
+*/
     //initialize mats
     Mat diff_and,diff1,diff2,grayDiff,binDiff;
 
@@ -149,17 +145,15 @@ void beacon_main(beacon_loc &b_loc)
     blobDetect->detect(binDiff, keypoints);
     
     /*
-    
-    String foldername = "test_11-3_atrium_different distances/";
+    String foldername = "test_1-20_outside/";
     std::string note = "";
 	cout << "File prefix for pictures: " << endl;
     cin >> note;
     
     imwrite(foldername + note + "_imgOriginal1.jpg", imgOriginal1);
-    imwrite(foldername + note  + "_imgOriginal2.jpg", imgOriginal2);
+   	imwrite(foldername + note  + "_imgOriginal2.jpg", imgOriginal2);
     imwrite(foldername + note  + "_imgOriginal3.jpg", imgOriginal3);
     imwrite(foldername + note  + "_imgOriginal4.jpg", imgOriginal4);
-    
     */
     
     cout << "Keypoints size: " << keypoints.size() << endl;
@@ -208,8 +202,6 @@ void beacon_main(beacon_loc &b_loc)
 
 		beaconLocation(keypoints, &b_loc);
 
-		// getBeaconOrientation(keypoints, &b_loc);
-		// printDistanceFromLights(keypoints, &b_loc);
 		robot_angle(&b_loc, binDiff, cent.x);
 
 		circle(out, cent, 5, CV_RGB(0,100,0), -1, 8);
@@ -226,13 +218,13 @@ void beacon_main(beacon_loc &b_loc)
         b_loc.beacon_not_found = 1;
     }
     
-    /*
     
-    imwrite(foldername + note  + "_diff1.jpg", diff1);
-    imwrite(foldername + note  + "_diff2.jpg", diff2);
-    imwrite(foldername + note  + "_out.jpg", out);
+    
+    // imwrite(foldername + note  + "_diff1.jpg", diff1);
+    // imwrite(foldername + note  + "_diff2.jpg", diff2);
+    // imwrite(foldername + note  + "_out.jpg", out);
 
-	*/
+	
 	
 	cout << "HERE!" << endl;
     //output windows to view

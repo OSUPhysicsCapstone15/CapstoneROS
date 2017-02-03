@@ -7,8 +7,8 @@ int main(){
   to test beacon.cpp */
 	
 	beacon_loc bloc;
-	bloc.x=7;
-	bloc.y=5;
+	bloc.x=2.9;
+	bloc.y=9.3;
 	bloc.angle_from_robot=0;
 	beacon_main(bloc);
 
@@ -16,7 +16,7 @@ int main(){
  
 	sample_loc sloc;
 	blob_main(sloc);
-	//*/
+*/
 
 return 0;
 }

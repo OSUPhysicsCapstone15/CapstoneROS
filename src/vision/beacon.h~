@@ -1,9 +1,12 @@
 #ifndef beacon_H_INCLUDED
 #define beacon_H_INCLUDED
-
+#include <sstream>
+#include <chrono>
+#include <thread>
 
 struct beacon_loc {
 	float angle_from_robot=0; //degrees for all angles
+	float angle_from_beacon=0;
 	float x=0; //meters
 	float y=0;
 	bool only_bottom=0;
@@ -12,6 +15,6 @@ struct beacon_loc {
 };
 
 
-beacon_loc beacon_main(beacon_loc &b_loc);
+void beacon_main(beacon_loc &b_loc);
 
 #endif
