@@ -66,7 +66,7 @@ void beacon_main(beacon_loc &b_loc)
     */
     
     //  			********** BEST CODE *********** 
-    
+    /*
     VideoCapture cap(-1);
 	
     //if not success, exit program
@@ -74,7 +74,9 @@ void beacon_main(beacon_loc &b_loc)
     {
         cout << "Cannot open the web cam" << endl;
         return;    
-    } 
+    }
+    */ 
+    /*
     auto t1 = std::chrono::high_resolution_clock::now();
 	Mat noimg = getPic(cap); //first pic out of sync
 	auto t2 = std::chrono::high_resolution_clock::now();
@@ -86,14 +88,13 @@ void beacon_main(beacon_loc &b_loc)
     auto t5 = std::chrono::high_resolution_clock::now();
     Mat imgOriginal4 = getPic(cap);	
     
-    
-
+    */
 
     //Kaeli Feb 17    
-    //string test;
-    //cout << "Name of picture set: ";
-    //cin >> test;
-    /*    
+    string test;
+    cout << "Name of picture set: ";
+    cin >> test;
+        
 	// Mat imgOriginal1 = imread("11-18-16 atrium testing/" + test + "_img01.jpg");
 	// Mat imgOriginal2 = imread("11-18-16 atrium testing/" + test + "_img02.jpg");
 	// Mat imgOriginal3 = imread("11-18-16 atrium testing/" + test + "_img03.jpg");
@@ -111,7 +112,7 @@ void beacon_main(beacon_loc &b_loc)
         cout << "can not open " << endl;
         return;
     }
-*/
+
     //initialize mats
     Mat diff_and,diff1,diff2,grayDiff,binDiff;
 

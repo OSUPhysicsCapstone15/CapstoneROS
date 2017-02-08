@@ -10,15 +10,15 @@
 #include <string>
 #include <cmath>
 
-static double Y_STAGE = 5; // Staging distance in front of beacon
+static double Y_STAGE = 0; // Staging distance in front of beacon
 
 // Flags
 int state = 2; // -1; Platform dismount 0: Startup, 1: Sample seeking, 2: Returning, 3: BeaconApproach, 4: Paused 
 
 //variables for beacon and approach
-double last_angle_from_beacon = 180; // 180 means facing the beacon
-double last_angle_from_robot = 45;    // WTF IS THIS???
-double last_distance_to_beacon = 12;
+double last_angle_from_beacon = 0; // 180 means facing the beacon
+double last_angle_from_robot = 0;    // WTF IS THIS???
+double last_distance_to_beacon = 0;
 bool only_bottom_light = true;
 bool beacon_found = true;
 bool beacon_angle_conf = true;
@@ -42,12 +42,12 @@ double x_easy = 5*0.3048; // Easy sample
 double y_easy = 45*0.3048;
 
 // Reported position
-double x_pos = 0;
-double y_pos = 1;
+double x_pos = 0.5;
+double y_pos = 2;
 
 // Estimated position
-double x_est = 0;
-double y_est = 15;
+double x_est = 0.5;
+double y_est = 2;
 
 // Callback function that records newest beacon location data
 void beaconCallback(const robot::BeaconResponse::ConstPtr& msg) {
@@ -462,16 +462,15 @@ int main(int argc, char **argv) {
 	// If we are far enough away we see the entire beacon
 	if(!only_bottom_light) {
 
-	  // If we are confident in the orientation angle reported by vision
+	  /* If we are confident in the orientation angle reported by vision
 	  if(true){//beacon_angle_conf) {
-	    // Calculate the angle and distance to the staging area
+	    /* Calculate the angle and distance to the staging area
 	    if(x_est == 0) { // This handles the special case of being directly in front of the beacon
 	      if(y_est < Y_STAGE) { // Will need to turn around
 		angle = last_angle_from_robot + 180;
-	      } else {
+	      } 
 		angle = last_angle_from_robot; // In line with front of beacon. Avoid 1/0 error.
-	      }	
-	    } else { // If we are confident in our coordinates
+	    } /*else { // If we are confident in our coordinates
 	      if(last_angle_from_beacon > 0){
 		angle = last_angle_from_robot + (90 - last_angle_from_beacon - (180/M_PI)*atan((double)(y_pos - Y_STAGE)/x_pos));
 	      } else {
@@ -482,20 +481,20 @@ int main(int argc, char **argv) {
 	  } else { // We are not confident in our orientation
 	    int z = 1;
 	  }
-
+		*/
 	  // Avoid excessive turns
-	  if(angle > 180) {
-	    angle = angle - 360;
+	  if(last_angle_from_robot > 180) {
+	    last_angle_from_robot = last_angle_from_robot - 360;
 	  }
-	  if(angle < -180) {
-	    angle = angle + 360;
+	  if(last_angle_from_robot < -180) {
+	    last_angle_from_robot = last_angle_from_robot + 360;
 	  }
 	  
 	  ROS_INFO("INFO: (x,y) is (%f, %f)", x_pos, y_pos);
-	  ROS_INFO("Alpha is: (180/M_PI)*atan(%f)",(double)(y_pos - Y_STAGE)/x_pos);
-	  ROS_INFO("Alpha is: %f",(180/M_PI)*atan((double)(y_pos - Y_STAGE)/x_pos));
+	  ROS_INFO("Alpha is: (180/M_PI)*atan(%f)",(double)(y_pos)/x_pos);
+	  ROS_INFO("Alpha is: %f",(180/M_PI)*atan((double)(y_pos)/x_pos));
 	  ROS_INFO("Angle from robot is: %f", last_angle_from_robot);
-	  ROS_INFO("Beacon Found, staging at Angle: %f, Distance: %f", angle, dist);
+	  //ROS_INFO("Beacon Found, staging at Angle: %f, Distance: %f", angle, dist);
 	  if(dist < 0.5) {
 	    if(seeking_state > 1) {
 	      state = 3;
@@ -505,7 +504,7 @@ int main(int argc, char **argv) {
 	    ROS_INFO("Changed to appraoch state");
 	    break;
 	  }
-	  if(abs(angle)<5) {
+	  if(abs(last_angle_from_robot)<5) {
 	    c_msg.commandOrder = 1; // Driving
 	    if(dist > 10) {
 	      driveDist = 10;
@@ -522,10 +521,10 @@ int main(int argc, char **argv) {
 	    }
 	  } else {
 	    c_msg.commandOrder = 2; // Turning, then driving
-	    c_msg.value = angle;
+	    c_msg.value = last_angle_from_robot ;
 	    command_pub.publish(c_msg);
 	    waiting_on_command = true;
-	    ROS_INFO("Requesting Turn of %f degrees", angle);	  
+	    ROS_INFO("Requesting Turn of %f degrees", last_angle_from_robot);	  
 	    while(waiting_on_command){
 	      ros::spinOnce();
 	      loop_rate.sleep(); // TODO: Add a timeout here
@@ -551,6 +550,7 @@ int main(int argc, char **argv) {
 	  c_msg.value = 180-last_angle_from_robot;
 	  command_pub.publish(c_msg);
 	  waiting_on_command = true;
+	  ROS_INFO("Only bottom");
 	  ROS_INFO("Requesting Turn of %f degrees", 180-last_angle_from_robot); // Back Up	  
 	  while(waiting_on_command){
 	    ros::spinOnce();

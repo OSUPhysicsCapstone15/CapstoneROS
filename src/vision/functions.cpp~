@@ -544,7 +544,8 @@ bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc)
 	cout << imgPoints << endl;
 */
 	Mat rvec, tvec, R;
-    bool guess;
+    bool guess = false;
+    /*
     if(!b_loc->beacon_not_found) {//if you find beacon calculate rvec and tvec
         guess = true;
     	rvec=(Mat_<double>(3,1)<<   0,
@@ -552,18 +553,17 @@ bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc)
 	      							0);
 	    //calculated based on information from nav team
 
-    	/* changed the y component of this tvec from "6" to "0" : Sam */
+    	// changed the y component of this tvec from "6" to "0" : Sam 
     	tvec=(Mat_<double>(3,1)<<   -1*b_loc->x,
                                     0.48,
 	      							-1*b_loc->y);
 	    // calculated based on information from nav team
 	    
-/*
 		cout << "Guessed Rotation vector" << endl;
         cout << rvec << endl;
         cout << "Guessed Translation vector" << endl;
         cout << tvec << endl;
-*/
+
 
         Rodrigues(rvec, R);//convert rotation vector to rotation matrix R
         
@@ -575,9 +575,9 @@ bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc)
     } else {
         guess = false;
     }
-
+	*/
 	//Mat rvec, tvec;
-    bool succ = solvePnP(kwnPoints, imgPoints, cameraMatrix, distCoeffs, rvec, tvec, guess);//checks to see if object was found
+    bool succ = solvePnP(kwnPoints, imgPoints, cameraMatrix, distCoeffs, rvec, tvec, guess);//checks to see if object was found, if guess is true it uses the initial values of rvec and tvec to optimize them
 
     if(!succ) {
         cout<<"Could not calculate position of beacon"<<endl;
@@ -615,6 +615,7 @@ bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc)
     cout << "Angle from robot is " << rangle << " degrees." << endl;
     cout << "Beacon x is " << -1*camera_tvec.at<double>(0) << " meters." << endl;
     cout << "Beacon y is " << -1*camera_tvec.at<double>(2) << " meters." << endl;
+    cout << "********************************" << endl;
 
     b_loc->x = -1*camera_tvec.at<double>(0);
     b_loc->y = -1*camera_tvec.at<double>(2);
