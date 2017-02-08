@@ -17,7 +17,7 @@ int state = 2; // -1; Platform dismount 0: Startup, 1: Sample seeking, 2: Return
 
 //variables for beacon and approach
 double last_angle_from_beacon = 180; // 180 means facing the beacon
-double last_angle_from_robot = 180;    // WTF IS THIS???
+double last_angle_from_robot = 45;    // WTF IS THIS???
 double last_distance_to_beacon = 12;
 bool only_bottom_light = true;
 bool beacon_found = true;

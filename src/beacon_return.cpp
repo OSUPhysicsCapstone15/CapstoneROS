@@ -159,7 +159,7 @@ int main(int argc, char **argv) {
     loop_rate.sleep();
   }
   
-  // Request a scan for the beacon
+  /* Request a scan for the beacon
   beacon_request_pub.publish(b_msg); // Look for the beacon
   ros::spinOnce();
   waiting_on_vision = true;
@@ -168,7 +168,7 @@ int main(int argc, char **argv) {
     loop_rate.sleep(); // TODO: Add a timeout here
     ros::spinOnce();
   }
-
+	*/
   ros::spinOnce();
   ROS_INFO("Initializing Complete");
 
