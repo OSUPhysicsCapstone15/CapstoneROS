@@ -577,8 +577,16 @@ bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc)
         guess = false;
     }
 	*/
-	//Mat rvec, tvec;
-    bool succ = solvePnP(kwnPoints, imgPoints, cameraMatrix, distCoeffs, rvec, tvec, guess);//checks to see if object was found, if guess is true it uses the initial values of rvec and tvec to optimize them
+	
+    bool succ;
+    
+    // use SOLVEPNP_P3P when at smaller distances to find more accurate angles
+    if(sqrt(b_loc->x * b_loc->x + b_loc->y * b_loc->y) < 20) {
+    	succ = solvePnP(kwnPoints, imgPoints, cameraMatrix, distCoeffs, rvec, tvec, guess, SOLVEPNP_P3P);
+    } else {
+    	succ = solvePnP(kwnPoints, imgPoints, cameraMatrix, distCoeffs, rvec, tvec, guess);
+    }
+    //checks to see if object was found, if guess is true it uses the initial values of rvec and tvec to optimize them
 
     if(!succ) {
         cout<<"Could not calculate position of beacon"<<endl;

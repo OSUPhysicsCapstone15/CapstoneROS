@@ -545,7 +545,8 @@ bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc)
 */
 	Mat rvec, tvec, R;
     bool guess = false;
-    /*
+    //Commented to get rid of dependence on initial values, uncomment if you believe initial values are good
+    /* 
     if(!b_loc->beacon_not_found) {//if you find beacon calculate rvec and tvec
         guess = true;
     	rvec=(Mat_<double>(3,1)<<   0,
@@ -577,7 +578,16 @@ bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc)
     }
 	*/
 	//Mat rvec, tvec;
-    bool succ = solvePnP(kwnPoints, imgPoints, cameraMatrix, distCoeffs, rvec, tvec, guess);//checks to see if object was found, if guess is true it uses the initial values of rvec and tvec to optimize them
+	// ** updated by Sam, the SOLVEPNP_P3P argument in this function slightly improves values
+    bool succ;
+    
+    // use SOLVEPNP_P3P when at smaller distances to find more accurate angles
+    if(sqrt(b_loc->x * b_loc->x + b_loc->y * b_loc->y < 20) {
+    	succ = solvePnP(kwnPoints, imgPoints, cameraMatrix, distCoeffs, rvec, tvec, guess, SOLVEPNP_P3P);
+    } else {
+    	succ = solvePnP(kwnPoints, imgPoints, cameraMatrix, distCoeffs, rvec, tvec, guess);
+    }
+    //checks to see if object was found, if guess is true it uses the initial values of rvec and tvec to optimize them
 
     if(!succ) {
         cout<<"Could not calculate position of beacon"<<endl;
