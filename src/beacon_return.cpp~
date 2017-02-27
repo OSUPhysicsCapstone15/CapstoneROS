@@ -10,7 +10,7 @@
 #include <string>
 #include <cmath>
 
-// static double Y_STAGE = 5; // Staging distance in front of beacon
+static double Y_STAGE = 0; // Staging distance in front of beacon
 
 // Flags
 int state = 2; // -1; Platform dismount 0: Startup, 1: Sample seeking, 2: Returning, 3: BeaconApproach, 4: Paused 
@@ -32,7 +32,7 @@ double last_angle_from_sample =0;
 double last_distance_from_sample=0;
 bool sample_found=false;
 bool sample_angle_conf;
-int seeking_state=0; //0 for pcs, 1 for easy, 2 for done
+int seeking_state=2; //0 for pcs, 1 for easy, 2 for done
 int looking_state=0; //0 for turn left, 1 turn right, 2 beacon look
 
 //variables for traveling to area
@@ -497,7 +497,7 @@ int main(int argc, char **argv) {
 	  //ROS_INFO("Beacon Found, staging at Angle: %f, Distance: %f", angle, dist);
 	  if(dist < 0.5) {
 	    if(seeking_state > 1) {
-	      state = 3;
+	      state = 4;
 	    } else {
 	      state = 0;
 	    }
@@ -509,7 +509,7 @@ int main(int argc, char **argv) {
 	    if(dist > 10) {
 	      driveDist = 10;
 	    } else {
-	      driveDist = dist;
+	      driveDist = dist-1;
 	    }
 	    c_msg.value = driveDist;
 	    command_pub.publish(c_msg);
@@ -518,6 +518,9 @@ int main(int argc, char **argv) {
 	    while(waiting_on_command){
 	      ros::spinOnce();
 	      loop_rate.sleep(); // TODO: Add a timeout here
+	    }
+	    if(last_distance_to_beacon-driveDist<2){
+	    	state=4;
 	    }
 	  } else {
 	    c_msg.commandOrder = 2; // Turning, then driving
@@ -533,7 +536,7 @@ int main(int argc, char **argv) {
 	    if(dist > 10) {
 	      driveDist = 10;
 	    } else {
-	      driveDist = dist;
+	      driveDist = dist-1;
 	    }
 	    c_msg.value = driveDist;
 	    command_pub.publish(c_msg);
@@ -543,14 +546,19 @@ int main(int argc, char **argv) {
 	      ros::spinOnce();
 	      loop_rate.sleep(); // TODO: Add a timeout here
 	    }
-	    
+	    if(last_distance_to_beacon-driveDist<2){
+	    	state=4;
+	    }
 	  }
-	} else { // We see the beacon, but only the bottom We will drive away Y_STAGE meters and try again
-	  c_msg.commandOrder = 2; // Turning, then driving
+	} else { // We see the beacon, but only the bottom We will stop
+	  /*c_msg.commandOrder = 2; // Turning, then driving
 	  c_msg.value = 180-last_angle_from_robot;
 	  command_pub.publish(c_msg);
-	  waiting_on_command = true;
+	  waiting_on_command = true;*/
 	  ROS_INFO("Only bottom");
+	  ROS_INFO("Stop");
+	  state = 4;
+	 	/*
 	  ROS_INFO("Requesting Turn of %f degrees", 180-last_angle_from_robot); // Back Up	  
 	  while(waiting_on_command){
 	    ros::spinOnce();
@@ -575,8 +583,9 @@ int main(int argc, char **argv) {
 	    ros::spinOnce();
 	    loop_rate.sleep(); // TODO: Add a timeout here
 	  }
-
+	*/
 	}
+
       } else { // Lost the beacon, start spinning and searching
 	c_msg.commandOrder = 2; // Turning
 	c_msg.value = 35;

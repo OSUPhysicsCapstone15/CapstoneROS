@@ -66,7 +66,9 @@ void beacon_main(beacon_loc &b_loc)
     */
     
     //  			********** BEST CODE *********** 
+    
     /*
+    
     VideoCapture cap(-1);
 	
     //if not success, exit program
@@ -75,8 +77,8 @@ void beacon_main(beacon_loc &b_loc)
         cout << "Cannot open the web cam" << endl;
         return;    
     }
-    */ 
-    /*
+    
+    
     auto t1 = std::chrono::high_resolution_clock::now();
 	Mat noimg = getPic(cap); //first pic out of sync
 	auto t2 = std::chrono::high_resolution_clock::now();
@@ -89,22 +91,23 @@ void beacon_main(beacon_loc &b_loc)
     Mat imgOriginal4 = getPic(cap);	
     
     */
-
+    
     //Kaeli Feb 17    
     string test;
     cout << "Name of picture set: ";
     cin >> test;
         
-	// Mat imgOriginal1 = imread("11-18-16 atrium testing/" + test + "_img01.jpg");
-	// Mat imgOriginal2 = imread("11-18-16 atrium testing/" + test + "_img02.jpg");
-	// Mat imgOriginal3 = imread("11-18-16 atrium testing/" + test + "_img03.jpg");
-	// Mat imgOriginal4 = imread("11-18-16 atrium testing/" + test + "_img04.jpg");
+	Mat imgOriginal1 = imread("test_2-15-17/" + test + "_img01.jpg");
+	Mat imgOriginal2 = imread("test_2-15-17/" + test + "_img02.jpg");
+	Mat imgOriginal3 = imread("test_2-15-17/" + test + "_img03.jpg");
+	Mat imgOriginal4 = imread("test_2-15-17/" + test + "_img04.jpg");
 	
 	
-	Mat imgOriginal1 = imread("test_1-20_outside/pics/" + test + "_imgOriginal1.jpg");
-	Mat imgOriginal2 = imread("test_1-20_outside/pics/" + test + "_imgOriginal2.jpg");
-	Mat imgOriginal3 = imread("test_1-20_outside/pics/" + test + "_imgOriginal3.jpg");
-	Mat imgOriginal4 = imread("test_1-20_outside/pics/" + test + "_imgOriginal4.jpg");
+	// Mat imgOriginal1 = imread("test_1-20_outside/pics/" + test + "_imgOriginal1.jpg");
+	// Mat imgOriginal2 = imread("test_1-20_outside/pics/" + test + "_imgOriginal2.jpg");
+	// Mat imgOriginal3 = imread("test_1-20_outside/pics/" + test + "_imgOriginal3.jpg");
+	// Mat imgOriginal4 = imread("test_1-20_outside/pics/" + test + "_imgOriginal4.jpg");
+	
 	
     
     if(imgOriginal1.empty() || imgOriginal2.empty() ||imgOriginal3.empty() ||imgOriginal4.empty())

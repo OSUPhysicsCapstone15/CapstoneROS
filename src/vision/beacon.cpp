@@ -1,5 +1,6 @@
 #include "beacon.h"
 #include "functions.h"
+#include <ctime>
 
 void beacon_main(beacon_loc &b_loc)
 {
@@ -67,6 +68,7 @@ void beacon_main(beacon_loc &b_loc)
     
     //  			********** BEST CODE *********** 
     
+    
     VideoCapture cap(-1);
 	
     //if not success, exit program
@@ -88,22 +90,22 @@ void beacon_main(beacon_loc &b_loc)
     
     
 
-
+/*
     //Kaeli Feb 17    
-    //string test;
-    //cout << "Name of picture set: ";
-    //cin >> test;
-    /*    
+    string test;
+    cout << "Name of picture set: ";
+    cin >> test;
+        
 	// Mat imgOriginal1 = imread("11-18-16 atrium testing/" + test + "_img01.jpg");
 	// Mat imgOriginal2 = imread("11-18-16 atrium testing/" + test + "_img02.jpg");
 	// Mat imgOriginal3 = imread("11-18-16 atrium testing/" + test + "_img03.jpg");
 	// Mat imgOriginal4 = imread("11-18-16 atrium testing/" + test + "_img04.jpg");
 	
 	
-	Mat imgOriginal1 = imread("test_1-20_outside/pics/" + test + "_imgOriginal1.jpg");
-	Mat imgOriginal2 = imread("test_1-20_outside/pics/" + test + "_imgOriginal2.jpg");
-	Mat imgOriginal3 = imread("test_1-20_outside/pics/" + test + "_imgOriginal3.jpg");
-	Mat imgOriginal4 = imread("test_1-20_outside/pics/" + test + "_imgOriginal4.jpg");
+	Mat imgOriginal1 = imread("test_2-15-17/" + test + "_img01.jpg");
+	Mat imgOriginal2 = imread("test_2-15-17/" + test + "_img02.jpg");
+	Mat imgOriginal3 = imread("test_2-15-17/" + test + "_img03.jpg");
+	Mat imgOriginal4 = imread("test_2-15-17/" + test + "_img04.jpg");
 	
     
     if(imgOriginal1.empty() || imgOriginal2.empty() ||imgOriginal3.empty() ||imgOriginal4.empty())
@@ -145,16 +147,19 @@ void beacon_main(beacon_loc &b_loc)
     blobDetect->detect(binDiff, keypoints);
     
     /*
-    String foldername = "test_1-20_outside/";
-    std::string note = "";
-	cout << "File prefix for pictures: " << endl;
-    cin >> note;
-    
-    imwrite(foldername + note + "_imgOriginal1.jpg", imgOriginal1);
-   	imwrite(foldername + note  + "_imgOriginal2.jpg", imgOriginal2);
-    imwrite(foldername + note  + "_imgOriginal3.jpg", imgOriginal3);
-    imwrite(foldername + note  + "_imgOriginal4.jpg", imgOriginal4);
+    	Save all files in the current folder with timestamps
     */
+    String foldername = "current/";
+    time_t now = time(0);
+    char* dt = ctime(&now);
+    
+    imwrite(foldername + dt + "_imgOriginal1.jpg", imgOriginal1);
+   	imwrite(foldername + dt  + "_imgOriginal2.jpg", imgOriginal2);
+    imwrite(foldername + dt  + "_imgOriginal3.jpg", imgOriginal3);
+    imwrite(foldername + dt  + "_imgOriginal4.jpg", imgOriginal4);
+    imwrite(foldername + dt  + "_diff1.jpg", diff1);
+    imwrite(foldername + dt  + "_diff2.jpg", diff2);
+
     
     cout << "Keypoints size: " << keypoints.size() << endl;
 
@@ -166,13 +171,13 @@ void beacon_main(beacon_loc &b_loc)
 
     cout << "Keypoints size: " << keypoints.size() << endl;
 
-    while(keypoints.size() < 4 && thresh >= 50)
+    while(keypoints.size() < 4 && thresh >= 20) // 20 is good for finding dim beacon, was 50
     {
         thresh -= 5;
         threshDilateDetect(grayDiff, binDiff, thresh, params, keypoints);
     }
 
-    if(thresh < 50)
+    if(thresh < 20) // 20 is good for finding dim beacon, was 50
     {
 	cout << "Failed to find beacon" << endl;
         b_loc.beacon_not_found = 1;
@@ -192,6 +197,7 @@ void beacon_main(beacon_loc &b_loc)
 
     //draw important points for output
     Mat out = drawAndCircleKeypoints(keypoints, binDiff);
+        imwrite(foldername + dt  + "_out.jpg", out);
 
     if(keypoints.size() == 4)
     {
@@ -202,7 +208,7 @@ void beacon_main(beacon_loc &b_loc)
 
 		beaconLocation(keypoints, &b_loc);
 
-		robot_angle(&b_loc, binDiff, cent.x);
+		//robot_angle(&b_loc, binDiff, cent.x);
 
 		circle(out, cent, 5, CV_RGB(0,100,0), -1, 8);
     }
@@ -217,13 +223,6 @@ void beacon_main(beacon_loc &b_loc)
     {
         b_loc.beacon_not_found = 1;
     }
-    
-    
-    
-    // imwrite(foldername + note  + "_diff1.jpg", diff1);
-    // imwrite(foldername + note  + "_diff2.jpg", diff2);
-    // imwrite(foldername + note  + "_out.jpg", out);
-
 	
 	
 	cout << "HERE!" << endl;

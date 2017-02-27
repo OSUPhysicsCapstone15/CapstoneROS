@@ -581,7 +581,7 @@ bool beaconLocation(vector<KeyPoint> imgKeyPoints, beacon_loc *b_loc)
     bool succ;
     
     // use SOLVEPNP_P3P when at smaller distances to find more accurate angles
-    if(sqrt(b_loc->x * b_loc->x + b_loc->y * b_loc->y) < 20) {
+    if(sqrt(b_loc->x * b_loc->x + b_loc->y * b_loc->y) < 16) {
     	succ = solvePnP(kwnPoints, imgPoints, cameraMatrix, distCoeffs, rvec, tvec, guess, SOLVEPNP_P3P);
     } else {
     	succ = solvePnP(kwnPoints, imgPoints, cameraMatrix, distCoeffs, rvec, tvec, guess);

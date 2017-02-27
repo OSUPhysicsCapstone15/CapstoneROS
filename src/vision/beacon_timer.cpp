@@ -14,7 +14,7 @@ void beacon_main(beacon_loc &b_loc)
 	
 	// declare a string for appending a prefix to the images we want to save
     std::string note;
-    std::string foldername = "testing";
+    std::string foldername = "test_2-15-17";
     
     // get the string for the prefix
     cout << "File prefix for pictures: (dist-16,5) or (dist-16,5-4,5) NO SPACES" << endl;
@@ -25,23 +25,23 @@ void beacon_main(beacon_loc &b_loc)
     {
     	//capture the video from web cam
 		VideoCapture cap(-1);
-		
+	
 		//if not success, exit program
 		if (!cap.isOpened())
 		{
 		    cout << "Cannot open the web cam" << endl;
-		    return;
+		    return;    
 		}
-    	
-    	// auto t1 = std::chrono::high_resolution_clock::now();
+		
+		auto t1 = std::chrono::high_resolution_clock::now();
 		Mat noimg = getPic(cap); //first pic out of sync
-		// auto t2 = std::chrono::high_resolution_clock::now();
+		auto t2 = std::chrono::high_resolution_clock::now();
 		Mat imgOriginal1 = getPic(cap);
-		// auto t3 = std::chrono::high_resolution_clock::now();
+		auto t3 = std::chrono::high_resolution_clock::now();
 		Mat imgOriginal2 = getPic(cap);
-		// auto t4 = std::chrono::high_resolution_clock::now();
+		auto t4 = std::chrono::high_resolution_clock::now();
 		Mat imgOriginal3 = getPic(cap);
-		// auto t5 = std::chrono::high_resolution_clock::now();
+		auto t5 = std::chrono::high_resolution_clock::now();
 		Mat imgOriginal4 = getPic(cap);	
     
 		// check if images open
