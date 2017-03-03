@@ -3,8 +3,8 @@
 //#define DEBUG // Print the detailed debug messages
 //#define HEARTBEAT_MONITOR // Pause the robot if encoder heartbeat is lost
 #define DEBUG_LITE // Print the most necessary debug messages
-//define ANGLE_CORRECTION // Correct the driving by keeping the angle close to 0
-#define PID17 // PID controls Class 2017
+#define ANGLE_CORRECTION // Correct the driving by keeping the angle close to 0
+//#define PID17 // PID controls Class 2017
 
 
 #include "ros/ros.h"
@@ -403,16 +403,16 @@ int main(int argc, char **argv) {
     // Runs While If (driving == true )
    double Last_Error; // For Differential 
    double Ei = 0; // Integral, Sum of all errors	 
-	double ERROR_TERM; // Sum of all E's
+   double ERROR_TERM; // Sum of all E's
 
 	// Define Max Speed Change
-	double Max_Change = 0.3;
+	double Max_Change = 0.4;
 	// For Large Error Terms, max speed change if 15%. For PID's less than this number, change is proportional
 
 	// Define Gains
-	const double Kp = 0.001;
+	const double Kp = 0.05;
 	const double Ki = 0.0001;
-	const double Kd = 0.0005;
+	const double Kd = 0.0015;
 	const double Bias = 0;
 
 	// Initialize Error Terms
@@ -474,32 +474,58 @@ int main(int argc, char **argv) {
 	 			msg.data = 0;
 	  			command_done_pub.publish(msg); // Report a finished command
 	  			ramping = false; // Reset ramping to false now that the movement is done
+	  			// zero_system(); // Zero out this new instance
 			}
 	// _______________________________________________________________________________________
 #ifdef PID17
 // These are the distances traveled y left and right wheels, UNITS = INCHES
+
+Ei += current_angle; // Add to Integral Term
+ROS_INFO("Ei Term: %f", Ei);
+Ed = current_angle - Last_Error;
+ROS_INFO("Ed Term: %f", Ed);
+ERROR_TERM = (Kp*current_angle) + (Ki*Ei) + (Kd*Ed);
+
+if (ERROR_TERM < -Max_Change) { ERROR_TERM = -Max_Change;
+	ROS_INFO("Error Term Max -> Max Right Speed Decrease)"); }
+else if (ERROR_TERM > Max_Change) { ERROR_TERM = Max_Change; 
+	ROS_INFO("Error Term Min -> Max Left Speed Decrease)"); }
+	
+	if (ERROR_TERM > 0.01) { // If it is a small deviation, decrease the appropriate side by 15% of the power
+	  leftWheelSpeed = rightWheelSpeed*(1-ERROR_TERM);
+	} else if (ERROR_TERM < -0.01) {
+	   rightWheelSpeed = leftWheelSpeed*(1+ERROR_TERM);
+	}
+	
+
+	/*
 double LeftD = enc2distance(leftEncoder-left_encoder_zeropoint);
 double RightD = enc2distance(rightEncoder-right_encoder_zeropoint); 
+ROS_INFO("Left Distance: %f ", LeftD); 
+ROS_INFO("Right Distance: %f ", RightD);
 
 Ep = LeftD - RightD;
 ROS_INFO("Ep Term: %f", Ep);
 Ei += Ep; // Add to Integral Term
+ROS_INFO("Ei Term: %f", Ei);
 Ed = Ep - Last_Error;
+ROS_INFO("Ed Term: %f", Ed);
 ERROR_TERM = (Kp*Ep) + (Ki*Ei) + (Kd*Ed);
+*/
 ROS_INFO("Error Term: %f",ERROR_TERM);
-
+/*
 // Limit Change
-if (ERROR_TERM < -Max_Change) { ERROR_TERM = Max_Change;
+if (ERROR_TERM < -Max_Change) { ERROR_TERM = -Max_Change;
 	ROS_INFO("Error Term Max -> Max Left Speed Increase)"); }
-else if (ERROR_TERM > Max_Change) { ERROR_TERM = -Max_Change; 
+else if (ERROR_TERM > Max_Change) { ERROR_TERM = Max_Change; 
 	ROS_INFO("Error Term Min -> Max Left Speed Decrease)"); }
 
 // Adjust Wheel Speed
 leftWheelSpeed = leftWheelSpeed*(1-ERROR_TERM);	
 ROS_INFO("New Left Wheel Speed: %f ", leftWheelSpeed); 
-
+*/
 // Update Last Error
-Last_Error = Ep; 
+Last_Error = current_angle; 
 ROS_INFO("Ep Term (Last Error): %f", Last_Error); 
 
 #endif
@@ -507,10 +533,10 @@ ROS_INFO("Ep Term (Last Error): %f", Last_Error);
 // END PID17
 #ifdef ANGLE_CORRECTION		
 // Angle correction, edits wheel speeds in response to being off-angle
-	if (current_angle > 3) { // If it is a small deviation, decrease the appropriate side by 15% of the power
-	  leftWheelSpeed = leftWheelSpeed*0.85;
-	} else if (current_angle < -3) {
-	   rightWheelSpeed = rightWheelSpeed*0.85;
+	if (current_angle > 1.5) { // If it is a small deviation, decrease the appropriate side by 15% of the power
+	  leftWheelSpeed = leftWheelSpeed*0.90;
+	} else if (current_angle < -1.5) {
+	   rightWheelSpeed = rightWheelSpeed*0.90;
 	}
 	
 	if (current_angle > 15) { // If the deviation is very large, slow down both sides, and with a greater difference 

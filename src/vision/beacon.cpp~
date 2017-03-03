@@ -171,13 +171,13 @@ void beacon_main(beacon_loc &b_loc)
 
     cout << "Keypoints size: " << keypoints.size() << endl;
 
-    while(keypoints.size() < 4 && thresh >= 20) // was 50
+    while(keypoints.size() < 4 && thresh >= 20) // 20 is good for finding dim beacon, was 50
     {
         thresh -= 5;
         threshDilateDetect(grayDiff, binDiff, thresh, params, keypoints);
     }
 
-    if(thresh < 20) // was 50
+    if(thresh < 20) // 20 is good for finding dim beacon, was 50
     {
 	cout << "Failed to find beacon" << endl;
         b_loc.beacon_not_found = 1;

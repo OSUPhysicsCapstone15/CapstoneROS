@@ -567,6 +567,7 @@ int main(int argc, char **argv) {
 
 	}
       } else { // Lost the beacon, start spinning and searching
+      // this portion can be updated to turn the camera instead of spinning the entire robot
 	c_msg.commandOrder = 2; // Turning
 	c_msg.value = 35;
 	command_pub.publish(c_msg);

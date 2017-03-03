@@ -8,63 +8,6 @@ void beacon_main(beacon_loc &b_loc)
 
     //Set up blob detection parameters
     SimpleBlobDetector::Params params = setupBeaconBlobParams();
-    // commented out by Kaeli for testing purposes 
-    //capture the video from web cam
-    //	VideoCapture cap(0);
-  
-        
-    /*    
-    Mat img;
-    for (int i = 0; i < 100; i++ ) {
-   
-    auto t = std::chrono::high_resolution_clock::now();
-    auto t0 = std::chrono::high_resolution_clock::now();
-    while( std::chrono::duration_cast<std::chrono::milliseconds>(t0-t).count() < 200) {
-    	t0 = std::chrono::high_resolution_clock::now();
-    }
-    cap >> img;
-    cout << std::chrono::duration_cast<std::chrono::milliseconds>(t0-t).count() << endl;
-    }
-    */
-    
-    /*
-    //t1-t4 added by Kaeli, on Nov 1 for testing
-	Mat imgOriginal1, imgOriginal2, imgOriginal3, imgOriginal4;
-	//auto t1 = std::chrono::high_resolution_clock::now();
-    imgOriginal1 = getPic(cap); // imread("testPics2/imgOriginal1.jpg", CV_LOAD_IMAGE_COLOR);
-    //auto t2 = std::chrono::high_resolution_clock::now();
-    imgOriginal2 = getPic(cap); //imread("testPics2/imgOriginal2.jpg", CV_LOAD_IMAGE_COLOR); //getPic(cap);
-    //auto t3 = std::chrono::high_resolution_clock::now();
-    imgOriginal3 = getPic(cap); //imread("testPics2/imgOriginal3.jpg", CV_LOAD_IMAGE_COLOR); //getPic(cap);
-    //auto t4 = std::chrono::high_resolution_clock::now();
-    imgOriginal4 = getPic(cap); //imread("testPics2/imgOriginal4.jpg", CV_LOAD_IMAGE_COLOR); //getPic(cap);*/
-    /*
-    cout << "time difference was " <<endl;
-    cout << std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count() << endl;
-    cout<<< std::chrono::duration_cast<std::chrono::milliseconds>(t3-t2).count() << endl;
-    cout << std::chrono::duration_cast<std::chrono::milliseconds>(t4-t3).count() << endl;
-    */    
-    /*
-    Mat img;//testing purposes (Kaeli)
-    Mat img2;//testing purposes (Kaeli)
-    //timing for loop (comment out if not testing timing specifically)
-    
-    for (int n=1; n<100; n++)
-      {
-	auto t1 = std::chrono::high_resolution_clock::now();
-	img = getPic(cap);
-	auto t2 = std::chrono::high_resolution_clock::now();
-	cout << std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count() << endl;
-	}
-	*/
-    /* 
-    auto t6 = std::chrono::high_resolution_clock::now();
-    cout << "first diff not used "<< std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count() << endl;
-    cout << "2nd " << std::chrono::duration_cast<std::chrono::milliseconds>(t3-t2).count() << endl;
-    cout << "3rd " << std::chrono::duration_cast<std::chrono::milliseconds>(t4-t3).count() << endl;
-    cout << "4th " << std::chrono::duration_cast<std::chrono::milliseconds>(t5-t4).count() << endl;
-    cout << "5th " << std::chrono::duration_cast<std::chrono::milliseconds>(t6-t5).count() << endl;
-    */
     
     //  			********** BEST CODE *********** 
     
@@ -86,7 +29,7 @@ void beacon_main(beacon_loc &b_loc)
     auto t4 = std::chrono::high_resolution_clock::now();
     Mat imgOriginal3 = getPic(cap);
     auto t5 = std::chrono::high_resolution_clock::now();
-    Mat imgOriginal4 = getPic(cap);	
+    Mat imgOriginal4 = getPic(cap);
     
     
 
@@ -230,4 +173,64 @@ void beacon_main(beacon_loc &b_loc)
     //createWindows();
     //showWindows(imgOriginal1, imgOriginal2, imgOriginal3, imgOriginal4, diff1, diff2, grayDiff, out);
 }
+
+/* Unused code */
+
+    // commented out by Kaeli for testing purposes 
+    //capture the video from web cam
+    //	VideoCapture cap(0);
+  
+        
+    /*    
+    Mat img;
+    for (int i = 0; i < 100; i++ ) {
+   
+    auto t = std::chrono::high_resolution_clock::now();
+    auto t0 = std::chrono::high_resolution_clock::now();
+    while( std::chrono::duration_cast<std::chrono::milliseconds>(t0-t).count() < 200) {
+    	t0 = std::chrono::high_resolution_clock::now();
+    }
+    cap >> img;
+    cout << std::chrono::duration_cast<std::chrono::milliseconds>(t0-t).count() << endl;
+    }
+    */
+    
+    /*
+    //t1-t4 added by Kaeli, on Nov 1 for testing
+	Mat imgOriginal1, imgOriginal2, imgOriginal3, imgOriginal4;
+	//auto t1 = std::chrono::high_resolution_clock::now();
+    imgOriginal1 = getPic(cap); // imread("testPics2/imgOriginal1.jpg", CV_LOAD_IMAGE_COLOR);
+    //auto t2 = std::chrono::high_resolution_clock::now();
+    imgOriginal2 = getPic(cap); //imread("testPics2/imgOriginal2.jpg", CV_LOAD_IMAGE_COLOR); //getPic(cap);
+    //auto t3 = std::chrono::high_resolution_clock::now();
+    imgOriginal3 = getPic(cap); //imread("testPics2/imgOriginal3.jpg", CV_LOAD_IMAGE_COLOR); //getPic(cap);
+    //auto t4 = std::chrono::high_resolution_clock::now();
+    imgOriginal4 = getPic(cap); //imread("testPics2/imgOriginal4.jpg", CV_LOAD_IMAGE_COLOR); //getPic(cap);*/
+    /*
+    cout << "time difference was " <<endl;
+    cout << std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count() << endl;
+    cout<<< std::chrono::duration_cast<std::chrono::milliseconds>(t3-t2).count() << endl;
+    cout << std::chrono::duration_cast<std::chrono::milliseconds>(t4-t3).count() << endl;
+    */    
+    /*
+    Mat img;//testing purposes (Kaeli)
+    Mat img2;//testing purposes (Kaeli)
+    //timing for loop (comment out if not testing timing specifically)
+    
+    for (int n=1; n<100; n++)
+      {
+	auto t1 = std::chrono::high_resolution_clock::now();
+	img = getPic(cap);
+	auto t2 = std::chrono::high_resolution_clock::now();
+	cout << std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count() << endl;
+	}
+	*/
+    /* 
+    auto t6 = std::chrono::high_resolution_clock::now();
+    cout << "first diff not used "<< std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count() << endl;
+    cout << "2nd " << std::chrono::duration_cast<std::chrono::milliseconds>(t3-t2).count() << endl;
+    cout << "3rd " << std::chrono::duration_cast<std::chrono::milliseconds>(t4-t3).count() << endl;
+    cout << "4th " << std::chrono::duration_cast<std::chrono::milliseconds>(t5-t4).count() << endl;
+    cout << "5th " << std::chrono::duration_cast<std::chrono::milliseconds>(t6-t5).count() << endl;
+    */
 
