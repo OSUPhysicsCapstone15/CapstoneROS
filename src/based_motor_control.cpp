@@ -398,13 +398,12 @@ int main(int argc, char **argv) {
   zero_system(); // Zero out this new instance
   freq_div_msg.data = 1; // Ask for no frequency division
   freq_div_pub.publish(freq_div_msg); // Send the new value
-<<<<<<< HEAD
 	
    // PID Globals
     // Runs While If (driving == true )
    double Last_Error; // For Differential 
    double Ei = 0; // Integral, Sum of all errors	 
-	double ERROR_TERM; // Sum of all E's
+   double ERROR_TERM; // Sum of all E's
 
 	// Define Max Speed Change
 	double Max_Change = 0.3;
@@ -421,9 +420,6 @@ int main(int argc, char **argv) {
 
 	double Ed = 0; // Differential, Difference in previous error to current
 	
-=======
-
->>>>>>> 6248564ed1d03ec02d3e738e5102db17fba000e8
   while (ros::ok()) { // Stay in this loop for the length of the program
     // Get the current angle and distances
     current_angle = enc2angle(leftEncoder-left_encoder_zeropoint, rightEncoder - right_encoder_zeropoint);
@@ -481,7 +477,6 @@ int main(int argc, char **argv) {
 			}
 	// _______________________________________________________________________________________
 #ifdef PID17
-<<<<<<< HEAD
 // These are the distances traveled y left and right wheels, UNITS = INCHES
 double LeftD = enc2distance(leftEncoder-left_encoder_zeropoint);
 double RightD = enc2distance(rightEncoder-right_encoder_zeropoint); 
@@ -507,47 +502,6 @@ ROS_INFO("New Left Wheel Speed: %f ", leftWheelSpeed);
 Last_Error = Ep; 
 ROS_INFO("Ep Term (Last Error): %f", Last_Error); 
 
-=======
-// Runs While If (driving == true )
-double ERROR_TERM; // Sum of all Ei's
-
-// Define Max Speed Change
-double Max_Change = 0.15;
-// For Large Error Terms, max speed change if 15%. For PID's less than this number, change is proportional
-
-// Define Gains
-const double Kp = 1;
-const double Ki = 1;
-const double Kd = 1;
-const double Bias = 0;
-
-// Initialize Variables
-double Last_Error; // For Differential 
-
-// Initialize Error Terms
-double Ep = 0; // Porportional
-double Ei = 0; // Integral
-double Ed = 0; // Differential
-
-// These are the distances traveled y left and right wheels, UNITS = INCHES
-double LeftD = enc2distance(leftEncoder);
-double RightD = enc2distance(rightEncoder); 
-
-Ep = LeftD - RightD;
-Ei += Ep; // Add to Integral Term
-Ed = Ep - Last_Error;
-ERROR_TERM = (Kp*Ep) + (Ki*Ei) + (Kd*Ed);
-
-// Limit Change
-if (ERROR_TERM > Max_Change) { ERROR_TERM = Max_Change; }
-else if (ERROR_TERM < -Max_Change) { ERROR_TERM = -Max_Change; }
-
-// Adjust Wheel Speed
-leftWheelSpeed = leftWheelSpeed*(1-ERROR_TERM);	
-
-// Update Last Error
-Last_Error = Ep; 
->>>>>>> 6248564ed1d03ec02d3e738e5102db17fba000e8
 #endif
 // _____________________________________________________________________________________
 // END PID17
