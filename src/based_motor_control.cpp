@@ -486,15 +486,16 @@ Ed = current_angle - Last_Error;
 ROS_INFO("Ed Term: %f", Ed);
 ERROR_TERM = (Kp*current_angle) + (Ki*Ei) + (Kd*Ed);
 
-if (ERROR_TERM < -Max_Change) { ERROR_TERM = -Max_Change;
-	ROS_INFO("Error Term Max -> Max Right Speed Decrease)"); }
-else if (ERROR_TERM > Max_Change) { ERROR_TERM = Max_Change; 
-	ROS_INFO("Error Term Min -> Max Left Speed Decrease)"); }
+	if (ERROR_TERM < -Max_Change) { ERROR_TERM = -Max_Change;
+		ROS_INFO("Error Term Max -> Max Right Speed Decrease)"); 
+	} else if (ERROR_TERM > Max_Change) { ERROR_TERM = Max_Change; 
+		ROS_INFO("Error Term Min -> Max Left Speed Decrease)"); 
+	}
 	
-	if (ERROR_TERM > 0.01) { // If it is a small deviation, decrease the appropriate side by 15% of the power
-	  leftWheelSpeed = rightWheelSpeed*(1-ERROR_TERM);
+	if (ERROR_TERM > 0.01) { 
+	  leftWheelSpeed = leftWheelSpeed*(1-ERROR_TERM);
 	} else if (ERROR_TERM < -0.01) {
-	   rightWheelSpeed = leftWheelSpeed*(1+ERROR_TERM);
+	   rightWheelSpeed = rightWheelSpeed*(1+ERROR_TERM);
 	}
 	
 

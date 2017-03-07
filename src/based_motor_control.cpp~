@@ -491,10 +491,10 @@ if (ERROR_TERM < -Max_Change) { ERROR_TERM = -Max_Change;
 else if (ERROR_TERM > Max_Change) { ERROR_TERM = Max_Change; 
 	ROS_INFO("Error Term Min -> Max Left Speed Decrease)"); }
 	
-	if (ERROR_TERM > 0.01) { // If it is a small deviation, decrease the appropriate side by 15% of the power
-	  leftWheelSpeed = rightWheelSpeed*(1-ERROR_TERM);
+	if (ERROR_TERM > 0.01) { 
+	  leftWheelSpeed = leftWheelSpeed*(1-ERROR_TERM);
 	} else if (ERROR_TERM < -0.01) {
-	   rightWheelSpeed = leftWheelSpeed*(1+ERROR_TERM);
+	   rightWheelSpeed = rightWheelSpeed*(1+ERROR_TERM);
 	}
 	
 
@@ -533,10 +533,10 @@ ROS_INFO("Ep Term (Last Error): %f", Last_Error);
 // END PID17
 #ifdef ANGLE_CORRECTION		
 // Angle correction, edits wheel speeds in response to being off-angle
-	if (current_angle > 1.5) { // If it is a small deviation, decrease the appropriate side by 15% of the power
-	  leftWheelSpeed = leftWheelSpeed*0.90;
-	} else if (current_angle < -1.5) {
-	   rightWheelSpeed = rightWheelSpeed*0.90;
+	if (current_angle > 3) { // If it is a small deviation, decrease the appropriate side by 15% of the power
+	  leftWheelSpeed = leftWheelSpeed*0.85;
+	} else if (current_angle < -3) {
+	   rightWheelSpeed = rightWheelSpeed*0.85;
 	}
 	
 	if (current_angle > 15) { // If the deviation is very large, slow down both sides, and with a greater difference 
