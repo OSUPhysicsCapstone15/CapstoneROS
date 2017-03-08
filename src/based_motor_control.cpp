@@ -420,9 +420,17 @@ int main(int argc, char **argv) {
 
 	double Ed = 0; // Differential, Difference in previous error to current
 	
+	// ANGLE CORRECTION VARS
+	double angle_diff = 0;
+	double past_angle = 0;
+	bool left_error = false;
+	bool right_error = false;
+		
   while (ros::ok()) { // Stay in this loop for the length of the program
     // Get the current angle and distances
     current_angle = enc2angle(leftEncoder-left_encoder_zeropoint, rightEncoder - right_encoder_zeropoint);
+    angle_diff = current_angle - past_angle; // For PID Derivative
+    past_angle = current_angle; 
     current_distance = enc2distance(leftEncoder - left_encoder_zeropoint)/2 + enc2distance(rightEncoder - right_encoder_zeropoint)/2;
 
 #ifdef DEBUG_LITE
@@ -532,14 +540,44 @@ ROS_INFO("Ep Term (Last Error): %f", Last_Error);
 #endif
 // _____________________________________________________________________________________
 // END PID17
-#ifdef ANGLE_CORRECTION		
+#ifdef ANGLE_CORRECTION	
+
 // Angle correction, edits wheel speeds in response to being off-angle
 	if (current_angle > 3) { // If it is a small deviation, decrease the appropriate side by 15% of the power
-	  leftWheelSpeed = leftWheelSpeed*0.85;
+	  	leftWheelSpeed = leftWheelSpeed*0.85;
+	  	left_error = true;
+	  	ROS_INFO("LEFT ERROR");
 	} else if (current_angle < -3) {
 	   rightWheelSpeed = rightWheelSpeed*0.85;
+	   right_error = true;
+	   ROS_INFO("RIGHT ERROR");
+	}else if (abs(current_angle) < 1){ // do nothing, reset L/R errors
+		left_error = false;
+		right_error = false;
 	}
 	
+	
+	if (left_error){
+		// Check derivative, if positive, do not chang
+		if (angle_diff < 0 ){
+			// If negative, we are heading back on track, reduce speed a little less
+			// NOTE: Left wheel speed is reset to 0.8 after every pass of while loop
+			leftWheelSpeed = leftWheelSpeed*0.92;
+		}
+	}
+		
+	if (right_error){
+		// Check derivative, if positive, do not chang
+		if (angle_diff > 0 ){
+			// If negative, we are heading back on track, reduce speed a little less
+			// NOTE: Left wheel speed is reset to 0.8 after every pass of while loop
+			rightWheelSpeed = rightWheelSpeed*0.92;
+		}
+	}
+	
+	
+	
+	/*
 	if (current_angle > 15) { // If the deviation is very large, slow down both sides, and with a greater difference 
 	  leftWheelSpeed = leftWheelSpeed*0.6;
 	  rightWheelSpeed = rightWheelSpeed*0.95;
@@ -549,6 +587,7 @@ ROS_INFO("Ep Term (Last Error): %f", Last_Error);
 	  leftWheelSpeed = leftWheelSpeed*0.95;
 	  ROS_INFO("!!!!!!!!!!!!!!!!!!!!!BIG CORRECTION TO THE RIGHT");
 	}
+	*/
 #endif
 	ROS_INFO("Trying to drive: %f %f", leftWheelSpeed, rightWheelSpeed); // Let the user know we are trying to drive
       } else if (grabbing) { // If the robot needs to grab the object
