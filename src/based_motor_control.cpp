@@ -31,7 +31,7 @@ static const double MOTOR_MAX = 1.0; // Max motor value (1.0 max, as defined by 
 static const double PIVOT_SPEED = 0.8; // The speed to run the motors at in a pivot
 static const double ENC_FUDGE = 1.0; // Encoder fudge factor. Keep at 1.0. Only use if absolutely necessary (unused)
 static const double BRAKE_SPEED = -0.1; // Reverse with enough power to stop wheel motion
-static const double DRIVE_SPEED = 0.80; // The standard drive speed (% of MOTOR_MAX)
+static const double DRIVE_SPEED = 0.50; // The standard drive speed (% of MOTOR_MAX)
 static const double DRIVE_SPEED_FAST = 1.0; // The fast drive speed
 static const double ANGLE_PRECISION = 5; // The precision to which angle movements are made, units of degrees
 static const double FORWARD_PRECISION = 20; // The precision to which linear movements are made, units of inches
@@ -410,9 +410,9 @@ int main(int argc, char **argv) {
 	// For Large Error Terms, max speed change if 15%. For PID's less than this number, change is proportional
 
 	// Define Gains
-	const double Kp = 0.05;
-	const double Ki = 0.0001;
-	const double Kd = 0.0015;
+	const double Kp = 0.05; //test to find best Kp
+	const double Ki = 0.000;//change Ki, Kd, and Bias after finding Kp 
+	const double Kd = 0.00;
 	const double Bias = 0;
 
 	// Initialize Error Terms
@@ -487,7 +487,7 @@ int main(int argc, char **argv) {
 	// _______________________________________________________________________________________
 #ifdef PID17
 // These are the distances traveled y left and right wheels, UNITS = INCHES
-
+/*
 Ei += current_angle; // Add to Integral Term
 ROS_INFO("Ei Term: %f", Ei);
 Ed = current_angle - Last_Error;
@@ -506,8 +506,8 @@ ERROR_TERM = (Kp*current_angle) + (Ki*Ei) + (Kd*Ed);
 	   rightWheelSpeed = rightWheelSpeed*(1+ERROR_TERM);
 	}
 	
-
-	/*
+*/
+	
 double LeftD = enc2distance(leftEncoder-left_encoder_zeropoint);
 double RightD = enc2distance(rightEncoder-right_encoder_zeropoint); 
 ROS_INFO("Left Distance: %f ", LeftD); 
@@ -520,19 +520,25 @@ ROS_INFO("Ei Term: %f", Ei);
 Ed = Ep - Last_Error;
 ROS_INFO("Ed Term: %f", Ed);
 ERROR_TERM = (Kp*Ep) + (Ki*Ei) + (Kd*Ed);
-*/
+
 ROS_INFO("Error Term: %f",ERROR_TERM);
-/*
+
 // Limit Change
 if (ERROR_TERM < -Max_Change) { ERROR_TERM = -Max_Change;
-	ROS_INFO("Error Term Max -> Max Left Speed Increase)"); }
+	ROS_INFO("Error Term Max -> Max Right Speed Decrease)"); }
 else if (ERROR_TERM > Max_Change) { ERROR_TERM = Max_Change; 
-	ROS_INFO("Error Term Min -> Max Left Speed Decrease)"); }
+	ROS_INFO("Error Term Max -> Max Left Speed Decrease)"); }
 
 // Adjust Wheel Speed
-leftWheelSpeed = leftWheelSpeed*(1-ERROR_TERM);	
-ROS_INFO("New Left Wheel Speed: %f ", leftWheelSpeed); 
-*/
+	if (ERROR_TERM > 0.01) { 
+	  leftWheelSpeed = leftWheelSpeed*(1-ERROR_TERM);
+	  ROS_INFO("New Left Wheel Speed: %f ", leftWheelSpeed); 
+	} else if (ERROR_TERM < -0.01) {
+	   rightWheelSpeed = rightWheelSpeed*(1+ERROR_TERM);
+	   ROS_INFO("New Right Wheel Speed: %f ", rightWheelSpeed); 
+	}
+
+
 // Update Last Error
 Last_Error = current_angle; 
 ROS_INFO("Ep Term (Last Error): %f", Last_Error); 
@@ -543,35 +549,58 @@ ROS_INFO("Ep Term (Last Error): %f", Last_Error);
 #ifdef ANGLE_CORRECTION	
 
 // Angle correction, edits wheel speeds in response to being off-angle
-	if (current_angle > 3) { // If it is a small deviation, decrease the appropriate side by 15% of the power
+	const int MAX_ANGLE = 2; // maxium allowable deviation, if this is exceeded, corrections begin
+	const double MAX_ERROR = 0.15; // maxium value for proportional error term
+	if (current_angle > MAX_ANGLE) { // If it is a small deviation, decrease the appropriate side by 15% of the power
 	  	leftWheelSpeed = leftWheelSpeed*0.85;
 	  	left_error = true;
+	  	right_error = false;
 	  	ROS_INFO("LEFT ERROR");
-	} else if (current_angle < -3) {
+	} else if (current_angle < -MAX_ANGLE) {
 	   rightWheelSpeed = rightWheelSpeed*0.85;
 	   right_error = true;
+	   left_error = false;
 	   ROS_INFO("RIGHT ERROR");
-	}else if (abs(current_angle) < 1){ // do nothing, reset L/R errors
+	}else if (abs(current_angle) < 0.65){ // do not change speeds, reset L/R errors
 		left_error = false;
 		right_error = false;
 	}
 	
+	double error_term = 0; // proportional error term for speed change
 	
 	if (left_error){
-		// Check derivative, if positive, do not chang
+		// Check derivative, if positive, do not change
 		if (angle_diff < 0 ){
 			// If negative, we are heading back on track, reduce speed a little less
-			// NOTE: Left wheel speed is reset to 0.8 after every pass of while loop
-			leftWheelSpeed = leftWheelSpeed*0.92;
+			// We want a proportional term, ased of current_angle
+			if(current_angle>0){
+				error_term = current_angle/(10*MAX_ANGLE);
+			
+				if(error_term > MAX_ERROR){
+					error_term = MAX_ERROR;
+				}
+
+				// NOTE: wheel speed is reset to 0.8 after every pass of while loop
+				leftWheelSpeed = leftWheelSpeed*(1-error_term);
+				ROS_INFO("%f left speed reduction", (1-error_term));
+			}
 		}
 	}
 		
 	if (right_error){
-		// Check derivative, if positive, do not chang
+		// Check derivative, if negative, do not change
 		if (angle_diff > 0 ){
-			// If negative, we are heading back on track, reduce speed a little less
-			// NOTE: Left wheel speed is reset to 0.8 after every pass of while loop
-			rightWheelSpeed = rightWheelSpeed*0.92;
+			// If positive, we are heading back on track, reduce speed a little less
+			// We want a proportional term, ased of current_angle
+			if(current_angle<0){
+				error_term = abs(current_angle/(10*MAX_ANGLE));
+			
+				if(error_term > MAX_ERROR){
+					error_term = MAX_ERROR;
+				}
+				rightWheelSpeed = rightWheelSpeed*(1-error_term);
+				ROS_INFO("%f right speed reduction", (1-error_term));
+			}
 		}
 	}
 	
