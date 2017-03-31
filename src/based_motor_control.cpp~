@@ -410,9 +410,9 @@ int main(int argc, char **argv) {
 	// For Large Error Terms, max speed change if 15%. For PID's less than this number, change is proportional
 
 	// Define Gains
-	const double Kp = 0.1; //test to find best Kp
-	const double Ki = 0.000;//change Ki, Kd, and Bias after finding Kp 
-	const double Kd = 0.00;
+	const double Kp = 0.05; //test to find best Kp
+	const double Ki = 0.05;//change Ki, Kd, and Bias after finding Kp 
+	const double Kd = 0.02;
 	const double Bias = 0;
 
 	// Initialize Error Terms
@@ -506,7 +506,7 @@ ERROR_TERM = (Kp*current_angle) + (Ki*Ei) + (Kd*Ed);
 	   rightWheelSpeed = rightWheelSpeed*(1+ERROR_TERM);
 	}
 	
-*/
+
 	
 double LeftD = enc2distance(leftEncoder-left_encoder_zeropoint);
 double RightD = enc2distance(rightEncoder-right_encoder_zeropoint); 
@@ -542,6 +542,23 @@ else if (ERROR_TERM > Max_Change) { ERROR_TERM = Max_Change;
 // Update Last Error
 Last_Error = current_angle; 
 ROS_INFO("Ep Term (Last Error): %f", Last_Error); 
+*/
+const double MAX_ERROR = 0.15; // maxium value for proportional error term
+double error_term = Ki*current_angle + Kd*angle_diff;
+
+if (error_term > 0) {
+	if(error_term > MAX_ERROR){
+		error_term = MAX_ERROR;
+	}
+	leftWheelSpeed = leftWheelSpeed*(1-error_term);
+	ROS_INFO("%f left speed reduction", (1-error_term));
+} else {
+	if(error_term < -MAX_ERROR){
+		error_term = -MAX_ERROR;
+	}
+	rightWheelSpeed = rightWheelSpeed*(1+error_term);
+	ROS_INFO("%f right speed reduction", (1+error_term));
+}
 
 #endif
 // _____________________________________________________________________________________
