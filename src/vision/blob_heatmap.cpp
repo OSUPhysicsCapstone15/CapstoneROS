@@ -5,15 +5,19 @@ void blob_main(sample_loc &s_loc)
 {
     hsvParams hsvWhite = {20,0,0,180,80,255};
     hsvParams hsvPurple = {80,60,0,130,255,255};
+    
+    hsvParams hsvHeat = {0, 60, 0, 15, 255, 255};
 
-    hsvParams hsv = s_loc.whiteSample==true? hsvWhite:hsvPurple;
+    // s_loc.whiteSample = false;
+    // hsvParams hsv = s_loc.whiteSample==true? hsvWhite:hsvPurple;
+    hsvParams hsv = hsvHeat;
 
     //Set up blob detection parameters
-    SimpleBlobDetector::Params params = setupObjectBlobParams();
+    SimpleBlobDetector::Params params = setupObjectBlobParams_heatmap();
 
     vector<KeyPoint> keypoints;
 
-    const string filename("/home/buckeye/catkin_ws/src/CapstoneROS/src/vision/heatmaps/heatmap_1");
+    const string filename("/home/buckeye/catkin_ws/src/CapstoneROS/src/vision/heatmaps/heatmap_1.jpg");
     //Initialize camera
     /*
     VideoCapture cap(0);
@@ -34,12 +38,14 @@ void blob_main(sample_loc &s_loc)
             return;
         }
 	
-	namedWindow("First", WINDOW_AUTOSIZE);
-	imshow("First", img);
+	// namedWindow("First", WINDOW_AUTOSIZE);
+	// imshow("First", img);
 
         //convert color to HSV, threshold and remove noise
+        /*
         cvtColor(img, imgHSV, COLOR_BGR2HSV);
         findGrass(img,imgHSV);
+        */
         cvtColor(img, imgHSV, COLOR_BGR2HSV);
 
         inRange(imgHSV, Scalar(hsv.hL, hsv.sL, hsv.vL), Scalar(hsv.hH, hsv.sH, hsv.vH), imgTHRESH);
@@ -47,9 +53,10 @@ void blob_main(sample_loc &s_loc)
 
         namedWindow("Input", WINDOW_AUTOSIZE);
         namedWindow("Detection", WINDOW_AUTOSIZE);
+        namedWindow("Filter", WINDOW_AUTOSIZE);
 
         Ptr<SimpleBlobDetector> blobDetect = SimpleBlobDetector::create(params);
-        blobDetect->detect( imgTHRESH, keypoints );
+        blobDetect->detect(imgTHRESH, keypoints );
 
         drawKeypoints(imgTHRESH, keypoints, out, CV_RGB(0,0,255), DrawMatchesFlags::DEFAULT);
         //Circle blobs
@@ -62,10 +69,24 @@ void blob_main(sample_loc &s_loc)
 	    robot_angle(&s_loc, imgTHRESH, keypoints[0].pt.x);
         }
         else{
-            cout<<"No Object Found"<<endl;
+            int lowKey = 0;
+            int lowVal = keypoints[0].pt.y;
+            for(int i = 0; i < keypoints.size(); i++){
+				if (keypoints[i].pt.y > lowVal){
+					lowKey = i;
+					lowVal = keypoints[i].pt.y;
+					}
+			}
+            // cout<<"No Object Found"<<endl;
+            circle(out, keypoints[lowKey].pt, 1.5*keypoints[lowKey].size, CV_RGB(255,0,0), 20, 8);
+            cout<<endl<<endl<<"Object Found?"<<endl;
+            tilt_turn_degrees(imgTHRESH, keypoints[lowKey].pt.y, keypoints[lowKey].pt.x, &s_loc);
+	    	robot_angle(&s_loc, imgTHRESH, keypoints[lowKey].pt.x);
         }
 
         imshow("Input", img);
+        imshow("Filter", imgTHRESH);
+        // imwrite("/home/buckeye/catkin_ws/src/CapstoneROS/src/vision/heatmaps/filter_1.jpg",imgTHRESH);
         imshow("Detection", out);
         waitKey(-1);
 

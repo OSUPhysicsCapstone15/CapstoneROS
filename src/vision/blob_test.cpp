@@ -33,7 +33,7 @@ void blob_main(sample_loc &s_loc)
 		/* img = imread(filename, CV_LOAD_IMAGE_COLOR); */
 		
     	// cap>>img;
-		img = imread("samplePics/25ft3.jpg", CV_LOAD_IMAGE_COLOR);
+		img = imread("samplePics/8ft3.jpg", CV_LOAD_IMAGE_COLOR);
         
         if(img.empty()){
             cout << "can not open image" << endl;

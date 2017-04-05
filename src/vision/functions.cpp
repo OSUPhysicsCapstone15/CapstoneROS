@@ -98,9 +98,9 @@ void removenoise(Mat image)
 
 //get robot dist from sample
 void tilt_turn_degrees(Mat img, int object_rows, int object_cols, sample_loc* orientation){
-    double camera_height = .61;     // height of camera from ground in meters
+    double camera_height = 1; // .61;     // height of camera from ground in meters
     double camera_angle = 90;	    //angle of camera
-    int camera_diagonal_angle = 69; // diagonal angle of view for camera in degrees
+    // int camera_diagonal_angle = 69; // diagonal angle of view for camera in degrees
                                     // logitech c525 fov is 69 degrees, Samsung Galaxy S5 is 90 degrees
 
     int rows = img.rows; // height of camera image in pixels
@@ -108,7 +108,7 @@ void tilt_turn_degrees(Mat img, int object_rows, int object_cols, sample_loc* or
     //cout << "Rows: " << rows << "\n" << "Cols: " << cols << endl;
 
     //logitech c525 fov is 69 degrees, Samsung Galaxy S5 is 90 degrees
-    double camera_diagonal = 69; // the angle of the cameras diagonal in degrees
+    double camera_diagonal = 90; // 69; // the angle of the cameras diagonal in degrees
     double pixel_diagonal = sqrt(rows * rows + cols * cols); // (pythagorean) diagonal length of image in pixels
     double degrees_per_pixel = camera_diagonal / pixel_diagonal; // ratio of real world degrees to pixels in the image
 
@@ -125,8 +125,9 @@ void tilt_turn_degrees(Mat img, int object_rows, int object_cols, sample_loc* or
     cout << "Turn robot " << turn_robot_x_degrees << " degrees.\n" << "Tilt camera " << tilt_camera_x_degrees << " degrees." << endl;
 
     double tilted_degrees = 90 + tilt_camera_x_degrees; // assuming camera is parallel to ground (90 degrees)
-
+	cout << "tilt_camera_x_degrees is " << tilt_camera_x_degrees << endl;
     double tilted_radians = tilted_degrees * M_PI / 180.0; // c++ tan() function uses radians
+    cout << "tilted_radians is " << tilted_radians << endl;
     double camera_radians = camera_angle * M_PI / 180.0;
 
     double height = camera_height; // height of camera from the ground in meters
@@ -426,6 +427,41 @@ SimpleBlobDetector::Params setupObjectBlobParams()
     params.maxConvexity = 10;
 
     return params;
+}
+
+SimpleBlobDetector::Params setupObjectBlobParams_heatmap()
+{
+    SimpleBlobDetector::Params params;
+    
+    // Change thresholds
+	params.minThreshold = 100;
+    params.maxThreshold = 250;
+    params.thresholdStep = 1;
+ 
+	// Filter by Area
+	params.filterByArea = true;
+	params.minArea = 10;
+    params.maxArea = 8000;
+	 
+	// Filter by Circularity
+    params.filterByCircularity = false;
+	 
+	// Filter by Convexity
+	params.filterByConvexity = true;
+    params.minConvexity = 0.3;
+    params.maxConvexity = 1;
+	 
+	// Filter by Inertia
+	params.filterByInertia = true;
+    params.minInertiaRatio = 0.10;
+    params.maxInertiaRatio = 0.70;
+    
+    // Filter by Color
+    params.filterByColor = false;
+
+    params.minDistBetweenBlobs = 0.0f;
+
+	return params;
 }
 
 //returns an image with the keypoints drawn on the given picture

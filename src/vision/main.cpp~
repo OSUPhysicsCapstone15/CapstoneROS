@@ -8,7 +8,7 @@ int main(){
 	
 	beacon_loc bloc;
 	bloc.x=1;
-	bloc.y=18;
+	bloc.y=1;
 	bloc.angle_from_robot=0;
 	beacon_main(bloc);
 

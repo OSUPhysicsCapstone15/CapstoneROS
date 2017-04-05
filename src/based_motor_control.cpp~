@@ -3,8 +3,8 @@
 //#define DEBUG // Print the detailed debug messages
 //#define HEARTBEAT_MONITOR // Pause the robot if encoder heartbeat is lost
 #define DEBUG_LITE // Print the most necessary debug messages
-#define ANGLE_CORRECTION // Correct the driving by keeping the angle close to 0
-//#define PID17 // PID controls Class 2017
+//#define ANGLE_CORRECTION // Correct the driving by keeping the angle close to 0
+#define PID17 // PID controls Class 2017
 
 
 #include "ros/ros.h"
@@ -411,8 +411,8 @@ int main(int argc, char **argv) {
 
 	// Define Gains
 	const double Kp = 0.05; //test to find best Kp
-	const double Ki = 0.05;//change Ki, Kd, and Bias after finding Kp 
-	const double Kd = 0.02;
+	const double Ki = 0.025;//change Ki, Kd, and Bias after finding Kp 
+	const double Kd = 0.0;
 	const double Bias = 0;
 
 	// Initialize Error Terms

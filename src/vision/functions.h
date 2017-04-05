@@ -46,6 +46,7 @@ void createWindows();
 
 SimpleBlobDetector::Params setupBeaconBlobParams();
 SimpleBlobDetector::Params setupObjectBlobParams();
+SimpleBlobDetector::Params setupObjectBlobParams_heatmap();
 
 void showWindows(Mat, Mat, Mat, Mat, Mat, Mat, Mat, Mat);
 
