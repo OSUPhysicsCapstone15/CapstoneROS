@@ -100,15 +100,14 @@ void removenoise(Mat image)
 void tilt_turn_degrees(Mat img, int object_rows, int object_cols, sample_loc* orientation){
     double camera_height = 1; // .61;     // height of camera from ground in meters
     double camera_angle = 90;	    //angle of camera
-    // int camera_diagonal_angle = 69; // diagonal angle of view for camera in degrees
-                                    // logitech c525 fov is 69 degrees, Samsung Galaxy S5 is 90 degrees
+    
+    //logitech c525 fov is 69 degrees, Samsung Galaxy S5 is 90 degrees
+    double camera_diagonal = 90; // 69; // the angle of the cameras diagonal in degrees degrees
 
     int rows = img.rows; // height of camera image in pixels
     int cols = img.cols; // width of camera image in pixels
     //cout << "Rows: " << rows << "\n" << "Cols: " << cols << endl;
 
-    //logitech c525 fov is 69 degrees, Samsung Galaxy S5 is 90 degrees
-    double camera_diagonal = 90; // 69; // the angle of the cameras diagonal in degrees
     double pixel_diagonal = sqrt(rows * rows + cols * cols); // (pythagorean) diagonal length of image in pixels
     double degrees_per_pixel = camera_diagonal / pixel_diagonal; // ratio of real world degrees to pixels in the image
 
@@ -459,7 +458,7 @@ SimpleBlobDetector::Params setupObjectBlobParams_heatmap()
     // Filter by Color
     params.filterByColor = false;
 
-    params.minDistBetweenBlobs = 0.0f;
+    params.minDistBetweenBlobs = 10.0f; // 0.0f
 
 	return params;
 }
