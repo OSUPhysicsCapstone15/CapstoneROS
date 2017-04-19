@@ -13,18 +13,19 @@ void blob_main(sample_loc &s_loc)
 
     vector<KeyPoint> keypoints;
 
-    // const string filename("/home/buckeye/catkin_ws/src/CapstoneROS/src/vision/samplePics/25ft3.jpg");
+    const string filename("/home/buckeye/catkin_ws/src/CapstoneROS/src/vision/heatmaps/blob_4.jpg");
+    /*
     //Initialize camera
     VideoCapture cap(0);
     if ( !cap.isOpened() ){
         cout << "Cannot open the web cam" << endl;
         return;
     }
-
+*/
     while(true){
         Mat img, imgHSV, imgTHRESH, out;
-// img = imread(filename, CV_LOAD_IMAGE_COLOR);
-       cap>>img;
+        img = imread(filename, CV_LOAD_IMAGE_COLOR);
+       //cap>>img;
 
         if(img.empty()){
             cout << "can not open image" << endl;
@@ -32,7 +33,7 @@ void blob_main(sample_loc &s_loc)
             return;
         }
 	
-	namedWindow("First", WINDOW_AUTOSIZE);
+	namedWindow("First", WINDOW_NORMAL);
 	imshow("First", img);
 
         //convert color to HSV, threshold and remove noise
@@ -43,8 +44,8 @@ void blob_main(sample_loc &s_loc)
         inRange(imgHSV, Scalar(hsv.hL, hsv.sL, hsv.vL), Scalar(hsv.hH, hsv.sH, hsv.vH), imgTHRESH);
         removenoise(imgTHRESH);
 
-        namedWindow("Input", WINDOW_AUTOSIZE);
-        namedWindow("Detection", WINDOW_AUTOSIZE);
+        namedWindow("Input", WINDOW_NORMAL);
+        namedWindow("Detection", WINDOW_NORMAL);
 
         Ptr<SimpleBlobDetector> blobDetect = SimpleBlobDetector::create(params);
         blobDetect->detect( imgTHRESH, keypoints );
@@ -64,6 +65,7 @@ void blob_main(sample_loc &s_loc)
         }
 
         imshow("Input", img);
+        //imwrite("/home/buckeye/catkin_ws/src/CapstoneROS/src/vision/heatmaps/blob4_filter.jpg",img);
         imshow("Detection", out);
         waitKey(-1);
 

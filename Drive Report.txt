@@ -1,0 +1,5 @@
+Left Motor Value 	Right Motor Value 	
+0	00	00	00	00	0#*#*#*#*#*# MAX correction to the RIGHT #*#*#*#*# 
+1	0.85#*#*#*#*#*# MAX correction to the RIGHT #*#*#*#*# 
+#*#*#*#*#*# MAX correction to the LEFT #*#*#*#*# 
+-0.085	-0.10	0

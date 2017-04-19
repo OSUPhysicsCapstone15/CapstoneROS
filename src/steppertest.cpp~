@@ -8,15 +8,19 @@
 #include <ros.h>
 #include <std_msgs/UInt16.h>
 
+// Set up ROS node
 ros::NodeHandle  nh;
-
+// Set up subscriber
+ros::Subscriber<std_msgs::UInt16> sub("stepper", stepper_cb);
+// Set up stepper
 Stepper cam(200, 11, 10, 9, 8);
 
-void stepper_cb( const std_msgs::UInt16& cmd_msg){
-	cam.step(cmd_msg.data); 
+// Get the angle from the console
+void stepper_cb(const std_msgs::UInt16& cmd_msg){
+	// Convert angle to stpes
+	int steps = cmd_msg.data/1.8;
+	cam.step(steps); 
 }
-
-ros::Subscriber<std_msgs::UInt16> sub("stepper", stepper_cb);
 
 void setup() {
 	nh.initNode();

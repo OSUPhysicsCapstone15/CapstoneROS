@@ -1,0 +1,7 @@
+set(_CATKIN_CURRENT_PACKAGE "robot")
+set(robot_MAINTAINER "lbeaufore <beaufore.2@osu.edu>")
+set(robot_DEPRECATED "")
+set(robot_VERSION "0.0.0")
+set(robot_BUILD_DEPENDS "roscpp" "rospy" "std_msgs" "message_generation")
+set(robot_RUN_DEPENDS "message_runtime" "roscpp" "rospy" "std_msgs")
+set(robot_BUILDTOOL_DEPENDS "catkin")

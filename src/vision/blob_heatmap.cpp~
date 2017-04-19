@@ -1,8 +1,17 @@
 #include "functions.h"
 #include "blob.h"
-
+//#include <Python.h>
 void blob_main(sample_loc &s_loc)
 {
+  /*
+  Py_Initialize();
+  PyRun_SimpleString("import sys");
+  PyRun_SimpleString('sys.path.append("ROS_heatmap.py")');
+  Py_Finalize();*/
+
+  std::string command = "./ROS_heatmap.py ";
+  system("python ROS_heatmap.py" );
+
     hsvParams hsvWhite = {20,0,0,180,80,255};
     hsvParams hsvPurple = {80,60,0,130,255,255};
     
@@ -15,7 +24,8 @@ void blob_main(sample_loc &s_loc)
 
     vector<KeyPoint> keypoints;
 
-    const string filename("/home/buckeye/catkin_ws/src/CapstoneROS/src/vision/heatmaps/heatmap_5.jpg");
+    const string filename("/home/buckeye/catkin_ws/src/CapstoneROS/src/vision/heatmaps/heatmap_4filter.jpg");
+    //const string filename("heatmap_real.jpg");
     //Initialize camera
     /*
     VideoCapture cap(0);
@@ -40,18 +50,15 @@ void blob_main(sample_loc &s_loc)
         cvtColor(img, imgHSV, COLOR_BGR2HSV);
 
         inRange(imgHSV, Scalar(hsvHeat_1.hL, hsvHeat_1.sL, hsvHeat_1.vL), Scalar(hsvHeat_1.hH, hsvHeat_1.sH, hsvHeat_1.vH), imgTHRESH_1);
-        removenoise(imgTHRESH_1);
+        // removenoise(imgTHRESH_1);
         inRange(imgHSV, Scalar(hsvHeat_2.hL, hsvHeat_2.sL, hsvHeat_2.vL), Scalar(hsvHeat_2.hH, hsvHeat_2.sH, hsvHeat_2.vH), imgTHRESH_2);
-        removenoise(imgTHRESH_2);
+        // removenoise(imgTHRESH_2);
         imgTHRESH = imgTHRESH_1 + imgTHRESH_2;
         
         /*
         inRange(imgHSV, Scalar(hsvHeat.hL, hsvHeat.sL, hsvHeat.vL), Scalar(hsvHeat.hH, hsvHeat.sH, hsvHeat.vH), imgTHRESH);
         removenoise(imgTHRESH);
         */
-        
-
-        
 
         Ptr<SimpleBlobDetector> blobDetect = SimpleBlobDetector::create(params);
         blobDetect->detect(imgTHRESH, keypoints );
@@ -60,76 +67,84 @@ void blob_main(sample_loc &s_loc)
         //Circle blobs
         for(int i = 0; i < keypoints.size(); i++)
             circle(out, keypoints[i].pt, 1.5*keypoints[i].size, CV_RGB(0,255,0), 2, 8);
-		int lowKey = 0;
+		int largestKey = 0;
         if(keypoints.size() == 1){
             cout<<endl<<endl<<"Object Found"<<endl;
+            circle(out, keypoints[0].pt, 1.5*keypoints[0].size, CV_RGB(255,0,0), 2, 8);
             tilt_turn_degrees(imgTHRESH, keypoints[0].pt.y, keypoints[0].pt.x, &s_loc);
 	    robot_angle(&s_loc, imgTHRESH, keypoints[0].pt.x);
         }
         else{
-           // int lowKey = 0;
-            int lowVal = keypoints[0].pt.y;
+           // we find the blob that has the largest area, this is usually the one we are looking for
+           // int largestKey = 0;
+            int area = keypoints[0].size;
             for(int i = 0; i < keypoints.size(); i++){
-				if (keypoints[i].pt.y > lowVal){
-					lowKey = i;
-					lowVal = keypoints[i].pt.y;
+				if (keypoints[i].size > area){
+					largestKey = i;
+					area = keypoints[i].size;
 					}
 			}
             // cout<<"No Object Found"<<endl;
-            circle(out, keypoints[lowKey].pt, 1.5*keypoints[lowKey].size, CV_RGB(255,0,0), 2, 8);
+            circle(out, keypoints[largestKey].pt, 1.5*keypoints[largestKey].size, CV_RGB(255,0,0), 2, 8);
             cout<<endl<<endl<<"Object Found?"<<endl;
-            tilt_turn_degrees(imgTHRESH, keypoints[lowKey].pt.y, keypoints[lowKey].pt.x, &s_loc);
-	    	robot_angle(&s_loc, imgTHRESH, keypoints[lowKey].pt.x);
+            tilt_turn_degrees(imgTHRESH, keypoints[largestKey].pt.y, keypoints[largestKey].pt.x, &s_loc);
+	    	robot_angle(&s_loc, imgTHRESH, keypoints[largestKey].pt.x);
         }
 
-	Mat canny_output;
-  	vector<vector<Point> > contours;
-  	vector<Vec4i> hierarchy;
-  	int thresh = 100;
-  	/// Detect edges using canny
-  	Canny( imgTHRESH, canny_output, thresh, thresh*2, 3 );
-  	/// Find contours
-  	findContours( canny_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
-  	RNG rng(12345);
-  	int closest_point = 1000;
-  	int closest_contour_index=0;
-  	Mat drawing = Mat::zeros( canny_output.size(), CV_8UC3 );
-  	Scalar color = Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
-  	Rect bounding_rect;
-  	cout << "number of contours " << contours.size() << endl;
-     	for( int i = 0; i< contours.size(); i++ ) { // iterate through each contour. 
-       		int a=abs(contours[i][i].y - keypoints[lowKey].pt.y) + abs(contours[i][i].x - keypoints[lowKey].pt.x);  //  Find the closest contour to keypoint
-       		if(a<closest_point){
-       		closest_point=a;
-       		closest_contour_index=i;                //Store the index of largest contour
-       		bounding_rect=boundingRect(contours[i]); // Find the bounding rectangle for biggest contour
-       		}
-  	}
-       	cout << "closest point index "<< closest_contour_index << endl;
-       	drawContours( drawing, contours, closest_contour_index, color, 2, 8, hierarchy, 0, Point() );
-       	rectangle(drawing, bounding_rect, Scalar(0,255,0),1, 8,0); 
-  	cout << "width = " << bounding_rect.width << endl;
-  	//cout << "focal length = pixel_width * distance / actual_width = " << bounding_rect.width*6/.09 << endl;
-  	double focal_len = 1200;
-  	double actual_width = .09;
-  	double better_dist = focal_len * actual_width / bounding_rect.width;
-  	cout << "new dist = " << better_dist << " meters" << endl;
-  	/// Show in a window
-  	namedWindow( "Contours", CV_WINDOW_AUTOSIZE );
-imshow( "Contours", drawing );
+		Mat canny_output;
+	  	vector<vector<Point> > contours;
+	  	vector<Vec4i> hierarchy;
+	  	int thresh = 100;
+	  	/// Detect edges using canny
+	  	Canny( imgTHRESH, canny_output, thresh, thresh*2, 3 );
+	  	/// Find contours
+	  	findContours( canny_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
+	  	RNG rng(12345);
+	  	double closest_point = 11110;
+	  	int closest_contour_index=0;
+	  	Mat drawing = Mat::zeros( canny_output.size(), CV_8UC3 );
+	  	Scalar color = Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
+	  	Rect bounding_rect;
+	  	cout << "x: " <<keypoints[largestKey].pt.x << ", y: " << keypoints[largestKey].pt.y << endl;
+	  	cout << "number of contours " << contours.size() << endl;
+		 	for( int i = 0; i< contours.size(); i++ ) { // iterate through each contour. 
+		   		long long a=sqrt(pow((double)(contours[i][0].y - keypoints[largestKey].pt.y),2) + pow((double)(contours[i][0].x - keypoints[largestKey].pt.x),2));  //  Find the closest contour to keypoint
+		   		//double a = contourArea(contours[i],false);//Find largest contour area
+		   		//out << i << " - x: "<< contours[i][i].x << " y: " << contours[i][i].y << " a: " << a << endl;
+		   		if(a<closest_point){
+		   		closest_point=a;
+		   		closest_contour_index=i;                //Store the index of closest contour
+		   		bounding_rect=boundingRect(contours[i]); // Find the bounding rectangle for closest contour
+		   		}
+	  	}
+		   	cout << "closest point index "<< closest_contour_index << endl;
+		   	drawContours( drawing, contours, closest_contour_index, color, 2, 8, hierarchy, 0, Point() );
+		   	rectangle(drawing, bounding_rect, Scalar(0,255,0),1, 8,0); 
+	  	cout << "width = " << bounding_rect.width << endl;
+	  	//to find focal length use pictures with known distances
+	  	//cout << "focal length = pixel_width * distance / actual_width = " << bounding_rect.width*6/.09 << endl;
+	  	double focal_len = 1200;
+	  	double actual_width = .09;
+	  	//distance can be found after finding the focal length
+	  	double better_dist = focal_len * actual_width / bounding_rect.width;
+	  	cout << "new dist = " << better_dist << " meters" << endl;
+	  	/// Show in a window
 
         namedWindow("Input", WINDOW_AUTOSIZE);
         namedWindow("Detection", WINDOW_AUTOSIZE);
+        namedWindow("Contours", CV_WINDOW_AUTOSIZE );
         namedWindow("Filter", WINDOW_AUTOSIZE);
         namedWindow("Filter1", WINDOW_AUTOSIZE);
         namedWindow("Filter2", WINDOW_AUTOSIZE);
         
         imshow("Input", img);
+		imshow("Detection", out);
+        imshow("Contours", drawing );
         imshow("Filter", imgTHRESH);
         imshow("Filter1", imgTHRESH_1);
         imshow("Filter2", imgTHRESH_2);
+        
         // imwrite("/home/buckeye/catkin_ws/src/CapstoneROS/src/vision/heatmaps/filter_5.jpg",imgTHRESH);
-        imshow("Detection", out);
         waitKey(-1);
 
     }

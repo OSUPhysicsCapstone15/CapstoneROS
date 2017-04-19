@@ -82,8 +82,6 @@ add_executable(vision_sim src/vision_sim.cpp)
 add_executable(beacon_return src/beacon_return.cpp)
 target_link_libraries(beacon_return ${catkin_LIBRARIES})
 
-add_executable(indoor_motor_control src/indoor_motor_control.cpp)
-target_link_libraries(indoor_motor_control ${catkin_LIBRARIES})
 # END TESTING EXECUATBLES
 
 target_link_libraries(vision_sim ${catkin_LIBRARIES})

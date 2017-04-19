@@ -34,10 +34,10 @@ Mat findBiggestBlob(Mat src)
 //finds the continuous region of grass in a picture, along with everything inside of it
 void findGrass(Mat src, Mat HSV) //this should be separated into a few more readable functions
 {
-    int iLowH = 40; // 30
-    int iHighH = 60; // 70
+    int iLowH = 30; // 30
+    int iHighH = 85; // 70
     
-    int iLowS = 60;
+    int iLowS = 30;
     int iHighS = 255;
 
     int iLowV = 0;
@@ -52,7 +52,7 @@ void findGrass(Mat src, Mat HSV) //this should be separated into a few more read
     erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
     dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
 
-    imgThresholded = findBiggestBlob(imgThresholded);
+    //imgThresholded = findBiggestBlob(imgThresholded);
 
     for(int i = 0; i < imgThresholded.rows - 1; i++)
     {
@@ -76,7 +76,7 @@ void findGrass(Mat src, Mat HSV) //this should be separated into a few more read
         if(minRow != temp.rows - 1)
         {
             int maxRow=temp.rows-1;
-            while(maxRow > maxRow && temp.at<Vec3b>(maxRow,i)[0]==0 && temp.at<Vec3b>(maxRow,i)[1]==0 && temp.at<Vec3b>(maxRow,i)[2]==0)
+            while(maxRow > minRow && temp.at<Vec3b>(maxRow,i)[0]==0 && temp.at<Vec3b>(maxRow,i)[1]==0 && temp.at<Vec3b>(maxRow,i)[2]==0)
             {
                 src.at<Vec3b>(maxRow,i) = (0,0,0);
                 maxRow--;
@@ -94,6 +94,17 @@ void removenoise(Mat image)
     //Morphological closing
     dilate(image,image,getStructuringElement(MORPH_ELLIPSE,Size(5,5)));
     erode(image,image,getStructuringElement(MORPH_ELLIPSE,Size(5,5)));
+}
+
+//removes noise from a picture, does not work (for now)
+void removenoise_heatmap(Mat image)
+{
+    //Morphologial opening
+    erode(image,image,getStructuringElement(MORPH_RECT,Size(10,10)));
+    dilate(image,image,getStructuringElement(MORPH_RECT,Size(10,10)));
+    //Morphological closing
+    dilate(image,image,getStructuringElement(MORPH_RECT,Size(10,10)));
+    erode(image,image,getStructuringElement(MORPH_RECT,Size(10,10)));
 }
 
 //get robot dist from sample
@@ -443,7 +454,9 @@ SimpleBlobDetector::Params setupObjectBlobParams_heatmap()
     params.maxArea = 8000;
 	 
 	// Filter by Circularity
-    params.filterByCircularity = false;
+    params.filterByCircularity = true; // was false
+    params.minCircularity = 0.55;
+    params.maxCircularity = 0.75;
 	 
 	// Filter by Convexity
 	params.filterByConvexity = true;

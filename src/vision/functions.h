@@ -23,6 +23,7 @@ struct hsvParams{
 };
 
 void removenoise(Mat);
+void removenoise_heatmap(Mat);
 
 Mat findBiggestBlob(Mat);
 

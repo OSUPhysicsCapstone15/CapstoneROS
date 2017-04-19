@@ -1,0 +1,10 @@
+(cl:defpackage robot-srv
+  (:use )
+  (:export
+   "ENCODERREQUEST"
+   "<ENCODERREQUEST-REQUEST>"
+   "ENCODERREQUEST-REQUEST"
+   "<ENCODERREQUEST-RESPONSE>"
+   "ENCODERREQUEST-RESPONSE"
+  ))
+

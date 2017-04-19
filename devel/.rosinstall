@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/buckeye/catkin_ws/src/CapstoneROS/devel/setup.sh

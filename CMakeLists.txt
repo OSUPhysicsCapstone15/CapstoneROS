@@ -25,6 +25,8 @@ find_package(catkin REQUIRED COMPONENTS
    SampleResponse.msg
    TargetResponse.msg
    TargetRequest.msg
+   CameraResponse.msg
+   CameraRequest.msg
  )
 
 # Generate services in the 'srv' folder
@@ -81,6 +83,8 @@ add_executable(vision_sim src/vision_sim.cpp)
 # BEGIN TESTING EXECUTABLES
 add_executable(beacon_return src/beacon_return.cpp)
 target_link_libraries(beacon_return ${catkin_LIBRARIES})
+add_executable(based_motor_control src/based_motor_control.cpp)
+target_link_libraries(based_motor_control ${catkin_LIBRARIES})
 
 # END TESTING EXECUATBLES
 

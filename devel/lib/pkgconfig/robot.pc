@@ -1,0 +1,8 @@
+prefix=/home/buckeye/catkin_ws/src/CapstoneROS/devel
+
+Name: robot
+Description: Description of robot
+Version: 0.0.0
+Cflags: -I/home/buckeye/catkin_ws/src/CapstoneROS/devel/include
+Libs: -L/home/buckeye/catkin_ws/src/CapstoneROS/devel/lib 
+Requires: roscpp rospy std_msgs message_runtime

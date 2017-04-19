@@ -1,0 +1,1 @@
+bool camera_turn_success

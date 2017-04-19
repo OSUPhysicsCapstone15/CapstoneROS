@@ -3,8 +3,9 @@
 //#define DEBUG // Print the detailed debug messages
 //#define HEARTBEAT_MONITOR // Pause the robot if encoder heartbeat is lost
 #define DEBUG_LITE // Print the most necessary debug messages
-//#define ANGLE_CORRECTION // Correct the driving by keeping the angle close to 0
-#define PID17 // PID controls Class 2017
+#define ANGLE_CORRECTION // Correct the driving by keeping the angle close to 0
+//#define PID17 // PID controls Class 2017
+#define DRIVE_REPORT // Progrom Writes motor values and other info to File 
 
 
 #include "ros/ros.h"
@@ -20,6 +21,8 @@
 #include "robot/RightMotor.h"
 #include <cstdlib> 
 #include <sstream>
+#include <iostream>
+#include <fstream>
 #include <ctime>
 #include <cmath>
 #include <chrono>
@@ -31,7 +34,7 @@ static const double MOTOR_MAX = 1.0; // Max motor value (1.0 max, as defined by 
 static const double PIVOT_SPEED = 0.8; // The speed to run the motors at in a pivot
 static const double ENC_FUDGE = 1.0; // Encoder fudge factor. Keep at 1.0. Only use if absolutely necessary (unused)
 static const double BRAKE_SPEED = -0.1; // Reverse with enough power to stop wheel motion
-static const double DRIVE_SPEED = 0.50; // The standard drive speed (% of MOTOR_MAX)
+static const double DRIVE_SPEED = 1.0; // The standard drive speed (% of MOTOR_MAX)
 static const double DRIVE_SPEED_FAST = 1.0; // The fast drive speed
 static const double ANGLE_PRECISION = 5; // The precision to which angle movements are made, units of degrees
 static const double FORWARD_PRECISION = 20; // The precision to which linear movements are made, units of inches
@@ -337,6 +340,8 @@ void zero_system() {
  * Robot main control
  */
 int main(int argc, char **argv) {
+
+
   ROS_INFO("PROGRAM STARTED");
   
   // Initialize ROS, this must be done before using other ROS components
@@ -400,14 +405,15 @@ int main(int argc, char **argv) {
   freq_div_pub.publish(freq_div_msg); // Send the new value
 	
    // PID Globals
-    // Runs While If (driving == true )
+    // Runs Continueously While(driving == true )
+    // Reset when (drive = false)
    double Last_Error; // For Differential 
    double Ei = 0; // Integral, Sum of all errors	 
    double ERROR_TERM; // Sum of all E's
 
 	// Define Max Speed Change
 	double Max_Change = 0.4;
-	// For Large Error Terms, max speed change if 15%. For PID's less than this number, change is proportional
+	// For Large Error Terms, max speed change if 40%. For PID's less than this number, change is proportional
 
 	// Define Gains
 	const double Kp = 0.05; //test to find best Kp
@@ -425,6 +431,19 @@ int main(int argc, char **argv) {
 	double past_angle = 0;
 	bool left_error = false;
 	bool right_error = false;
+	
+	#ifdef DRIVE_REPORT
+		// Create a drive report tab separated file (.tsv)
+		// CREATES FILE IN THE DIRECTORY YOU ARE IN WHEN "based_motor_control" IS LAUNCED 
+		ofstream Drive_Report;
+		Drive_Report.open("Drive Report.txt");
+		Drive_Report << "Left Motor Value " << "\t" << "Right Motor Value " <<"\t" << "\n";
+		// ^ REMOVE header if you want to read csv into another file
+		
+		// define counter variable and sample rate
+		int counter = 0;
+		const int COUNT_RATE = 1; // Samples every 'n' motor values 
+	#endif
 		
   while (ros::ok()) { // Stay in this loop for the length of the program
     // Get the current angle and distances
@@ -484,7 +503,7 @@ int main(int argc, char **argv) {
 	  			ramping = false; // Reset ramping to false now that the movement is done
 	  			// zero_system(); // Zero out this new instance
 			}
-	// _______________________________________________________________________________________
+	/* _______________________________________________________________________________________
 #ifdef PID17
 // These are the distances traveled y left and right wheels, UNITS = INCHES
 /*
@@ -542,7 +561,7 @@ else if (ERROR_TERM > Max_Change) { ERROR_TERM = Max_Change;
 // Update Last Error
 Last_Error = current_angle; 
 ROS_INFO("Ep Term (Last Error): %f", Last_Error); 
-*/
+
 const double MAX_ERROR = 0.15; // maxium value for proportional error term
 double error_term = Ki*current_angle + Kd*angle_diff;
 
@@ -561,15 +580,17 @@ if (error_term > 0) {
 }
 
 #endif
-// _____________________________________________________________________________________
+*/
 // END PID17
 #ifdef ANGLE_CORRECTION	
 
 // Angle correction, edits wheel speeds in response to being off-angle
 	const int MAX_ANGLE = 2; // maxium allowable deviation, if this is exceeded, corrections begin
 	const double MAX_ERROR = 0.15; // maxium value for proportional error term
-	if (current_angle > MAX_ANGLE) { // If it is a small deviation, decrease the appropriate side by 15% of the power
-	  	leftWheelSpeed = leftWheelSpeed*0.85;
+	
+	// Check current Angle
+	if (current_angle > MAX_ANGLE) { 
+	  	// leftWheelSpeed = leftWheelSpeed*0.85;
 	  	left_error = true;
 	  	right_error = false;
 	  	ROS_INFO("LEFT ERROR");
@@ -591,13 +612,17 @@ if (error_term > 0) {
 			// If negative, we are heading back on track, reduce speed a little less
 			// We want a proportional term, ased of current_angle
 			if(current_angle>0){
-				error_term = current_angle/(10*MAX_ANGLE);
+				error_term = abs(current_angle/(10*MAX_ANGLE));
 			
 				if(error_term > MAX_ERROR){
-					error_term = MAX_ERROR;
+					error_term = MAX_ERROR;	  	
+				  	#ifdef DRIVE_REPORT
+				  		Drive_Report << "#*#*#*#*#*# MAX LEFT speed reduction #*#*#*#*# \n" ;
+				  	#endif
+				  	
 				}
 
-				// NOTE: wheel speed is reset to 0.8 after every pass of while loop
+				// NOTE: wheel speed is reset after every pass of while loop
 				leftWheelSpeed = leftWheelSpeed*(1-error_term);
 				ROS_INFO("%f left speed reduction", (1-error_term));
 			}
@@ -613,7 +638,10 @@ if (error_term > 0) {
 				error_term = abs(current_angle/(10*MAX_ANGLE));
 			
 				if(error_term > MAX_ERROR){
-					error_term = MAX_ERROR;
+					error_term = MAX_ERROR;				   
+				   	#ifdef DRIVE_REPORT
+				  		Drive_Report << "#*#*#*#*#*# MAX  RIGHT speed reduction #*#*#*#*# \n" ;
+				  	#endif
 				}
 				rightWheelSpeed = rightWheelSpeed*(1-error_term);
 				ROS_INFO("%f right speed reduction", (1-error_term));
@@ -659,7 +687,7 @@ if (error_term > 0) {
 	ROS_INFO("Target distance: %f", target_distance);
       }
 #endif
-      
+
     } else { // Otherwise the robot is paused
       ROS_INFO("I AM PAUSED");
     }
@@ -725,6 +753,14 @@ if (error_term > 0) {
     ROS_INFO("Published motor vals: %f,%f", (float)left_msg.data, (float)right_msg.data);
     ROS_INFO("---------------------------------------------------------------------");
 #endif
+
+#ifdef DRIVE_REPORT
+	counter += 1;
+	if (counter % COUNT_RATE == 0){
+		Drive_Report << (float)left_msg.data << "\t"<< (float)right_msg.data << "\n";
+	}
+#endif
+
     ros::spinOnce(); // Checks for ros update
     loop_rate.sleep(); // Sleep for the period corresponding to the given frequency
   }
