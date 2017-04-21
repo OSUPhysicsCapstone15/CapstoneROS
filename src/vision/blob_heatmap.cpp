@@ -8,7 +8,32 @@ void blob_main(sample_loc &s_loc)
   PyRun_SimpleString("import sys");
   PyRun_SimpleString('sys.path.append("ROS_heatmap.py")');
   Py_Finalize();*/
+/*
+    VideoCapture cap(0);
+    if ( !cap.isOpened() ){
+        cout << "Cannot open the web cam" << endl;
+        return;
+    }
+    */
 
+
+  Mat img1, imgHSV1;
+  //cap>>img1;
+  img1 = imread("closePurple.jpg", CV_LOAD_IMAGE_COLOR);
+  imwrite("/home/buckeye/catkin_ws/src/CapstoneROS/src/vision/webcam_test.jpg",img1);  
+  if(img1.empty()){
+      cout << "can not open image" << endl;
+	  s_loc.sample_not_found=true;
+      return;
+      }
+      
+        cvtColor(img1, imgHSV1, COLOR_BGR2HSV);
+        findGrass(img1,imgHSV1);
+        cvtColor(img1, imgHSV1, COLOR_BGR2HSV);
+        
+  imwrite("/home/buckeye/catkin_ws/src/CapstoneROS/src/vision/webcam_test_filtered.jpg",img1);
+
+  
   std::string command = "./ROS_heatmap.py ";
   system("python ROS_heatmap.py" );
 
@@ -42,7 +67,7 @@ void blob_main(sample_loc &s_loc)
        // cap>>img;
 
         if(img.empty()){
-            cout << "can not open image" << endl;
+            cout << "Cannot open image. No object found. Heatmap does not exist." << endl;
 	    s_loc.sample_not_found=true;
             return;
         }
@@ -60,8 +85,10 @@ void blob_main(sample_loc &s_loc)
         removenoise(imgTHRESH);
         */
 
+
         Ptr<SimpleBlobDetector> blobDetect = SimpleBlobDetector::create(params);
         blobDetect->detect(imgTHRESH, keypoints );
+        if (keypoints.size() > 0) {
 
         drawKeypoints(imgTHRESH, keypoints, out, CV_RGB(0,0,255), DrawMatchesFlags::DEFAULT);
         //Circle blobs
@@ -123,7 +150,7 @@ void blob_main(sample_loc &s_loc)
 	  	cout << "width = " << bounding_rect.width << endl;
 	  	//to find focal length use pictures with known distances
 	  	//cout << "focal length = pixel_width * distance / actual_width = " << bounding_rect.width*6/.09 << endl;
-	  	double focal_len = 1200;
+	  	double focal_len = 1150;
 	  	double actual_width = .09;
 	  	//distance can be found after finding the focal length
 	  	double better_dist = focal_len * actual_width / bounding_rect.width;
@@ -132,21 +159,25 @@ void blob_main(sample_loc &s_loc)
 
         namedWindow("Input", WINDOW_AUTOSIZE);
         namedWindow("Detection", WINDOW_AUTOSIZE);
-        namedWindow("Contours", CV_WINDOW_AUTOSIZE );
-        namedWindow("Filter", WINDOW_AUTOSIZE);
-        namedWindow("Filter1", WINDOW_AUTOSIZE);
-        namedWindow("Filter2", WINDOW_AUTOSIZE);
+        //namedWindow("Contours", CV_WINDOW_AUTOSIZE );
+        //namedWindow("Filter", WINDOW_AUTOSIZE);
+        //namedWindow("Filter1", WINDOW_AUTOSIZE);
+        //namedWindow("Filter2", WINDOW_AUTOSIZE);
         
         imshow("Input", img);
 		imshow("Detection", out);
-        imshow("Contours", drawing );
-        imshow("Filter", imgTHRESH);
-        imshow("Filter1", imgTHRESH_1);
-        imshow("Filter2", imgTHRESH_2);
+        //imshow("Contours", drawing );
+        //imshow("Filter", imgTHRESH);
+        //imshow("Filter1", imgTHRESH_1);
+        //imshow("Filter2", imgTHRESH_2);
         
-        // imwrite("/home/buckeye/catkin_ws/src/CapstoneROS/src/vision/heatmaps/filter_5.jpg",imgTHRESH);
+        imwrite("/home/buckeye/catkin_ws/src/CapstoneROS/src/vision/blob1_detection.jpg",out);
+        imwrite("/home/buckeye/catkin_ws/src/CapstoneROS/src/vision/blob1_contours.jpg",drawing);       
         waitKey(-1);
-
+        }else{
+        	cout << "No object found!";
+			return;
+        }
     }
   }
 

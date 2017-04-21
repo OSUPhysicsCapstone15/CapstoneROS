@@ -450,13 +450,13 @@ SimpleBlobDetector::Params setupObjectBlobParams_heatmap()
  
 	// Filter by Area
 	params.filterByArea = true;
-	params.minArea = 10;
+	params.minArea = 50;
     params.maxArea = 8000;
 	 
 	// Filter by Circularity
     params.filterByCircularity = true; // was false
     params.minCircularity = 0.55;
-    params.maxCircularity = 0.75;
+    params.maxCircularity = 0.85;
 	 
 	// Filter by Convexity
 	params.filterByConvexity = true;
